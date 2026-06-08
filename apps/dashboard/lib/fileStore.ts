@@ -21,7 +21,7 @@ export async function saveFile(sessionId: string, filename: string, buffer: Buff
   await fs.mkdir(dir, { recursive: true });
   const safe = safeSegment(filename);
   const full = path.join(dir, safe);
-  await fs.writeFile(full, buffer);
+  await fs.writeFile(full, new Uint8Array(buffer));
   return safe;
 }
 
