@@ -32,7 +32,13 @@ export async function POST(req: NextRequest) {
   }
 
   const supabase = await createClient();
-  const { data, error } = await supabase.auth.signUp({ email, password });
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+    // Send the confirmation link back to the origin the user signed up from,
+    // so it works in dev (3030) and production without hardcoding a host.
+    options: { emailRedirectTo: req.nextUrl.origin },
+  });
 
   if (error) {
     const status = /registered|already/i.test(error.message) ? 409 : 400;
