@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>TeePublic Uploader — Queue</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="page">
+    <header class="topbar">
+      <div class="brand">
+        <div class="logo">T</div>
+        <div>
+          <h1>Upload queue</h1>
+          <p id="meta" class="muted"></p>
+        </div>
+      </div>
+      <div class="controls">
+        <button id="btn-all"   class="ghost-sm">Select all</button>
+        <button id="btn-none"  class="ghost-sm">Clear</button>
+        <button id="btn-start" class="primary">▶ Start</button>
+        <button id="btn-pause">❚❚ Pause</button>
+        <button id="btn-clear" class="danger">Clear queue</button>
+      </div>
+    </header>
+
+    <section class="stats">
+      <div><span class="label">Total</span><span id="s-total" class="stat">0</span></div>
+      <div><span class="label">Picked</span><span id="s-picked" class="stat info">0</span></div>
+      <div><span class="label">Done</span><span id="s-done" class="stat ok">0</span></div>
+      <div><span class="label">Failed</span><span id="s-fail" class="stat err">0</span></div>
+      <div><span class="label">Left</span><span id="s-left" class="stat info">0</span></div>
+      <div class="progress-wrap"><div id="progress" class="progress"></div></div>
+    </section>
+
+    <section id="list" class="list"></section>
+    <p id="empty" class="empty">No queue yet. Send one from the dashboard.</p>
+  </div>
+  <script type="module" src="main.js"></script>
+</body>
+</html>

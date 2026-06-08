@@ -1,0 +1,42 @@
+{
+  "manifest_version": 3,
+  "name": "TeePublic Uploader",
+  "version": "0.1.0",
+  "description": "Batch uploader for TeePublic. Receives queues from the localhost dashboard.",
+  "action": {
+    "default_title": "TeePublic Uploader",
+    "default_popup": "popup/index.html"
+  },
+  "background": {
+    "service_worker": "background/index.js",
+    "type": "module"
+  },
+  "permissions": [
+    "storage",
+    "tabs",
+    "scripting"
+  ],
+  "host_permissions": [
+    "http://localhost:3030/*",
+    "https://*.teepublic.com/*"
+  ],
+  "externally_connectable": {
+    "matches": [
+      "http://localhost:3030/*",
+      "http://127.0.0.1:3030/*"
+    ]
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://*.teepublic.com/*"],
+      "js": ["content/teepublic.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["queue/index.html"],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}

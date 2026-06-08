@@ -1,0 +1,19 @@
+{
+  "name": "teepublic-uploader",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Local-first TeePublic batch upload manager (dashboard + Chrome extension)",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:dashboard": "npm run dev --workspace=@teepublic/dashboard",
+    "dev:extension": "npm run dev --workspace=@teepublic/extension",
+    "build:extension": "npm run build --workspace=@teepublic/extension",
+    "build:dashboard": "npm run build --workspace=@teepublic/dashboard"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

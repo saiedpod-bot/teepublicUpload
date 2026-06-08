@@ -1,0 +1,20 @@
+{
+  "name": "@teepublic/extension",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "node build.mjs --watch",
+    "build": "node build.mjs",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@teepublic/shared": "*"
+  },
+  "devDependencies": {
+    "@types/chrome": "0.0.270",
+    "chokidar": "3.6.0",
+    "esbuild": "0.24.0",
+    "typescript": "5.6.3"
+  }
+}

@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>TeePublic Uploader — Style Preview</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Inter, system-ui, sans-serif; background: #1a1a1f; color: #fff; padding: 24px; }
+  .page-title { text-align: center; font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+  .page-sub { text-align: center; color: #9ca3af; font-size: 13px; margin-bottom: 24px; }
+  .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; max-width: 1400px; margin: 0 auto; }
+  @media (max-width: 980px) { .grid { grid-template-columns: 1fr; } }
+  .style-wrap { border-radius: 16px; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,.4); }
+  .style-tag { font: 600 12px Inter; letter-spacing: .04em; text-transform: uppercase; padding: 8px 14px; background: #000; color: #fff; display: flex; justify-content: space-between; }
+  .style-tag span { opacity: .6; font-weight: 400; text-transform: none; letter-spacing: 0; }
+
+  /* ============ shared mock layout (each .app re-themes via vars) ============ */
+  .app { padding: 22px; min-height: 460px; }
+  .app .hd { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+  .app .logo { height: 38px; width: 38px; display: grid; place-items: center; font-weight: 800; }
+  .app .h1 { font-size: 17px; font-weight: 700; }
+  .app .h2 { font-size: 11px; opacity: .6; }
+  .app .tabs { display: inline-flex; gap: 6px; padding: 5px; margin-bottom: 18px; }
+  .app .tab { padding: 8px 14px; font-size: 13px; font-weight: 500; cursor: pointer; }
+  .app .drops { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 18px; }
+  .app .drop { padding: 26px 18px; text-align: center; }
+  .app .drop .dt { font-weight: 600; font-size: 14px; margin-bottom: 6px; }
+  .app .drop .dh { font-size: 11px; opacity: .6; line-height: 1.5; }
+  .app .statbar { display: flex; align-items: center; justify-content: space-between; padding: 18px; margin-bottom: 16px; }
+  .app .stats { display: flex; gap: 34px; }
+  .app .stat .sl { font-size: 10px; letter-spacing: .08em; text-transform: uppercase; opacity: .55; }
+  .app .stat .sv { font-size: 30px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .app .chips { display: flex; gap: 8px; margin-bottom: 4px; }
+  .app .chip { font-size: 11px; font-weight: 500; padding: 4px 10px; }
+  .app .btn { font-size: 14px; font-weight: 600; padding: 12px 22px; cursor: pointer; border: none; }
+
+  /* ===================== 1. NEO-BRUTALIST ===================== */
+  .brut { background: #f4f1e8; color: #111; font-family: 'Space Grotesk', Inter, sans-serif; }
+  .brut .logo { background: #ffe600; color: #111; border: 2.5px solid #111; border-radius: 6px; }
+  .brut .surface, .brut .drop, .brut .statbar, .brut .tabs { border: 2.5px solid #111; background: #fff; box-shadow: 5px 5px 0 #111; border-radius: 4px; }
+  .brut .tabs { box-shadow: 4px 4px 0 #111; }
+  .brut .tab { border-radius: 0; }
+  .brut .tab.on { background: #111; color: #fff; }
+  .brut .drop { box-shadow: 4px 4px 0 #111; }
+  .brut .chip { border: 2px solid #111; border-radius: 0; background: #c4f000; color: #111; }
+  .brut .chip.ok { background: #00e0a4; }
+  .brut .btn { background: #ff5c00; color: #fff; border: 2.5px solid #111; box-shadow: 4px 4px 0 #111; border-radius: 2px; text-transform: uppercase; letter-spacing: .03em; }
+  .brut .sv { font-family: 'JetBrains Mono', monospace; }
+
+  /* ===================== 2. WARM EDITORIAL ===================== */
+  .warm { background: #faf6ee; color: #2e2a24; font-family: Inter, sans-serif; }
+  .warm .logo { background: #c2613b; color: #fff; border-radius: 50%; font-family: Fraunces, serif; }
+  .warm .h1 { font-family: Fraunces, serif; font-weight: 600; letter-spacing: -.01em; }
+  .warm .surface, .warm .drop, .warm .statbar { background: #fffdf8; border: 1px solid #e6dccb; border-radius: 12px; box-shadow: 0 1px 2px rgba(120,90,40,.05); }
+  .warm .tabs { background: #f1e9da; border-radius: 999px; }
+  .warm .tab { border-radius: 999px; }
+  .warm .tab.on { background: #fffdf8; color: #c2613b; box-shadow: 0 1px 3px rgba(0,0,0,.08); }
+  .warm .drop { border-style: dashed; }
+  .warm .chip { border-radius: 999px; background: #efe6d6; color: #7a6a50; }
+  .warm .chip.ok { background: #dcebd9; color: #4d7c4a; }
+  .warm .sv { font-family: Fraunces, serif; color: #c2613b; }
+  .warm .btn { background: #c2613b; color: #fff; border-radius: 999px; }
+
+  /* ===================== 3. TERMINAL / HACKER ===================== */
+  .term { background: #0a0e0a; color: #7dffae; font-family: 'JetBrains Mono', monospace; }
+  .term .logo { background: transparent; color: #7dffae; border: 1px solid #2a4a30; border-radius: 3px; }
+  .term .h1 { color: #b9ffd2; } .term .h2 { color: #4a8a5e; }
+  .term .surface, .term .drop, .term .statbar, .term .tabs { background: #0d140d; border: 1px solid #1f3a24; border-radius: 3px; }
+  .term .tab { border-radius: 0; color: #4a8a5e; }
+  .term .tab.on { background: #122012; color: #7dffae; border: 1px solid #2a4a30; }
+  .term .drop { border-style: dashed; border-color: #2a4a30; }
+  .term .drop .dt::before { content: "> "; }
+  .term .chip { border-radius: 0; background: #122012; color: #7dffae; border: 1px solid #2a4a30; }
+  .term .chip.ok { color: #aaffc4; }
+  .term .sl { color: #4a8a5e; } .term .sv { color: #7dffae; }
+  .term .btn { background: #122012; color: #7dffae; border: 1px solid #3a6a44; border-radius: 2px; }
+  .term .btn::before { content: "$ "; }
+
+  /* ===================== 4. CLEAN SWISS / LINEAR ===================== */
+  .swiss { background: #f7f7f8; color: #18181b; font-family: Inter, sans-serif; }
+  .swiss .logo { background: #5b65ff; color: #fff; border-radius: 8px; }
+  .swiss .surface, .swiss .drop, .swiss .statbar { background: #fff; border: 1px solid #e4e4e7; border-radius: 10px; }
+  .swiss .tabs { background: #efeff1; border-radius: 8px; }
+  .swiss .tab { border-radius: 6px; color: #52525b; }
+  .swiss .tab.on { background: #fff; color: #18181b; box-shadow: 0 1px 2px rgba(0,0,0,.06); }
+  .swiss .drop { border-style: dashed; border-color: #d4d4d8; }
+  .swiss .chip { border-radius: 6px; background: #f4f4f5; color: #52525b; }
+  .swiss .chip.ok { background: #ecfdf3; color: #15803d; }
+  .swiss .sv { color: #18181b; } .swiss .stat.acc .sv { color: #5b65ff; }
+  .swiss .btn { background: #5b65ff; color: #fff; border-radius: 8px; }
+</style>
+</head>
+<body>
+  <div class="page-title">TeePublic Uploader — Style Preview</div>
+  <div class="page-sub">Same dashboard, four directions. Tell me which one (or mix) and I'll apply it for real.</div>
+
+  <div class="grid">
+    <!-- template repeated; class on .app sets the theme -->
+    <div class="style-wrap">
+      <div class="style-tag">1 · Neo-brutalist <span>chunky · bold · hard shadows</span></div>
+      <div class="app brut">
+        <div class="hd"><div class="logo">T</div><div><div class="h1">TeePublic Uploader</div><div class="h2">Local-first batch upload manager</div></div></div>
+        <div class="tabs surface"><div class="tab on">From spreadsheet</div><div class="tab">Generate with AI</div></div>
+        <div class="drops">
+          <div class="drop surface"><div class="dt">Spreadsheet</div><div class="dh">Drop an .xlsx or .csv</div></div>
+          <div class="drop surface"><div class="dt">Design images</div><div class="dh">Drop .png / .jpg files</div></div>
+        </div>
+        <div class="statbar surface">
+          <div class="stats"><div class="stat"><div class="sl">Rows</div><div class="sv">12</div></div><div class="stat acc"><div class="sl">Matched</div><div class="sv">12</div></div><div class="stat"><div class="sl">Errors</div><div class="sv">0</div></div></div>
+          <button class="btn">Import (12)</button>
+        </div>
+        <div class="chips"><span class="chip ok">✓ 12 matched</span><span class="chip">design 1 of 12</span></div>
+      </div>
+    </div>
+
+    <div class="style-wrap">
+      <div class="style-tag">2 · Warm editorial <span>serif · paper · calm</span></div>
+      <div class="app warm">
+        <div class="hd"><div class="logo">T</div><div><div class="h1">TeePublic Uploader</div><div class="h2">Local-first batch upload manager</div></div></div>
+        <div class="tabs"><div class="tab on">From spreadsheet</div><div class="tab">Generate with AI</div></div>
+        <div class="drops">
+          <div class="drop"><div class="dt">Spreadsheet</div><div class="dh">Drop an .xlsx or .csv</div></div>
+          <div class="drop"><div class="dt">Design images</div><div class="dh">Drop .png / .jpg files</div></div>
+        </div>
+        <div class="statbar">
+          <div class="stats"><div class="stat"><div class="sl">Rows</div><div class="sv">12</div></div><div class="stat acc"><div class="sl">Matched</div><div class="sv">12</div></div><div class="stat"><div class="sl">Errors</div><div class="sv">0</div></div></div>
+          <button class="btn">Import (12)</button>
+        </div>
+        <div class="chips"><span class="chip ok">✓ 12 matched</span><span class="chip">design 1 of 12</span></div>
+      </div>
+    </div>
+
+    <div class="style-wrap">
+      <div class="style-tag">3 · Terminal / hacker <span>mono · phosphor · dark</span></div>
+      <div class="app term">
+        <div class="hd"><div class="logo">T</div><div><div class="h1">teepublic://uploader</div><div class="h2">local-first batch upload manager</div></div></div>
+        <div class="tabs"><div class="tab on">from_spreadsheet</div><div class="tab">generate_ai</div></div>
+        <div class="drops">
+          <div class="drop"><div class="dt">spreadsheet</div><div class="dh">load .xlsx / .csv</div></div>
+          <div class="drop"><div class="dt">design_images</div><div class="dh">load images/*.png</div></div>
+        </div>
+        <div class="statbar">
+          <div class="stats"><div class="stat"><div class="sl">rows</div><div class="sv">12</div></div><div class="stat acc"><div class="sl">matched</div><div class="sv">12</div></div><div class="stat"><div class="sl">errors</div><div class="sv">00</div></div></div>
+          <button class="btn">./import --count=12</button>
+        </div>
+        <div class="chips"><span class="chip ok">[OK] 12 matched</span><span class="chip">design 01/12</span></div>
+      </div>
+    </div>
+
+    <div class="style-wrap">
+      <div class="style-tag">4 · Clean Swiss / Linear <span>flat · neutral · crisp</span></div>
+      <div class="app swiss">
+        <div class="hd"><div class="logo">T</div><div><div class="h1">TeePublic Uploader</div><div class="h2">Local-first batch upload manager</div></div></div>
+        <div class="tabs"><div class="tab on">From spreadsheet</div><div class="tab">Generate with AI</div></div>
+        <div class="drops">
+          <div class="drop"><div class="dt">Spreadsheet</div><div class="dh">Drop an .xlsx or .csv</div></div>
+          <div class="drop"><div class="dt">Design images</div><div class="dh">Drop .png / .jpg files</div></div>
+        </div>
+        <div class="statbar">
+          <div class="stats"><div class="stat"><div class="sl">Rows</div><div class="sv">12</div></div><div class="stat acc"><div class="sl">Matched</div><div class="sv">12</div></div><div class="stat"><div class="sl">Errors</div><div class="sv">0</div></div></div>
+          <button class="btn">Import (12)</button>
+        </div>
+        <div class="chips"><span class="chip ok">✓ 12 matched</span><span class="chip">design 1 of 12</span></div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>TeePublic Uploader</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <div class="logo">T</div>
+      <div>
+        <h1>TeePublic Uploader</h1>
+        <p id="ext-id" class="muted"></p>
+      </div>
+    </div>
+  </header>
+
+  <section class="stats">
+    <div><span class="label">Total</span><span id="s-total" class="stat">0</span></div>
+    <div><span class="label">Picked</span><span id="s-picked" class="stat info">0</span></div>
+    <div><span class="label">Done</span><span id="s-done" class="stat ok">0</span></div>
+    <div><span class="label">Failed</span><span id="s-fail" class="stat err">0</span></div>
+  </section>
+
+  <section class="select-bar">
+    <button id="btn-toggle-all" class="small"></button>
+    <button id="btn-invert"     class="small">Invert</button>
+    <span id="picked-summary" class="muted-sm"></span>
+  </section>
+
+  <section id="grid" class="grid"></section>
+
+  <section class="actions">
+    <button id="btn-start" class="primary">▶ Start</button>
+    <button id="btn-pause">❚❚</button>
+    <button id="btn-open">Queue ↗</button>
+    <button id="btn-clear" class="danger">Clear</button>
+  </section>
+
+  <p id="empty" class="empty">No queue yet. Send one from the dashboard at <code>localhost:3030</code>.</p>
+
+  <script type="module" src="main.js"></script>
+</body>
+</html>

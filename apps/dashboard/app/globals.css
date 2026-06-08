@@ -1,0 +1,225 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ════════════════════════════════════════════════════════════════════════
+   THEME REGISTRY
+   Each [data-theme="…"] block is one complete skin. Colours are RGB channels
+   (space-separated) so Tailwind's `/<alpha>` modifiers work. Structural vars
+   (--font, --radius, --glow, backdrop, primary button) let themes differ in
+   shape, not just colour. To add a theme: copy a block, retune, then register
+   it in lib/theme.ts. All themes are dark-structured (html keeps `.dark`).
+   ════════════════════════════════════════════════════════════════════════ */
+
+/* ── 1 · TERMINAL — green phosphor, monospace, sharp, scanlines ───────────── */
+[data-theme="terminal"] {
+  --font: "JetBrains Mono", ui-monospace, monospace;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --radius: 2px;  --radius-chip: 0px;
+
+  --ink-0: 16 26 18;     --ink-950: 6 9 6;      --ink-900: 10 15 10;
+  --ink-800: 14 21 14;   --ink-700: 20 32 20;   --ink-600: 27 44 27;  --ink-500: 37 64 42;
+  --accent-50: 227 255 236;  --accent-200: 167 255 198; --accent-400: 109 255 163;
+  --accent-500: 61 255 134;  --accent-600: 37 224 110;  --accent-700: 23 163 80;
+  --zinc-50: 242 247 243;  --zinc-100: 214 239 221; --zinc-200: 185 217 193;
+  --zinc-300: 158 196 168; --zinc-400: 111 154 124; --zinc-500: 84 128 95;
+  --zinc-600: 63 101 73;   --zinc-700: 44 74 52;    --zinc-800: 28 51 31;
+  --zinc-900: 18 32 18;    --zinc-950: 10 20 12;
+  --violet2-500: 61 255 134; --violet2-600: 37 224 110;
+  --success-500: 43 217 111; --success-600: 31 170 85;
+  --warn-500: 255 176 0;     --warn-600: 217 140 0;
+  --danger-500: 255 95 86;   --danger-600: 224 68 59;
+
+  --glow: 0 0 0 1px rgba(61,255,134,0.30), 0 0 18px rgba(61,255,134,0.20);
+  --shadow-card: 0 0 0 1px rgba(61,255,134,0.05) inset, 0 8px 30px rgba(0,0,0,0.6);
+  --grad-accent: linear-gradient(135deg, #3dff86 0%, #17a350 100%);
+  --grad-soft: radial-gradient(1100px 600px at 12% -10%, rgba(61,255,134,0.10), transparent 60%), radial-gradient(800px 500px at 100% 0%, rgba(61,255,134,0.06), transparent 55%);
+  --btn-pri-bg: rgb(14 21 14); --btn-pri-fg: rgb(61 255 134); --btn-pri-border: rgb(23 163 80); --btn-pri-shadow: none;
+}
+
+/* ── 2 · AMBER CRT — amber phosphor, monospace, sharp, warm scanlines ─────── */
+[data-theme="amber"] {
+  --font: "JetBrains Mono", ui-monospace, monospace;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --radius: 2px;  --radius-chip: 0px;
+
+  --ink-0: 26 18 8;     --ink-950: 10 7 3;     --ink-900: 16 11 5;
+  --ink-800: 22 15 7;   --ink-700: 32 22 10;   --ink-600: 45 31 14;  --ink-500: 64 45 20;
+  --accent-50: 255 245 220;  --accent-200: 255 220 150; --accent-400: 255 190 90;
+  --accent-500: 255 176 0;   --accent-600: 224 150 0;   --accent-700: 163 108 0;
+  --zinc-50: 247 244 240;  --zinc-100: 245 230 205; --zinc-200: 230 210 175;
+  --zinc-300: 205 180 140; --zinc-400: 165 140 100; --zinc-500: 130 108 72;
+  --zinc-600: 100 82 52;   --zinc-700: 74 60 36;    --zinc-800: 51 41 24;
+  --zinc-900: 32 25 14;    --zinc-950: 20 15 8;
+  --violet2-500: 255 176 0; --violet2-600: 224 150 0;
+  --success-500: 120 200 120; --success-600: 80 160 90;
+  --warn-500: 255 200 60;     --warn-600: 224 170 0;
+  --danger-500: 255 110 90;   --danger-600: 224 80 60;
+
+  --glow: 0 0 0 1px rgba(255,176,0,0.30), 0 0 18px rgba(255,176,0,0.22);
+  --shadow-card: 0 0 0 1px rgba(255,176,0,0.06) inset, 0 8px 30px rgba(0,0,0,0.6);
+  --grad-accent: linear-gradient(135deg, #ffb000 0%, #a36c00 100%);
+  --grad-soft: radial-gradient(1100px 600px at 12% -10%, rgba(255,176,0,0.10), transparent 60%), radial-gradient(800px 500px at 100% 0%, rgba(255,176,0,0.06), transparent 55%);
+  --btn-pri-bg: rgb(22 15 7); --btn-pri-fg: rgb(255 176 0); --btn-pri-border: rgb(163 108 0); --btn-pri-shadow: none;
+}
+
+/* ── 3 · CYBER NEON — cyan/magenta, sans, rounded, neon glow ──────────────── */
+[data-theme="cyber"] {
+  --font: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --radius: 12px;  --radius-chip: 999px;
+
+  --ink-0: 16 24 40;    --ink-950: 6 8 16;     --ink-900: 10 13 26;
+  --ink-800: 15 19 38;  --ink-700: 22 28 54;   --ink-600: 32 40 74;  --ink-500: 48 58 100;
+  --accent-50: 224 255 255;  --accent-200: 150 240 255; --accent-400: 60 220 255;
+  --accent-500: 0 200 255;   --accent-600: 0 165 224;   --accent-700: 0 120 170;
+  --zinc-50: 244 247 255;  --zinc-100: 219 230 255; --zinc-200: 190 205 240;
+  --zinc-300: 158 178 220; --zinc-400: 110 130 180; --zinc-500: 84 102 150;
+  --zinc-600: 63 78 120;   --zinc-700: 44 56 92;    --zinc-800: 28 36 64;
+  --zinc-900: 18 24 44;    --zinc-950: 10 14 28;
+  --violet2-500: 255 43 214; --violet2-600: 214 30 178;
+  --success-500: 0 230 180;  --success-600: 0 190 150;
+  --warn-500: 255 200 0;     --warn-600: 224 170 0;
+  --danger-500: 255 60 130;  --danger-600: 224 40 110;
+
+  --glow: 0 0 0 1px rgba(0,200,255,0.35), 0 0 22px rgba(0,200,255,0.30);
+  --shadow-card: 0 0 0 1px rgba(0,200,255,0.06) inset, 0 8px 30px rgba(0,0,0,0.5);
+  --grad-accent: linear-gradient(135deg, #00c8ff 0%, #ff2bd6 100%);
+  --grad-soft: radial-gradient(1000px 560px at 8% -10%, rgba(0,200,255,0.16), transparent 60%), radial-gradient(820px 480px at 100% 0%, rgba(255,43,214,0.14), transparent 55%);
+  --btn-pri-bg: linear-gradient(135deg, #00c8ff 0%, #2bb6ff 100%); --btn-pri-fg: #04121a; --btn-pri-border: transparent; --btn-pri-shadow: 0 0 18px rgba(0,200,255,0.4);
+}
+
+/* ── 4 · INDIGO SAAS — the original indigo/violet, sans, soft, glassy ─────── */
+[data-theme="indigo"] {
+  --font: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --radius: 16px;  --radius-chip: 999px;
+
+  --ink-0: 16 18 34;    --ink-950: 7 8 20;     --ink-900: 12 14 28;
+  --ink-800: 19 21 38;  --ink-700: 28 31 51;   --ink-600: 38 42 66;  --ink-500: 55 60 92;
+  --accent-50: 238 240 255;  --accent-200: 197 203 255; --accent-400: 125 134 255;
+  --accent-500: 91 101 255;  --accent-600: 74 76 230;   --accent-700: 60 59 191;
+  --zinc-50: 244 244 246;  --zinc-100: 228 228 235; --zinc-200: 200 200 215;
+  --zinc-300: 168 168 190; --zinc-400: 130 130 155; --zinc-500: 100 100 125;
+  --zinc-600: 78 78 100;   --zinc-700: 55 58 82;    --zinc-800: 38 40 60;
+  --zinc-900: 24 26 42;    --zinc-950: 14 15 28;
+  --violet2-500: 168 85 247; --violet2-600: 147 51 234;
+  --success-500: 16 185 129; --success-600: 5 150 105;
+  --warn-500: 245 158 11;    --warn-600: 217 119 6;
+  --danger-500: 244 63 94;   --danger-600: 225 29 72;
+
+  --glow: 0 0 0 1px rgba(125,134,255,0.25), 0 8px 30px rgba(91,101,255,0.25);
+  --shadow-card: 0 1px 0 rgba(255,255,255,0.04) inset, 0 8px 30px rgba(0,0,0,0.35);
+  --grad-accent: linear-gradient(135deg, #5b65ff 0%, #a855f7 100%);
+  --grad-soft: radial-gradient(1200px 600px at 10% -10%, rgba(91,101,255,0.18), transparent 60%), radial-gradient(900px 500px at 100% 0%, rgba(168,85,247,0.16), transparent 55%);
+  --btn-pri-bg: linear-gradient(135deg, #5b65ff 0%, #a855f7 100%); --btn-pri-fg: #fff; --btn-pri-border: transparent; --btn-pri-shadow: var(--glow);
+}
+
+/* ── Base ─────────────────────────────────────────────────────────────────── */
+html, body {
+  @apply antialiased bg-ink-950 text-zinc-100;
+  font-family: var(--font);
+}
+
+/* Backdrop differs per theme: scanlines for the CRT skins, soft glow grids
+   for the rounded ones. */
+body::before {
+  content: "";
+  position: fixed; inset: 0; pointer-events: none; z-index: -1;
+}
+[data-theme="terminal"] body::before {
+  background-image:
+    repeating-linear-gradient(0deg, rgba(61,255,134,0.035) 0 1px, transparent 1px 3px),
+    radial-gradient(circle at 1px 1px, rgba(61,255,134,0.05) 1px, transparent 0);
+  background-size: 100% 3px, 24px 24px;
+}
+[data-theme="amber"] body::before {
+  background-image:
+    repeating-linear-gradient(0deg, rgba(255,176,0,0.04) 0 1px, transparent 1px 3px),
+    radial-gradient(circle at 1px 1px, rgba(255,176,0,0.05) 1px, transparent 0);
+  background-size: 100% 3px, 24px 24px;
+}
+[data-theme="cyber"] body::before {
+  background-image: radial-gradient(circle at 1px 1px, rgba(0,200,255,0.05) 1px, transparent 0);
+  background-size: 26px 26px;
+}
+[data-theme="indigo"] body::before {
+  background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,0.04) 1px, transparent 0);
+  background-size: 22px 22px;
+}
+
+@layer components {
+  .surface {
+    @apply rounded-lg backdrop-blur-xl bg-ink-900/80 border border-zinc-700/70 shadow-card;
+  }
+  .surface-soft {
+    @apply rounded-lg bg-ink-800/70 border border-zinc-700/60;
+  }
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium
+           transition disabled:opacity-50 disabled:cursor-not-allowed select-none;
+  }
+  .btn-primary {
+    @apply btn;
+    background: var(--btn-pri-bg);
+    color: var(--btn-pri-fg);
+    border: 1px solid var(--btn-pri-border);
+    box-shadow: var(--btn-pri-shadow);
+  }
+  .btn-primary:hover { filter: brightness(1.08); }
+  .btn-primary:active { filter: brightness(0.96); }
+  /* The CRT skins read their primary action as a shell command. */
+  [data-theme="terminal"] .btn-primary::before,
+  [data-theme="amber"] .btn-primary::before { content: "$ "; opacity: 0.55; }
+
+  .btn-ghost {
+    @apply btn bg-ink-800/60 text-zinc-100 border border-zinc-700
+           hover:bg-ink-700 hover:border-accent-700/60;
+  }
+  .btn-danger {
+    @apply btn bg-ink-800 text-danger-500 border border-danger-600/70 hover:border-danger-500;
+  }
+  .chip {
+    @apply inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium border;
+    border-radius: var(--radius-chip);
+  }
+  .chip-ok    { @apply chip bg-success-500/10 text-success-500 border-success-500/40; }
+  .chip-warn  { @apply chip bg-warn-500/10    text-warn-500    border-warn-500/40; }
+  .chip-err   { @apply chip bg-danger-500/10  text-danger-500  border-danger-500/40; }
+  .chip-info  { @apply chip bg-accent-500/10  text-accent-400  border-accent-500/40; }
+  .chip-mute  { @apply chip bg-ink-800        text-zinc-300    border-zinc-700; }
+
+  .label { @apply text-xs uppercase tracking-wider text-zinc-400; }
+  .stat  { @apply font-mono tabular-nums; }
+
+  .dropzone {
+    @apply surface-soft p-8 text-center cursor-pointer transition border-dashed border-zinc-700
+           hover:bg-ink-700/60 hover:border-accent-500/50;
+  }
+  .dropzone-active {
+    @apply bg-accent-500/10 border-accent-500/60 shadow-glow;
+  }
+  .input {
+    @apply surface-soft px-3 py-2 text-sm w-full outline-none
+           focus:border-accent-500/70 placeholder:text-zinc-500;
+  }
+
+  .tab {
+    @apply inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg
+           text-zinc-400 hover:bg-ink-700 hover:text-zinc-100;
+  }
+  .tab-active {
+    @apply bg-ink-700 text-accent-500 border border-accent-700/60 shadow-glow;
+  }
+
+  .switch {
+    @apply relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full transition
+           bg-ink-700 border border-zinc-700;
+  }
+  .switch[data-on="true"] { @apply bg-success-500/80 border-success-500; }
+  .switch::after {
+    content: "";
+    @apply absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-zinc-100 transition shadow;
+  }
+  .switch[data-on="true"]::after { transform: translateX(20px); }
+}

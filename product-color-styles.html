@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Product + Color UI — style options</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --bg:#060906; --surface:#0a0f0a; --soft:#0e150e; --hover:#142014;
+    --line:#2c4a34; --green:#3dff86; --green2:#6dffa3; --dim:#6f9a7c; --dim2:#54805f;
+    --txt:#d6efdd; --off:#1c331f; --amber:#ffb000; --red:#ff5f56;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'JetBrains Mono',monospace;background:var(--bg);color:var(--txt);padding:26px;
+    background-image:repeating-linear-gradient(0deg,rgba(61,255,134,.035) 0 1px,transparent 1px 3px),radial-gradient(circle at 1px 1px,rgba(61,255,134,.05) 1px,transparent 0);
+    background-size:100% 3px,24px 24px;}
+  h1.t{color:var(--green2);font-size:18px;margin-bottom:2px}
+  p.s{color:var(--dim);font-size:12px;margin-bottom:22px}
+  h2.sec{color:var(--green);font-size:13px;letter-spacing:.06em;text-transform:uppercase;margin:30px 0 14px;border-bottom:1px dashed var(--line);padding-bottom:8px}
+  .opt{max-width:1080px;margin:0 0 26px}
+  .bar{display:flex;justify-content:space-between;align-items:center;background:#000;border:1px solid var(--line);border-bottom:none;padding:7px 13px;font-size:12px;color:var(--green2);font-weight:700}
+  .bar span{color:var(--dim);font-weight:400}
+  .panel{background:var(--surface);border:1px solid var(--line);padding:16px}
+  .muted{color:var(--dim)} .lbl{font-size:11px;color:var(--txt)}
+
+  /* ===== PRODUCT STYLE A — toggle cards (current) ===== */
+  .gridP{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+  .pcard{background:var(--soft);border:1px solid #20381f;padding:10px;display:flex;flex-direction:column;align-items:center;gap:8px;font-size:11px}
+  .sw{width:38px;height:20px;border-radius:999px;background:var(--off);position:relative;border:1px solid var(--line)}
+  .sw.on{background:rgba(61,255,134,.7);border-color:var(--green)}
+  .sw::after{content:"";position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;background:#cfeed6;transition:.15s}
+  .sw.on::after{transform:translateX(18px);background:#06140a}
+
+  /* ===== PRODUCT STYLE B — selectable chips ===== */
+  .chips{display:flex;flex-wrap:wrap;gap:8px}
+  .pchip{font-size:12px;padding:6px 12px;border:1px solid var(--line);background:#0d140d;color:var(--dim);cursor:default;display:flex;align-items:center;gap:7px}
+  .pchip.on{border-color:var(--green);color:var(--green2);background:rgba(61,255,134,.08)}
+  .pchip .k{font-size:11px;color:var(--dim2)}
+  .pchip.on .k{color:var(--green)}
+
+  /* ===== PRODUCT STYLE C — terminal checklist ===== */
+  .check{display:grid;grid-template-columns:repeat(3,1fr);gap:2px 26px;font-size:13px}
+  .crow{display:flex;align-items:center;gap:10px;padding:5px 6px;cursor:default}
+  .crow:hover{background:#0d140d}
+  .box{color:var(--green)}
+  .crow.off .box{color:var(--off)} .crow.off{color:var(--dim)}
+
+  /* ===== PRODUCT STYLE D — ON/OFF state cards ===== */
+  .gridP2{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+  .scard{border:1px solid #20381f;background:var(--soft);padding:11px 12px;display:flex;justify-content:space-between;align-items:center;font-size:12px}
+  .scard.on{border-color:rgba(61,255,134,.4)}
+  .st{font-size:10px;font-weight:700;letter-spacing:.08em;padding:2px 7px;border:1px solid var(--off);color:var(--dim)}
+  .scard.on .st{border-color:var(--green);color:var(--green);background:rgba(61,255,134,.1)}
+
+  /* ===== COLOR STYLES ===== */
+  .row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+  .swatch{width:30px;height:30px;border-radius:50%;border:2px solid var(--line);position:relative;cursor:default}
+  .swatch.sel{border-color:var(--green);box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--green)}
+  .swatch .ck{position:absolute;inset:0;display:grid;place-items:center;font-size:12px;font-weight:700}
+  .sq{width:30px;height:30px;border:2px solid var(--line);position:relative;cursor:default}
+  .sq.sel{border-color:var(--green)}
+  .sq .ck{position:absolute;inset:0;display:grid;place-items:center;font-size:12px;font-weight:700}
+  .swlabel{font-size:10px;color:var(--dim);text-align:center;margin-top:3px;width:46px}
+
+  /* color C: per-product inline palette rows */
+  .prow{display:grid;grid-template-columns:120px 1fr;gap:12px;align-items:center;padding:8px 0;border-top:1px solid #16241680}
+  .prow:first-child{border-top:none}
+  .pname{font-size:12px}
+  .pal{display:flex;gap:6px;flex-wrap:wrap}
+  .dot{width:22px;height:22px;border:2px solid var(--line);cursor:default}
+  .dot.sel{border-color:var(--green);box-shadow:inset 0 0 0 2px var(--bg)}
+
+  /* color D: select with leading color dot */
+  .selrow{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  .selbox{background:var(--soft);border:1px solid #20381f;padding:9px 10px}
+  .selbox .pn{font-size:11px;margin-bottom:6px}
+  .fakesel{display:flex;align-items:center;justify-content:space-between;background:var(--bg);border:1px solid var(--line);padding:6px 9px;font-size:12px}
+  .fakesel .left{display:flex;align-items:center;gap:8px}
+  .cdot{width:14px;height:14px;border-radius:50%;border:1px solid var(--line)}
+</style>
+</head>
+<body>
+  <h1 class="t">Product + Color UI — style options</h1>
+  <p class="s">Pick one style for product on/off and one for colour selection. I'll rebuild ProductsTab + ColorsEditor with them.</p>
+
+  <h2 class="sec">▸ Enable / disable products</h2>
+
+  <div class="opt">
+    <div class="bar">PA · TOGGLE CARDS <span>current · name + switch · 7 enabled</span></div>
+    <div class="panel"><div class="gridP">
+      <div class="pcard">T-Shirt<div class="sw on"></div></div>
+      <div class="pcard">Hoodie<div class="sw on"></div></div>
+      <div class="pcard">Tank<div class="sw on"></div></div>
+      <div class="pcard">Kids<div class="sw"></div></div>
+      <div class="pcard">Hats<div class="sw on"></div></div>
+      <div class="pcard">Mugs<div class="sw"></div></div>
+      <div class="pcard">Stickers<div class="sw on"></div></div>
+      <div class="pcard">Bags<div class="sw on"></div></div>
+    </div></div>
+  </div>
+
+  <div class="opt">
+    <div class="bar">PB · SELECTABLE CHIPS <span>compact · click to toggle · densest</span></div>
+    <div class="panel"><div class="chips">
+      <span class="pchip on"><span class="k">[x]</span>T-Shirt</span>
+      <span class="pchip on"><span class="k">[x]</span>Hoodie</span>
+      <span class="pchip on"><span class="k">[x]</span>Tank</span>
+      <span class="pchip on"><span class="k">[x]</span>Crewneck</span>
+      <span class="pchip"><span class="k">[ ]</span>Long Sleeve</span>
+      <span class="pchip"><span class="k">[ ]</span>Kids</span>
+      <span class="pchip on"><span class="k">[x]</span>Hats</span>
+      <span class="pchip"><span class="k">[ ]</span>Mugs</span>
+      <span class="pchip on"><span class="k">[x]</span>Stickers</span>
+      <span class="pchip on"><span class="k">[x]</span>Bags</span>
+      <span class="pchip"><span class="k">[ ]</span>Pins</span>
+    </div></div>
+  </div>
+
+  <div class="opt">
+    <div class="bar">PC · TERMINAL CHECKLIST <span>mono [x]/[ ] rows · scan-friendly</span></div>
+    <div class="panel"><div class="check">
+      <div class="crow"><span class="box">[x]</span>T-Shirt</div>
+      <div class="crow"><span class="box">[x]</span>Hoodie</div>
+      <div class="crow"><span class="box">[x]</span>Tank</div>
+      <div class="crow"><span class="box">[x]</span>Crewneck</div>
+      <div class="crow off"><span class="box">[ ]</span>Long Sleeve</div>
+      <div class="crow off"><span class="box">[ ]</span>Kids</div>
+      <div class="crow"><span class="box">[x]</span>Hats</div>
+      <div class="crow off"><span class="box">[ ]</span>Mugs</div>
+      <div class="crow"><span class="box">[x]</span>Stickers</div>
+    </div></div>
+  </div>
+
+  <div class="opt">
+    <div class="bar">PD · ON/OFF STATE CARDS <span>explicit ON/OFF badge · clearest state</span></div>
+    <div class="panel"><div class="gridP2">
+      <div class="scard on">T-Shirt<span class="st">ON</span></div>
+      <div class="scard on">Hoodie<span class="st">ON</span></div>
+      <div class="scard on">Tank<span class="st">ON</span></div>
+      <div class="scard">Kids<span class="st">OFF</span></div>
+      <div class="scard on">Hats<span class="st">ON</span></div>
+      <div class="scard">Mugs<span class="st">OFF</span></div>
+      <div class="scard on">Stickers<span class="st">ON</span></div>
+      <div class="scard on">Bags<span class="st">ON</span></div>
+    </div></div>
+  </div>
+
+  <h2 class="sec">▸ Select product colours</h2>
+
+  <div class="opt">
+    <div class="bar">CA · SWATCH CIRCLES + DROPDOWNS <span>current · round basic swatches + per-product select</span></div>
+    <div class="panel">
+      <div class="muted" style="font-size:11px;margin-bottom:8px">Basic colours:</div>
+      <div class="row">
+        <div><div class="swatch sel" style="background:#111"><span class="ck" style="color:#fff">✓</span></div><div class="swlabel">black</div></div>
+        <div><div class="swatch" style="background:#fff"></div><div class="swlabel">white</div></div>
+        <div><div class="swatch" style="background:#1e3a8a"></div><div class="swlabel">navy</div></div>
+        <div><div class="swatch" style="background:#b91c1c"></div><div class="swlabel">red</div></div>
+        <div><div class="swatch" style="background:#9ca3af"></div><div class="swlabel">heather</div></div>
+      </div>
+      <div class="selrow">
+        <div class="selbox"><div class="pn">T-Shirt</div><div class="fakesel"><span>Black</span><span class="muted">▾</span></div></div>
+        <div class="selbox"><div class="pn">Hoodie</div><div class="fakesel"><span>Black</span><span class="muted">▾</span></div></div>
+        <div class="selbox"><div class="pn">Tank</div><div class="fakesel"><span>Navy</span><span class="muted">▾</span></div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="opt">
+    <div class="bar">CB · SQUARE CHIPS <span>sharp square swatches · matches terminal corners</span></div>
+    <div class="panel">
+      <div class="muted" style="font-size:11px;margin-bottom:8px">Basic colours:</div>
+      <div class="row">
+        <div><div class="sq sel" style="background:#111"><span class="ck" style="color:#fff">✓</span></div><div class="swlabel">black</div></div>
+        <div><div class="sq" style="background:#fff"></div><div class="swlabel">white</div></div>
+        <div><div class="sq" style="background:#1e3a8a"></div><div class="swlabel">navy</div></div>
+        <div><div class="sq" style="background:#b91c1c"></div><div class="swlabel">red</div></div>
+        <div><div class="sq" style="background:#9ca3af"></div><div class="swlabel">heather</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="opt">
+    <div class="bar">CC · INLINE PALETTE ROWS <span>each product its own swatch row · no dropdown · all visible</span></div>
+    <div class="panel">
+      <div class="prow"><div class="pname">T-Shirt</div><div class="pal">
+        <span class="dot sel" style="background:#111"></span><span class="dot" style="background:#fff"></span><span class="dot" style="background:#1e3a8a"></span><span class="dot" style="background:#b91c1c"></span><span class="dot" style="background:#15803d"></span><span class="dot" style="background:#9ca3af"></span>
+      </div></div>
+      <div class="prow"><div class="pname">Hoodie</div><div class="pal">
+        <span class="dot sel" style="background:#111"></span><span class="dot" style="background:#374151"></span><span class="dot" style="background:#1e3a8a"></span><span class="dot" style="background:#7f1d1d"></span>
+      </div></div>
+      <div class="prow"><div class="pname">Tank</div><div class="pal">
+        <span class="dot" style="background:#111"></span><span class="dot sel" style="background:#1e3a8a"></span><span class="dot" style="background:#fff"></span><span class="dot" style="background:#b91c1c"></span>
+      </div></div>
+    </div>
+  </div>
+
+  <div class="opt">
+    <div class="bar">CD · DROPDOWN + COLOUR DOT <span>compact · select shows the chosen colour</span></div>
+    <div class="panel"><div class="selrow">
+      <div class="selbox"><div class="pn">T-Shirt</div><div class="fakesel"><span class="left"><span class="cdot" style="background:#111"></span>Black</span><span class="muted">▾</span></div></div>
+      <div class="selbox"><div class="pn">Hoodie</div><div class="fakesel"><span class="left"><span class="cdot" style="background:#111"></span>Black</span><span class="muted">▾</span></div></div>
+      <div class="selbox"><div class="pn">Tank</div><div class="fakesel"><span class="left"><span class="cdot" style="background:#1e3a8a"></span>Navy</span><span class="muted">▾</span></div></div>
+      <div class="selbox"><div class="pn">Crewneck</div><div class="fakesel"><span class="left"><span class="cdot" style="background:#9ca3af"></span>Heather</span><span class="muted">▾</span></div></div>
+      <div class="selbox"><div class="pn">Hats</div><div class="fakesel"><span class="left"><span class="cdot" style="background:#111"></span>Black</span><span class="muted">▾</span></div></div>
+      <div class="selbox"><div class="pn">Bags</div><div class="fakesel"><span class="left"><span class="cdot" style="background:#b91c1c"></span>Red</span><span class="muted">▾</span></div></div>
+    </div></div>
+  </div>
+
+</body>
+</html>

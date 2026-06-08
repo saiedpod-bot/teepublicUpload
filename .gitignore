@@ -1,0 +1,15 @@
+node_modules
+.next
+dist
+.DS_Store
+*.log
+.env
+.env.local
+.turbo
+.pnpm-store
+apps/extension/dist
+apps/dashboard/.next
+apps/dashboard/out
+apps/dashboard/uploads
+apps/dashboard/.auth
+*.tsbuildinfo
