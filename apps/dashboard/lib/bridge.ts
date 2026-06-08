@@ -4,19 +4,21 @@
 
 import type { DashboardToExtensionMessage, ExtensionToDashboardResponse } from "@teepublic/shared";
 
-declare global {
-  interface Window {
-    chrome?: {
-      runtime?: {
-        sendMessage: (
-          extensionId: string,
-          message: unknown,
-          callback?: (response: ExtensionToDashboardResponse) => void
-        ) => void;
-        lastError?: { message: string };
-      };
-    };
-  }
+// Minimal shape of the chrome.runtime API we use. Declared locally (not as a
+// global Window augmentation) to avoid colliding with @types/chrome, which is
+// pulled in elsewhere in the monorepo.
+type ChromeRuntime = {
+  sendMessage: (
+    extensionId: string,
+    message: unknown,
+    callback?: (response: ExtensionToDashboardResponse) => void
+  ) => void;
+  lastError?: { message: string };
+};
+
+function chromeRuntime(): ChromeRuntime | undefined {
+  if (typeof window === "undefined") return undefined;
+  return (window as unknown as { chrome?: { runtime?: ChromeRuntime } }).chrome?.runtime;
 }
 
 const STORAGE_KEY = "teepublic.extensionId";
@@ -35,7 +37,7 @@ export function clearExtensionId() {
 }
 
 export function isExtensionAvailable(): boolean {
-  return typeof window !== "undefined" && !!window.chrome?.runtime?.sendMessage;
+  return !!chromeRuntime()?.sendMessage;
 }
 
 export function sendToExtension(
@@ -45,11 +47,12 @@ export function sendToExtension(
   return new Promise((resolve, reject) => {
     const id = extensionId ?? getExtensionId();
     if (!id) return reject(new Error("Extension ID not configured"));
-    if (!window.chrome?.runtime?.sendMessage) return reject(new Error("chrome.runtime is unavailable — open this page in Chrome and install the extension"));
+    const runtime = chromeRuntime();
+    if (!runtime?.sendMessage) return reject(new Error("chrome.runtime is unavailable — open this page in Chrome and install the extension"));
 
     try {
-      window.chrome.runtime.sendMessage(id, message, (response) => {
-        const err = window.chrome?.runtime?.lastError;
+      runtime.sendMessage(id, message, (response) => {
+        const err = runtime.lastError;
         if (err) return reject(new Error(err.message));
         if (!response) return reject(new Error("no response from extension (is it installed and the ID correct?)"));
         resolve(response);

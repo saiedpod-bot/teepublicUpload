@@ -78,7 +78,7 @@ export function UploaderApp() {
         const fd = new FormData();
         fd.append("file", file);
         const res = await fetch(`/api/files/${sessionId}`, { method: "POST", body: fd });
-        const json = await res.json();
+        const json = await res.json().catch(() => ({ ok: false, error: `Server error (${res.status})` }));
         if (!json.ok) throw new Error(json.error);
         const stem = stemName(json.originalName);
         next.set(stem, {

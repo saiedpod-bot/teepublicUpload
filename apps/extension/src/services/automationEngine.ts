@@ -76,7 +76,7 @@ class AutomationEngine {
       const tabId = await this.ensureTeePublicTab();
       this.currentTabId = tabId;
 
-      const imageDataUrl = await fetchDesignAsDataUrl(item.imageUrl, settings.dashboardOrigin);
+      const imageDataUrl = await fetchDesignAsDataUrl(item.imageUrl);
       await ensureContentScriptReady(tabId);
 
       const result = await sendToTab<{ ok: boolean; error?: string; publishedUrl?: string }>(tabId, {
@@ -275,12 +275,10 @@ async function waitForSucceededSignal(itemId: string, tabId: number | null, time
   return false;
 }
 
-async function fetchDesignAsDataUrl(imageUrl: string, dashboardOrigin: string): Promise<string> {
-  const u = new URL(imageUrl);
-  const dash = new URL(dashboardOrigin);
-  u.protocol = dash.protocol;
-  u.host = dash.host;
-  const res = await fetch(u.toString(), { cache: "no-store" });
+async function fetchDesignAsDataUrl(imageUrl: string): Promise<string> {
+  // imageUrl is an absolute, publicly-fetchable URL (Supabase Storage public
+  // bucket), so fetch it directly — no host rewriting needed.
+  const res = await fetch(imageUrl, { cache: "no-store" });
   if (!res.ok) throw new Error(`fetch design failed: ${res.status}`);
   const blob = await res.blob();
   return await new Promise((resolve, reject) => {

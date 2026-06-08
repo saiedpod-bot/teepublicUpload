@@ -18,12 +18,15 @@
   ],
   "host_permissions": [
     "http://localhost:3030/*",
+    "https://teepublic-dashboard.vercel.app/*",
+    "https://*.supabase.co/*",
     "https://*.teepublic.com/*"
   ],
   "externally_connectable": {
     "matches": [
       "http://localhost:3030/*",
-      "http://127.0.0.1:3030/*"
+      "http://127.0.0.1:3030/*",
+      "https://teepublic-dashboard.vercel.app/*"
     ]
   },
   "content_scripts": [

@@ -8,21 +8,29 @@ import { saveFile } from "@/lib/fileStore";
 export const runtime = "nodejs";
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ sessionId: string }> }) {
-  const { sessionId } = await params;
-  const form = await req.formData();
-  const file = form.get("file");
-  if (!(file instanceof File)) {
-    return NextResponse.json({ ok: false, error: "missing file" }, { status: 400 });
+  try {
+    const { sessionId } = await params;
+    const form = await req.formData();
+    const file = form.get("file");
+    if (!(file instanceof File)) {
+      return NextResponse.json({ ok: false, error: "missing file" }, { status: 400 });
+    }
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const mime = file.type || "image/png";
+    const { filename, url } = await saveFile(sessionId, file.name, buffer, mime);
+    return NextResponse.json({
+      ok: true,
+      filename,
+      originalName: file.name,
+      url,
+      size: file.size,
+      mime,
+    });
+  } catch (e) {
+    // Always return JSON so the client doesn't choke on an empty error body.
+    return NextResponse.json(
+      { ok: false, error: e instanceof Error ? e.message : "upload failed" },
+      { status: 500 },
+    );
   }
-  const buffer = Buffer.from(await file.arrayBuffer());
-  const stored = await saveFile(sessionId, file.name, buffer);
-  const origin = req.nextUrl.origin;
-  return NextResponse.json({
-    ok: true,
-    filename: stored,
-    originalName: file.name,
-    url: `${origin}/api/files/${sessionId}/${stored}`,
-    size: file.size,
-    mime: file.type || "image/png",
-  });
 }
