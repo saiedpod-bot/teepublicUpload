@@ -6,7 +6,8 @@ import type { DesignMetadata, QueueBatch, QueueItem } from "@teepublic/shared";
 import { SLUG_TO_PRODUCT_LABEL } from "@teepublic/shared";
 import { Dropzone } from "./Dropzone";
 import { sendToExtension, getExtensionId } from "@/lib/bridge";
-import { fileToBase64, generateListing, GEMINI_MODELS, DEFAULT_GEMINI_MODEL, type GeneratedListing } from "@/lib/gemini";
+import { fileToBase64, urlToBase64, generateListing, GEMINI_MODELS, DEFAULT_GEMINI_MODEL, type GeneratedListing } from "@/lib/gemini";
+import { loadDesigns, saveDesigns, deleteDesign, type PersistedDesign } from "@/lib/designsStore";
 import { getGeminiKey, setGeminiKey, getGeminiModel, setGeminiModel, getGeminiPrompt, setGeminiPrompt } from "@/lib/aiSettings";
 import type { ColorProductConfigValue } from "./ColorProductConfig";
 import { allEnabledProducts, applyPreset, type ColorPreset } from "@/lib/colorPresets";
@@ -15,13 +16,24 @@ import { ColorsEditor } from "./ColorsEditor";
 
 interface StagedImage {
   id: string;
-  file: File;
+  // Absent for designs rehydrated from the database (we only kept the URL).
+  file?: File;
   url: string;
   serverFilename: string;
+  originalName: string;
   mime: string;
   size: number;
   previewUrl: string;
   base64?: string;
+}
+
+// Get the raw base64 for a design image, whether it came from a fresh upload
+// (has a File) or was rehydrated from the database (only the stored URL).
+async function ensureBase64(img: StagedImage): Promise<string> {
+  if (img.base64) return img.base64;
+  const b64 = img.file ? await fileToBase64(img.file) : await urlToBase64(img.url);
+  img.base64 = b64;
+  return b64;
 }
 
 type DesignStatus = "idle" | "generating" | "ready" | "error";
@@ -71,6 +83,10 @@ export function GenerationApp({ sessionId }: { sessionId: string }) {
   // Custom basic colors — extend the swatch row, persisted across sessions.
   const [customBasicColors, setCustomBasicColors] = useState<CustomBasicColor[]>([]);
 
+  // Becomes true once we've loaded the user's saved designs from the server,
+  // so the autosave effect doesn't overwrite them with the empty initial state.
+  const [hydrated, setHydrated] = useState(false);
+
   useEffect(() => {
     setKey(getGeminiKey());
     setKeyDraft(getGeminiKey());
@@ -103,6 +119,40 @@ export function GenerationApp({ sessionId }: { sessionId: string }) {
     saveCustomBasicColors(customBasicColors);
   }, [customBasicColors]);
 
+  // Load the user's saved designs once on mount so their work follows their
+  // account across browsers/devices.
+  useEffect(() => {
+    (async () => {
+      try {
+        const saved = await loadDesigns();
+        if (saved.length > 0) {
+          const imgs: StagedImage[] = saved.map((d) => ({
+            id: d.id,
+            url: d.imageUrl,
+            serverFilename: d.serverFilename,
+            originalName: d.originalName,
+            mime: d.mime,
+            size: d.size,
+            previewUrl: d.imageUrl, // no local blob; the stored URL renders fine
+          }));
+          const des: GeneratedDesign[] = saved.map((d) => {
+            const image = imgs.find((i) => i.id === d.id)!;
+            // "generating" is transient — never restore a stuck spinner.
+            const status: DesignStatus =
+              d.status === "generating" ? (d.listing ? "ready" : "idle") : (d.status as DesignStatus);
+            return { image, listing: d.listing, status, config: d.config ?? defaultDesignConfig() };
+          });
+          setImages(imgs);
+          setDesigns(des);
+        }
+      } catch (e) {
+        console.warn("loadDesigns failed", e); // non-fatal: start empty
+      } finally {
+        setHydrated(true);
+      }
+    })();
+  }, []);
+
   // Keep `designs` in lockstep with `images`. New images become idle designs
   // with the default config; removed images drop their design row entirely.
   useEffect(() => {
@@ -118,6 +168,29 @@ export function GenerationApp({ sessionId }: { sessionId: string }) {
       );
     });
   }, [images]);
+
+  // Debounced autosave: whenever designs change (after hydration), persist the
+  // batch to the user's account. Skipped while a generation is in flight to
+  // avoid storing transient "generating" rows.
+  useEffect(() => {
+    if (!hydrated || busy) return;
+    const t = setTimeout(() => {
+      const payload: PersistedDesign[] = designs.map((d) => ({
+        id: d.image.id,
+        sessionId,
+        imageUrl: d.image.url,
+        serverFilename: d.image.serverFilename,
+        originalName: d.image.originalName,
+        mime: d.image.mime,
+        size: d.image.size,
+        listing: d.listing,
+        config: d.config,
+        status: d.status,
+      }));
+      saveDesigns(payload).catch((e) => console.warn("saveDesigns failed", e));
+    }, 800);
+    return () => clearTimeout(t);
+  }, [designs, sessionId, hydrated, busy]);
 
   useEffect(() => {
     if (currentIndex >= designs.length) setCurrentIndex(Math.max(0, designs.length - 1));
@@ -138,6 +211,7 @@ export function GenerationApp({ sessionId }: { sessionId: string }) {
           file,
           url: json.url,
           serverFilename: json.originalName,
+          originalName: json.originalName,
           mime: json.mime,
           size: json.size,
           previewUrl: URL.createObjectURL(file),
@@ -155,6 +229,8 @@ export function GenerationApp({ sessionId }: { sessionId: string }) {
       if (target) URL.revokeObjectURL(target.previewUrl);
       return prev.filter((i) => i.id !== id);
     });
+    // Drop the persisted copy too so it doesn't reappear on next load.
+    deleteDesign(id).catch((e) => console.warn("deleteDesign failed", e));
   }
 
   function saveKey() {
@@ -182,8 +258,7 @@ export function GenerationApp({ sessionId }: { sessionId: string }) {
       if (ac.signal.aborted) break;
       const img = images[i];
       try {
-        const base64 = img.base64 ?? await fileToBase64(img.file);
-        img.base64 = base64;
+        const base64 = await ensureBase64(img);
         const listing = await generateListing({
           apiKey,
           prompt,
@@ -265,8 +340,7 @@ export function GenerationApp({ sessionId }: { sessionId: string }) {
       d.image.id === id ? { ...d, status: "generating", error: undefined } : d
     ));
     try {
-      const base64 = target.image.base64 ?? await fileToBase64(target.image.file);
-      target.image.base64 = base64;
+      const base64 = await ensureBase64(target.image);
       const listing = await generateListing({
         apiKey,
         prompt,

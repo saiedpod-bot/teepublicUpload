@@ -136,9 +136,19 @@ export async function generateListing(opts: GenerateOptions): Promise<GeneratedL
 
 /** Convert a File to its base64 body (no `data:...;base64,` prefix). */
 export async function fileToBase64(file: File): Promise<string> {
-  const buffer = await file.arrayBuffer();
+  return bytesToBase64(new Uint8Array(await file.arrayBuffer()));
+}
+
+// For designs rehydrated from the database we no longer have the original File,
+// only the stored image URL — fetch it and encode the bytes the same way.
+export async function urlToBase64(url: string): Promise<string> {
+  const res = await fetch(url, { cache: "no-store" });
+  if (!res.ok) throw new Error(`fetch image failed: ${res.status}`);
+  return bytesToBase64(new Uint8Array(await res.arrayBuffer()));
+}
+
+function bytesToBase64(bytes: Uint8Array): string {
   // btoa handles 8-bit strings only; build one chunk-wise to avoid stack blow-up.
-  const bytes = new Uint8Array(buffer);
   let binary = "";
   const CHUNK = 0x8000;
   for (let i = 0; i < bytes.length; i += CHUNK) {
