@@ -28,7 +28,10 @@ export function UploaderApp() {
   const [validation, setValidation] = useState<ValidationResult | null>(null);
   const [stage, setStage] = useState<Stage>("idle");
   const [error, setError] = useState<string | null>(null);
-  const [extensionId, setExtId] = useState<string>(() => getExtensionId() ?? "");
+  // Start empty so server and client render the same HTML (no hydration
+  // mismatch), then load the saved id from localStorage after mount.
+  const [extensionId, setExtId] = useState<string>("");
+  useEffect(() => { setExtId(getExtensionId() ?? ""); }, []);
   const [extensionOk, setExtensionOk] = useState<boolean | null>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   // Custom basic-color swatches — shared with the AI-generate flow via the
