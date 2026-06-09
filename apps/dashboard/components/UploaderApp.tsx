@@ -90,20 +90,22 @@ export function UploaderApp() {
     })();
   }, []);
 
-  // Debounced autosave: persist the batch whenever rows/images change (after
-  // hydration). Skips the empty initial state so it never wipes saved work.
-  useEffect(() => {
-    if (!hydrated) return;
-    if (rows.length === 0 && images.size === 0) return;
-    const t = setTimeout(() => {
-      saveSpreadsheet({
-        spreadsheetName,
-        rows,
-        images: [...images.values()],
-      }).catch((e) => console.warn("saveSpreadsheet failed", e));
-    }, 800);
-    return () => clearTimeout(t);
-  }, [rows, images, spreadsheetName, hydrated]);
+  // Save the current batch to the user's account on demand (the Import button),
+  // not automatically.
+  const [importStage, setImportStage] = useState<"idle" | "saving" | "saved">("idle");
+  async function importToAccount() {
+    setError(null);
+    setImportStage("saving");
+    try {
+      await saveSpreadsheet({ spreadsheetName, rows, images: [...images.values()] });
+      setImportStage("saved");
+    } catch (e) {
+      setError(`Save failed: ${(e as Error).message}`);
+      setImportStage("idle");
+    }
+  }
+  // Any edit invalidates the "saved" indicator.
+  useEffect(() => { if (hydrated) setImportStage("idle"); }, [rows, images, spreadsheetName, hydrated]);
 
   async function handleSpreadsheet(file: File) {
     setError(null);
@@ -284,13 +286,22 @@ export function UploaderApp() {
               <Stat label="Matched"       value={matchedCount} accent="ok" />
               <Stat label="Blocking errors" value={errorCount} accent={errorCount ? "err" : "mute"} />
             </div>
-            <button
-              className="btn-primary text-base px-6 py-3"
-              disabled={matchedCount === 0 || errorCount > 0 || stage === "sending"}
-              onClick={handleStartUpload}
-            >
-              {stage === "sending" ? "Sending…" : stage === "sent" ? "Imported ✓" : `Import (${matchedCount})`}
-            </button>
+            <div className="flex items-center gap-3">
+              <button
+                className="btn-ghost text-base px-6 py-3"
+                disabled={(rows.length === 0 && images.size === 0) || importStage === "saving"}
+                onClick={importToAccount}
+              >
+                {importStage === "saving" ? "Importing…" : importStage === "saved" ? "Imported ✓" : "Import"}
+              </button>
+              <button
+                className="btn-primary text-base px-6 py-3"
+                disabled={matchedCount === 0 || errorCount > 0 || stage === "sending"}
+                onClick={handleStartUpload}
+              >
+                {stage === "sending" ? "Sending…" : stage === "sent" ? "Sent ✓" : `Send to extension (${matchedCount})`}
+              </button>
+            </div>
           </div>
 
           <ValidationPanel issues={validation.issues} />

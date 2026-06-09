@@ -7,7 +7,7 @@ import { SLUG_TO_PRODUCT_LABEL } from "@teepublic/shared";
 import { Dropzone } from "./Dropzone";
 import { sendToExtension, getExtensionId } from "@/lib/bridge";
 import { fileToBase64, urlToBase64, generateListing, GEMINI_MODELS, DEFAULT_GEMINI_MODEL, type GeneratedListing } from "@/lib/gemini";
-import { loadDesigns, saveDesigns, deleteDesign, type PersistedDesign } from "@/lib/designsStore";
+import { loadDesigns, saveDesigns, type PersistedDesign } from "@/lib/designsStore";
 import { getGeminiKey, setGeminiKey, getGeminiModel, setGeminiModel, getGeminiPrompt, setGeminiPrompt } from "@/lib/aiSettings";
 import type { ColorProductConfigValue } from "./ColorProductConfig";
 import { allEnabledProducts, applyPreset, type ColorPreset } from "@/lib/colorPresets";
@@ -169,12 +169,14 @@ export function GenerationApp({ sessionId }: { sessionId: string }) {
     });
   }, [images]);
 
-  // Debounced autosave: whenever designs change (after hydration), persist the
-  // batch to the user's account. Skipped while a generation is in flight to
-  // avoid storing transient "generating" rows.
-  useEffect(() => {
-    if (!hydrated || busy) return;
-    const t = setTimeout(() => {
+  // Save the current batch to the user's account on demand (the Import button),
+  // not automatically. saveDesigns is authoritative: it upserts these designs
+  // and deletes any of the user's designs not in this set.
+  const [importStage, setImportStage] = useState<"idle" | "saving" | "saved">("idle");
+  async function importToAccount() {
+    setError(null);
+    setImportStage("saving");
+    try {
       const payload: PersistedDesign[] = designs.map((d) => ({
         id: d.image.id,
         sessionId,
@@ -187,10 +189,15 @@ export function GenerationApp({ sessionId }: { sessionId: string }) {
         config: d.config,
         status: d.status,
       }));
-      saveDesigns(payload).catch((e) => console.warn("saveDesigns failed", e));
-    }, 800);
-    return () => clearTimeout(t);
-  }, [designs, sessionId, hydrated, busy]);
+      await saveDesigns(payload);
+      setImportStage("saved");
+    } catch (e) {
+      setError(`Save failed: ${(e as Error).message}`);
+      setImportStage("idle");
+    }
+  }
+  // Any edit invalidates the "saved" indicator.
+  useEffect(() => { if (hydrated) setImportStage("idle"); }, [designs, hydrated]);
 
   useEffect(() => {
     if (currentIndex >= designs.length) setCurrentIndex(Math.max(0, designs.length - 1));
@@ -229,8 +236,7 @@ export function GenerationApp({ sessionId }: { sessionId: string }) {
       if (target) URL.revokeObjectURL(target.previewUrl);
       return prev.filter((i) => i.id !== id);
     });
-    // Drop the persisted copy too so it doesn't reappear on next load.
-    deleteDesign(id).catch((e) => console.warn("deleteDesign failed", e));
+    // Removal is persisted on the next Import (saveDesigns deletes missing ids).
   }
 
   function saveKey() {
@@ -594,14 +600,24 @@ export function GenerationApp({ sessionId }: { sessionId: string }) {
             Each design ships with its own colors &amp; products configuration.
           </p>
         </div>
-        <button
-          type="button"
-          className="btn-primary text-base px-6 py-3"
-          disabled={readyCount === 0 || stage === "sending"}
-          onClick={sendToQueue}
-        >
-          {stage === "sending" ? "Sending…" : stage === "sent" ? "Sent ✓" : `Send to extension (${readyCount})`}
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            className="btn-ghost text-base px-6 py-3"
+            disabled={designs.length === 0 || importStage === "saving"}
+            onClick={importToAccount}
+          >
+            {importStage === "saving" ? "Importing…" : importStage === "saved" ? "Imported ✓" : `Import (${designs.length})`}
+          </button>
+          <button
+            type="button"
+            className="btn-primary text-base px-6 py-3"
+            disabled={readyCount === 0 || stage === "sending"}
+            onClick={sendToQueue}
+          >
+            {stage === "sending" ? "Sending…" : stage === "sent" ? "Sent ✓" : `Send to extension (${readyCount})`}
+          </button>
+        </div>
       </div>
     </div>
   );

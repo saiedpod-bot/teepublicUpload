@@ -76,6 +76,17 @@ export async function POST(req: NextRequest) {
 
   const { error } = await supabase.from(TABLE).upsert(rows, { onConflict: "user_id,id" });
   if (error) return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
+
+  // Authoritative sync: drop any of the user's designs that aren't in this set,
+  // so removing a design locally + Import deletes it server-side too.
+  const keepIds = rows.map((r) => r.id);
+  let del = supabase.from(TABLE).delete().eq("user_id", user.id);
+  if (keepIds.length > 0) {
+    del = del.not("id", "in", `(${keepIds.map((id) => `"${id}"`).join(",")})`);
+  }
+  const { error: delError } = await del;
+  if (delError) return NextResponse.json({ ok: false, error: delError.message }, { status: 500 });
+
   return NextResponse.json({ ok: true });
 }
 

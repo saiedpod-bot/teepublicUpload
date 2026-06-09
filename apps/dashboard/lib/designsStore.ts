@@ -27,7 +27,7 @@ export async function loadDesigns(): Promise<PersistedDesign[]> {
 }
 
 export async function saveDesigns(designs: PersistedDesign[]): Promise<void> {
-  if (designs.length === 0) return;
+  // Authoritative full-sync: an empty array clears the user's saved designs.
   const res = await fetch("/api/designs", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
