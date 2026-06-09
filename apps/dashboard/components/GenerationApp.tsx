@@ -8,6 +8,7 @@ import { Dropzone } from "./Dropzone";
 import { sendToExtension, getExtensionId } from "@/lib/bridge";
 import { fileToBase64, urlToBase64, generateListing, GEMINI_MODELS, DEFAULT_GEMINI_MODEL, type GeneratedListing } from "@/lib/gemini";
 import { loadDesigns, saveDesigns, type PersistedDesign } from "@/lib/designsStore";
+import { uploadDesignImage } from "@/lib/uploadImage";
 import { getGeminiKey, setGeminiKey, getGeminiModel, setGeminiModel, getGeminiPrompt, setGeminiPrompt } from "@/lib/aiSettings";
 import type { ColorProductConfigValue } from "./ColorProductConfig";
 import { allEnabledProducts, applyPreset, type ColorPreset } from "@/lib/colorPresets";
@@ -208,19 +209,15 @@ export function GenerationApp({ sessionId }: { sessionId: string }) {
     const next: StagedImage[] = [];
     for (const file of files) {
       try {
-        const fd = new FormData();
-        fd.append("file", file);
-        const res = await fetch(`/api/files/${sessionId}`, { method: "POST", body: fd });
-        const json = await res.json().catch(() => ({ ok: false, error: `Server error (${res.status})` }));
-        if (!json.ok) throw new Error(json.error);
+        const up = await uploadDesignImage(sessionId, file);
         next.push({
           id: nanoid(10),
           file,
-          url: json.url,
-          serverFilename: json.originalName,
-          originalName: json.originalName,
-          mime: json.mime,
-          size: json.size,
+          url: up.url,
+          serverFilename: up.originalName,
+          originalName: up.originalName,
+          mime: up.mime,
+          size: up.size,
           previewUrl: URL.createObjectURL(file),
         });
       } catch (e) {

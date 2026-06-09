@@ -15,6 +15,7 @@ import { GenerationApp } from "./GenerationApp";
 import type { DesignMetadata } from "@teepublic/shared";
 import { loadCustomBasicColors, saveCustomBasicColors, type CustomBasicColor } from "@/lib/batchConfig";
 import { loadSpreadsheet, saveSpreadsheet } from "@/lib/spreadsheetStore";
+import { uploadDesignImage } from "@/lib/uploadImage";
 
 type Stage = "idle" | "validated" | "sending" | "sent";
 type Mode  = "spreadsheet" | "generate";
@@ -124,18 +125,14 @@ export function UploaderApp() {
     const next = new Map(images);
     for (const file of files) {
       try {
-        const fd = new FormData();
-        fd.append("file", file);
-        const res = await fetch(`/api/files/${sessionId}`, { method: "POST", body: fd });
-        const json = await res.json().catch(() => ({ ok: false, error: `Server error (${res.status})` }));
-        if (!json.ok) throw new Error(json.error);
-        const stem = stemName(json.originalName);
+        const up = await uploadDesignImage(sessionId, file);
+        const stem = stemName(up.originalName);
         next.set(stem, {
           stem,
-          originalName: json.originalName,
-          url: json.url,
-          mime: json.mime,
-          size: json.size,
+          originalName: up.originalName,
+          url: up.url,
+          mime: up.mime,
+          size: up.size,
         });
       } catch (e) {
         setError(`Upload of ${file.name} failed: ${(e as Error).message}`);
