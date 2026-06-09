@@ -32,6 +32,10 @@ export function UploaderApp() {
   // mismatch), then load the saved id from localStorage after mount.
   const [extensionId, setExtId] = useState<string>("");
   useEffect(() => { setExtId(getExtensionId() ?? ""); }, []);
+  // chrome.runtime only exists in the browser; computing it during render
+  // would differ from the server (always false) and break hydration.
+  const [chromePresent, setChromePresent] = useState(false);
+  useEffect(() => { setChromePresent(isExtensionAvailable()); }, []);
   const [extensionOk, setExtensionOk] = useState<boolean | null>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   // Custom basic-color swatches — shared with the AI-generate flow via the
@@ -182,7 +186,7 @@ export function UploaderApp() {
   return (
     <div className="space-y-6">
       <ExtensionStatus
-        chromePresent={isExtensionAvailable()}
+        chromePresent={chromePresent}
         extensionId={extensionId}
         onChange={(v) => { setExtId(v); setExtensionId(v); }}
         onPing={handlePing}
