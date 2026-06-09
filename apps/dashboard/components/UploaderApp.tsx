@@ -14,6 +14,7 @@ import { ExtensionStatus } from "./ExtensionStatus";
 import { GenerationApp } from "./GenerationApp";
 import type { DesignMetadata } from "@teepublic/shared";
 import { loadCustomBasicColors, saveCustomBasicColors, type CustomBasicColor } from "@/lib/batchConfig";
+import { loadSpreadsheet, saveSpreadsheet } from "@/lib/spreadsheetStore";
 
 type Stage = "idle" | "validated" | "sending" | "sent";
 type Mode  = "spreadsheet" | "generate";
@@ -36,6 +37,9 @@ export function UploaderApp() {
   // would differ from the server (always false) and break hydration.
   const [chromePresent, setChromePresent] = useState(false);
   useEffect(() => { setChromePresent(isExtensionAvailable()); }, []);
+  // Becomes true once the saved spreadsheet batch has loaded, so the autosave
+  // effect doesn't overwrite it with the empty initial state.
+  const [hydrated, setHydrated] = useState(false);
   const [extensionOk, setExtensionOk] = useState<boolean | null>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
   // Custom basic-color swatches — shared with the AI-generate flow via the
@@ -64,6 +68,42 @@ export function UploaderApp() {
     setValidation(result);
     setStage("validated");
   }
+
+  // Load the user's saved spreadsheet batch once on mount so their work follows
+  // their account across browsers/devices.
+  useEffect(() => {
+    (async () => {
+      try {
+        const batch = await loadSpreadsheet();
+        if (batch && (batch.rows.length > 0 || batch.images.length > 0)) {
+          const map = new Map(batch.images.map((i) => [i.stem, i]));
+          setSpreadsheetName(batch.spreadsheetName);
+          setRows(batch.rows);
+          setImages(map);
+          revalidate(batch.rows, map);
+        }
+      } catch (e) {
+        console.warn("loadSpreadsheet failed", e); // non-fatal: start empty
+      } finally {
+        setHydrated(true);
+      }
+    })();
+  }, []);
+
+  // Debounced autosave: persist the batch whenever rows/images change (after
+  // hydration). Skips the empty initial state so it never wipes saved work.
+  useEffect(() => {
+    if (!hydrated) return;
+    if (rows.length === 0 && images.size === 0) return;
+    const t = setTimeout(() => {
+      saveSpreadsheet({
+        spreadsheetName,
+        rows,
+        images: [...images.values()],
+      }).catch((e) => console.warn("saveSpreadsheet failed", e));
+    }, 800);
+    return () => clearTimeout(t);
+  }, [rows, images, spreadsheetName, hydrated]);
 
   async function handleSpreadsheet(file: File) {
     setError(null);
