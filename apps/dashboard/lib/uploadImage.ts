@@ -1,44 +1,38 @@
-// Uploads a design image straight from the browser to Supabase Storage,
-// bypassing the Next.js/Vercel API route (whose serverless body limit is
-// ~4.5MB and was rejecting larger PNGs with HTTP 413). Direct-to-Supabase has
-// no such limit and avoids the extra hop, so it's also faster.
-//
-// Requires a Storage RLS policy letting authenticated users insert into the
-// `designs` bucket — see supabase/migrations/0004_designs_storage_policies.sql.
+// Prepares a dropped design image entirely in the browser — no Supabase, no
+// Vercel — so adding images is instant. The file is read into a data URL that
+// is used for previews, embedded in the queue sent to the extension (which
+// fetch()es it directly), and stored as-is when the user clicks Import.
 
-import { createClient } from "@/lib/supabase/client";
-
-const BUCKET = "designs";
+const MAX_SEGMENT = 200;
 
 export function safeSegment(s: string): string {
-  return s.replace(/[^a-zA-Z0-9._-]/g, "_").slice(0, 200);
+  return s.replace(/[^a-zA-Z0-9._-]/g, "_").slice(0, MAX_SEGMENT);
 }
 
 export interface UploadedImage {
   filename: string;
   originalName: string;
-  url: string;
+  url: string; // data: URL — self-contained, works anywhere fetch() does
   mime: string;
   size: number;
 }
 
-export async function uploadDesignImage(sessionId: string, file: File): Promise<UploadedImage> {
-  const supabase = createClient();
-  const safe = safeSegment(file.name);
-  const path = `${safeSegment(sessionId)}/${safe}`;
-
-  const { error } = await supabase.storage.from(BUCKET).upload(path, file, {
-    contentType: file.type || "image/png",
-    upsert: true,
-  });
-  if (error) throw new Error(error.message);
-
-  const { data } = supabase.storage.from(BUCKET).getPublicUrl(path);
+export async function uploadDesignImage(_sessionId: string, file: File): Promise<UploadedImage> {
+  const url = await fileToDataUrl(file);
   return {
-    filename: safe,
+    filename: safeSegment(file.name),
     originalName: file.name,
-    url: data.publicUrl,
+    url,
     mime: file.type || "image/png",
     size: file.size,
   };
+}
+
+function fileToDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = () => reject(reader.error ?? new Error("Failed to read file"));
+    reader.readAsDataURL(file);
+  });
 }
