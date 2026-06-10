@@ -16,7 +16,7 @@ import {
   findRadioByLabel,
 } from "../lib/dom";
 import { humanDelay, sleep } from "../lib/delays";
-import { configureProductTable, configureOtherProducts, applyEnabledProducts, applyProductColorPalette, findBlockingEmptyColors, fullClick } from "./colors";
+import { configureProductTable, configureOtherProducts, configureNonApparelColors, applyEnabledProducts, applyProductColorPalette, findBlockingEmptyColors, fullClick } from "./colors";
 
 console.info("[teepublic-cs] ready on", location.href);
 
@@ -355,6 +355,18 @@ async function runUpload(
     }
     log(`product table configured (${configResult.configured.length} rows)`);
     await humanDelay(300, 700);
+
+    // ── 6.5a. Non-apparel color dropdowns outside the <tr> table (Hats, …) ──
+    // These live in #primary_color_<type> and only populate their options
+    // once the matching canvas tile is activated. Color the ENABLED ones so
+    // they don't block Publish with "must choose a primary color".
+    try {
+      const na = await configureNonApparelColors(item.metadata.productColors);
+      log(`non-apparel colors: ${na.configured.length} configured, ${na.unconfigured.length} unconfigured`);
+    } catch (e) {
+      log(`non-apparel colors: failed — continuing: ${(e as Error).message}`);
+    }
+    await humanDelay(200, 400);
 
     // ── 6.55. Per-card "Configure Other Products" — Bags, Shorts, Hats… ──
     // The default apparel table only contains T-Shirt / Hoodie / etc. To set

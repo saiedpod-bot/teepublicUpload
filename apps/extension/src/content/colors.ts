@@ -1455,6 +1455,123 @@ export async function configureProductTable(
   return { ok: stillEmpty.length === 0, unconfigured: stillEmpty, configured };
 }
 
+// ─── Non-apparel color dropdowns (outside the <tr> table) ──────────────────
+// Some products (notably Hats) have a color dropdown that lives in
+// #primary_color_<canvasType> OUTSIDE any <tr>, so findDdSelectRows misses it.
+// Its <ul.dd-options> is empty until the matching div.canvas.<type> tile is
+// activated ("Currently Editing"). Left unconfigured it stays on "Select
+// Default Color" and blocks Publish with "must choose a primary color for X".
+
+interface NonApparelDropdown {
+  name: string;          // display name, e.g. "Hats"
+  canvasType: string;    // id suffix / tile class token, e.g. "hat"
+  wrapper: HTMLElement;  // div.dd-select
+  container: HTMLElement; // div#primary_color_<type>
+}
+
+/** Color dropdowns that are NOT inside an apparel <tr> — matched by the
+ *  #primary_color_<type> container id. */
+function findNonApparelColorDropdowns(): NonApparelDropdown[] {
+  const out: NonApparelDropdown[] = [];
+  for (const wrapper of document.querySelectorAll<HTMLElement>("div.dd-select")) {
+    if (wrapper.closest("tr")) continue; // apparel rows handled by findDdSelectRows
+    const container = wrapper.closest<HTMLElement>('[id^="primary_color_"]');
+    if (!container) continue;
+    const canvasType = container.id.replace(/^primary_color_/, "");
+    const name = TILE_CLASS_TO_NAME[canvasType] ?? canvasType;
+    out.push({ name, canvasType, wrapper, container });
+  }
+  return out;
+}
+
+/** Find a canvas tile (div.canvas.<type>) by class token without CSS-escaping. */
+function findCanvasTile(canvasType: string): HTMLElement | null {
+  for (const el of document.querySelectorAll<HTMLElement>("div.canvas")) {
+    if (el.classList.contains(canvasType)) return el;
+  }
+  return null;
+}
+
+/** Is the product behind this canvas tile currently enabled? */
+function isCanvasTypeEnabled(canvasType: string): boolean {
+  const tile = findCanvasTile(canvasType);
+  const hidden = tile?.querySelector<HTMLInputElement>('input[name^="canvas-option"]');
+  return hidden ? hidden.value === "true" : false;
+}
+
+/** Poll for a dd-options list inside `container` to populate (> 1 <li>). */
+async function pollForOptions(container: HTMLElement, timeoutMs: number): Promise<boolean> {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    const ul = container.querySelector<HTMLElement>("ul.dd-options");
+    if (ul && ul.querySelectorAll("li").length > 1) return true;
+    await sleep(100);
+  }
+  return false;
+}
+
+/** Configure the ENABLED non-apparel color dropdowns (Hats, …): activate the
+ *  tile so options populate, then reuse setRowColor. Disabled products are
+ *  skipped — they need no color and won't block Publish. */
+export async function configureNonApparelColors(
+  productColors?: Record<string, string>,
+): Promise<{ ok: boolean; configured: string[]; unconfigured: string[] }> {
+  const dropdowns = findNonApparelColorDropdowns();
+  log(`non-apparel color dropdowns found: ${dropdowns.length}`);
+  const configured: string[] = [];
+  const unconfigured: string[] = [];
+
+  for (const dd of dropdowns) {
+    if (!isCanvasTypeEnabled(dd.canvasType)) {
+      log(`  ${dd.name}: disabled — skipping color`);
+      continue;
+    }
+
+    const current = readDdSelectedText(dd.wrapper);
+    if (current && !isPlaceholder(current)) {
+      log(`  ${dd.name}: already "${current}", skipping`);
+      configured.push(dd.name);
+      continue;
+    }
+
+    // 1. Activate the tile so its color options mount.
+    const tile = findCanvasTile(dd.canvasType);
+    if (tile) {
+      log(`  ${dd.name}: activating tile`);
+      await fullClick(tile);
+    } else {
+      log(`  ${dd.name}: ⚠ no canvas tile found for "${dd.canvasType}"`);
+    }
+
+    // 2. Wait (up to 3s) for the options to populate.
+    if (!(await pollForOptions(dd.container, 3000))) {
+      log(`  ${dd.name}: ⚠ options never populated`);
+      unconfigured.push(dd.name);
+      continue;
+    }
+    const optCount = dd.container.querySelectorAll("ul.dd-options li").length;
+    log(`  ${dd.name}: options populated (${optCount} colors)`);
+
+    // 3. Pick the user's dashboard color (exact, else fuzzy fallback).
+    const preferred = pickPreferredColor(dd.name, productColors);
+    log(`  ${dd.name}: slug=${preferred.slug || "(unmapped)"}, wanted="${preferred.value}" (source=${preferred.source})`);
+    let result = await setRowColor(dd.wrapper, preferred.value);
+    if (!result.ok) {
+      await sleep(250);
+      result = await setRowColor(dd.wrapper, preferred.value);
+    }
+    if (result.ok) {
+      log(`  ${dd.name} → ${result.chosen} ✓`);
+      configured.push(dd.name);
+    } else {
+      log(`  ${dd.name}: FAILED (${result.reason})`);
+      unconfigured.push(dd.name);
+    }
+    await sleep(150);
+  }
+  return { ok: unconfigured.length === 0, configured, unconfigured };
+}
+
 /** Determine the dominant tone preference from the spreadsheet's per-product
  *  colors. Returns "white", "black", or "all" (mixed/unknown). */
 function dominantTone(productColors: Record<string, string>): "white" | "black" | "all" {
