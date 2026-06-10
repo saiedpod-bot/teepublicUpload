@@ -50,7 +50,7 @@ export function PreviewTable({ rows, images, onRemove }: Props) {
                   </td>
                   <td className="px-3 py-3 font-mono text-zinc-300">{row.metadata.filename}</td>
                   <td className="px-3 py-3">
-                    <div className="text-zinc-100 truncate max-w-[28ch]" title={row.metadata.title}>{row.metadata.title}</div>
+                    <div className="text-zinc-900 dark:text-zinc-100 truncate max-w-[28ch]" title={row.metadata.title}>{row.metadata.title}</div>
                     {row.metadata.matureContent && <span className="chip-warn mt-1">Mature</span>}
                   </td>
                   <td className="px-3 py-3 text-zinc-300">
@@ -87,7 +87,7 @@ function TagsCell({ tags }: { tags: string[] }) {
   if (tags.length === 0) return <span className="text-zinc-500">—</span>;
   return (
     <span title={tags.join(", ")} className="inline-block max-w-[26ch] truncate align-middle">
-      <span className="font-mono text-zinc-100">{tags.length}</span>
+      <span className="font-mono text-zinc-900 dark:text-zinc-100">{tags.length}</span>
       <span className="text-zinc-500"> · {tags.slice(0, 3).join(", ")}{tags.length > 3 ? "…" : ""}</span>
     </span>
   );
@@ -113,7 +113,7 @@ function ProductsCell({ metadata }: { metadata: DesignMetadata }) {
   return (
     <div className="flex flex-col gap-0.5">
       <span title={products.join(", ")} className="truncate max-w-[26ch]">
-        <span className="font-mono text-zinc-100">{products.length}</span>
+        <span className="font-mono text-zinc-900 dark:text-zinc-100">{products.length}</span>
         <span className="text-zinc-500"> products</span>
       </span>
       {colorSummary && (

@@ -121,7 +121,7 @@ export function AdminUsers() {
               const busy = pendingId === u.id;
               return (
                 <tr key={u.id} className="border-b border-zinc-800/60 last:border-0">
-                  <td className="px-4 py-3 font-mono text-zinc-200">{u.email ?? "—"}</td>
+                  <td className="px-4 py-3 font-mono text-zinc-700 dark:text-zinc-200">{u.email ?? "—"}</td>
                   <td className="px-4 py-3">
                     {u.is_admin ? (
                       <span className="chip-ok">admin</span>

@@ -1,20 +1,25 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { AuthStatus } from "@/components/AuthStatus";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export const metadata: Metadata = {
   title: "TeePublic Uploader",
   description: "Batch upload manager for TeePublic",
 };
 
-// The app uses one fixed dark theme; flag it before paint so the native
-// controls (scrollbars, selects) render dark and there's no flash.
+// Apply the saved light/dark choice before paint to avoid a flash. Default dark.
 const themeBootstrap = `
 (function(){
   try {
+    var m = localStorage.getItem("teepublic.colormode");
+    if (m !== "light" && m !== "dark") m = "dark";
+    document.documentElement.classList.toggle("dark", m === "dark");
+    document.documentElement.style.colorScheme = m;
+  } catch (e) {
     document.documentElement.classList.add("dark");
     document.documentElement.style.colorScheme = "dark";
-  } catch (e) {}
+  }
 })();
 `;
 
@@ -38,7 +43,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                 T
               </div>
               <div>
-                <h1 className="text-lg font-semibold tracking-tight text-zinc-100">
+                <h1 className="text-lg font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">
                   TeePublic Uploader
                 </h1>
                 <p className="text-xs text-zinc-400">
@@ -48,6 +53,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </div>
             <div className="flex items-center gap-2">
               <AuthStatus />
+              <ThemeToggle />
               <a
                 href="https://www.teepublic.com/design/quick_create"
                 target="_blank"

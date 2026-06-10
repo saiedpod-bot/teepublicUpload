@@ -48,7 +48,7 @@ export function Dropzone({ title, hint, accept, multiple, badge, onFiles }: Prop
             e.target.value = "";
           }}
         />
-        <div className="text-sm text-zinc-200 font-medium">Drop files here, or click to browse</div>
+        <div className="text-sm text-zinc-700 dark:text-zinc-200 font-medium">Drop files here, or click to browse</div>
         <div className="text-xs text-zinc-400 mt-1">{hint}</div>
       </div>
     </div>

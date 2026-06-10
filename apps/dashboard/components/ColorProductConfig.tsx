@@ -99,7 +99,7 @@ export function ColorProductConfig({
                   {!enabled && <span className="text-zinc-400 dark:text-zinc-500">disabled</span>}
                 </label>
                 <select
-                  className="input [color-scheme:dark]"
+                  className="input"
                   value={selected}
                   onChange={(e) => setColor(slug, e.target.value)}
                   disabled={!enabled || palette.length === 0}

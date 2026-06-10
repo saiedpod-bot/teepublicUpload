@@ -28,12 +28,12 @@ export default async function PendingPage() {
         <div className="surface p-7 text-center space-y-5">
           <div className="space-y-2">
             <span className="chip-warn">Awaiting approval</span>
-            <h1 className="text-2xl font-semibold tracking-tight text-zinc-100">
+            <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-100">
               Your account is pending
             </h1>
             <p className="text-sm text-zinc-400">
               Signed in as{" "}
-              <span className="font-medium text-zinc-200 break-all">{email}</span>
+              <span className="font-medium text-zinc-700 dark:text-zinc-200 break-all">{email}</span>
               {signedUpAt && (
                 <>
                   {" "}· requested{" "}
@@ -44,7 +44,7 @@ export default async function PendingPage() {
           </div>
 
           <div className="surface-soft p-4 text-left text-sm text-zinc-300 space-y-2">
-            <p className="font-medium text-zinc-100">What happens next</p>
+            <p className="font-medium text-zinc-900 dark:text-zinc-100">What happens next</p>
             <ul className="space-y-1.5 text-zinc-400">
               <li className="flex gap-2">
                 <span className="text-accent-400 mt-0.5">→</span>

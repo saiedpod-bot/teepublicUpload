@@ -3,29 +3,29 @@
 @tailwind utilities;
 
 /* ════════════════════════════════════════════════════════════════════════
-   AMPLIFY-STYLE DARK THEME
-   A single, clean, flat skin inspired by AWS Amplify UI's dark mode:
-   neutral slate surfaces, a teal brand accent, small radii, subtle borders,
-   no glow / scanlines / CRT effects. Colours are RGB channels (space-
-   separated) so Tailwind's `/<alpha>` opacity modifiers keep working.
+   AMPLIFY-STYLE THEME — Ocean Blue, light + dark
+   One clean, flat skin with a blue brand accent. Surface tones (`ink-*`)
+   flip between light and dark; the neutral text/border scale (`zinc-*`) and
+   the accent stay the same in both modes. `.dark` on <html> selects dark.
+   Colours are RGB channels so Tailwind's `/<alpha>` modifiers keep working.
    ════════════════════════════════════════════════════════════════════════ */
 
 :root {
   --font: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
-  --radius: 8px;        /* Amplify "medium" */
-  --radius-chip: 6px;   /* Amplify badge */
+  --radius: 8px;
+  --radius-chip: 6px;
 
-  /* Cool slate surface scale (darkest page → lighter cards). */
-  --ink-0:   6 10 20;
-  --ink-950: 15 23 42;    /* page background  #0f172a (slate-950) */
-  --ink-900: 30 41 59;    /* card surface     #1e293b (slate-800) */
-  --ink-800: 36 50 68;    /* soft surface     #243244 */
-  --ink-700: 51 65 85;    /* hover / divider  #334155 (slate-700) */
-  --ink-600: 71 85 105;   /* #475569 (slate-600) */
-  --ink-500: 100 116 139; /* #64748b (slate-500) */
+  /* LIGHT surfaces (page → card → soft → border → …). */
+  --ink-0:   255 255 255;
+  --ink-950: 248 250 252;  /* page background  #f8fafc */
+  --ink-900: 255 255 255;  /* card surface     #ffffff */
+  --ink-800: 241 245 249;  /* soft surface     #f1f5f9 */
+  --ink-700: 226 232 240;  /* border / divider #e2e8f0 */
+  --ink-600: 203 213 225;  /* #cbd5e1 */
+  --ink-500: 148 163 184;  /* #94a3b8 */
 
-  /* Ocean-blue brand accent. */
+  /* Ocean-blue accent (same in both modes). */
   --accent-50:  239 246 255;
   --accent-200: 191 219 254;
   --accent-400: 96 165 250;   /* #60a5fa */
@@ -33,47 +33,78 @@
   --accent-600: 37 99 235;    /* #2563eb */
   --accent-700: 29 78 216;    /* #1d4ed8 */
 
-  /* Neutral text scale (light → dark), slate-tinted. */
-  --zinc-50:  241 245 249;
-  --zinc-100: 226 232 240;   /* #e2e8f0 primary text */
-  --zinc-200: 203 213 225;
-  --zinc-300: 168 182 200;
-  --zinc-400: 148 163 184;   /* #94a3b8 muted */
+  /* Standard slate text scale (50 lightest → 950 darkest), same both modes. */
+  --zinc-50:  248 250 252;
+  --zinc-100: 241 245 249;
+  --zinc-200: 226 232 240;
+  --zinc-300: 203 213 225;
+  --zinc-400: 148 163 184;   /* muted text */
   --zinc-500: 100 116 139;
   --zinc-600: 71 85 105;
-  --zinc-700: 51 65 85;      /* #334155 borders */
+  --zinc-700: 51 65 85;
   --zinc-800: 30 41 59;
-  --zinc-900: 15 23 42;
-  --zinc-950: 10 15 26;
+  --zinc-900: 15 23 42;      /* #0f172a darkest text */
+  --zinc-950: 8 13 24;
 
   --violet2-500: 139 92 246; --violet2-600: 124 58 237;
-  --success-500: 34 197 94;  --success-600: 22 163 74;
-  --warn-500:    245 158 11; --warn-600:    217 119 6;
-  --danger-500:  239 68 68;  --danger-600:  220 38 38;
+  --success-500: 22 163 74;  --success-600: 21 128 61;
+  --warn-500:    217 119 6;  --warn-600:    180 83 9;
+  --danger-500:  220 38 38;  --danger-600:  185 28 28;
 
-  /* Flat: a subtle focus ring + a soft card shadow, no neon. */
-  --glow: 0 0 0 2px rgba(59, 130, 246, 0.35);
-  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.02) inset;
+  --glow: 0 0 0 2px rgba(59, 130, 246, 0.30);
+  --shadow-card: 0 1px 3px rgba(15, 23, 42, 0.08), 0 0 0 1px rgba(15, 23, 42, 0.03);
   --grad-accent: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
   --grad-soft: none;
-  --btn-pri-bg: rgb(37 99 235);   /* blue-600 #2563eb */
+  --btn-pri-bg: rgb(37 99 235);
   --btn-pri-fg: #ffffff;
   --btn-pri-border: transparent;
   --btn-pri-shadow: none;
 }
 
+.dark {
+  /* DARK surfaces. */
+  --ink-0:   6 10 20;
+  --ink-950: 15 23 42;     /* page  #0f172a */
+  --ink-900: 30 41 59;     /* card  #1e293b */
+  --ink-800: 36 50 68;     /* soft  #243244 */
+  --ink-700: 51 65 85;     /* border #334155 */
+  --ink-600: 71 85 105;
+  --ink-500: 100 116 139;
+
+  /* In dark mode the text scale reads inverted (light text), so swap the
+     usable text indices: 50/100/200 become light, 800/900 become dark. */
+  --zinc-50:  248 250 252;
+  --zinc-100: 226 232 240;  /* #e2e8f0 primary text */
+  --zinc-200: 203 213 225;
+  --zinc-300: 168 182 200;
+  --zinc-400: 148 163 184;  /* muted */
+  --zinc-500: 120 132 148;
+  --zinc-600: 90 102 118;
+  --zinc-700: 51 65 85;
+  --zinc-800: 30 41 59;
+  --zinc-900: 15 23 42;
+  --zinc-950: 10 15 26;
+
+  --success-500: 34 197 94;  --success-600: 22 163 74;
+  --warn-500:    245 158 11; --warn-600:    217 119 6;
+  --danger-500:  239 68 68;  --danger-600:  220 38 38;
+
+  --glow: 0 0 0 2px rgba(59, 130, 246, 0.35);
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.02) inset;
+}
+
 /* ── Base ─────────────────────────────────────────────────────────────────── */
 html, body {
-  @apply antialiased bg-ink-950 text-zinc-100;
+  @apply antialiased bg-ink-950 text-zinc-900 dark:text-zinc-100;
   font-family: var(--font);
 }
 
 @layer components {
   .surface {
-    @apply rounded-lg bg-ink-900 border border-zinc-700/70 shadow-card;
+    @apply rounded-lg bg-ink-900 border border-ink-700 shadow-card;
   }
   .surface-soft {
-    @apply rounded-lg bg-ink-800 border border-zinc-700/60;
+    @apply rounded-lg bg-ink-800 border border-ink-700;
   }
   .btn {
     @apply inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium
@@ -90,8 +121,8 @@ html, body {
   .btn-primary:active { filter: brightness(0.96); }
 
   .btn-ghost {
-    @apply btn bg-ink-800 text-zinc-100 border border-zinc-700
-           hover:bg-ink-700 hover:border-zinc-600;
+    @apply btn bg-ink-800 text-zinc-900 dark:text-zinc-100 border border-ink-700
+           hover:bg-ink-700 hover:border-ink-600;
   }
   .btn-danger {
     @apply btn bg-ink-800 text-danger-500 border border-danger-600/70 hover:border-danger-500;
@@ -100,17 +131,17 @@ html, body {
     @apply inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium border;
     border-radius: var(--radius-chip);
   }
-  .chip-ok    { @apply chip bg-success-500/10 text-success-500 border-success-500/40; }
-  .chip-warn  { @apply chip bg-warn-500/10    text-warn-500    border-warn-500/40; }
-  .chip-err   { @apply chip bg-danger-500/10  text-danger-500  border-danger-500/40; }
-  .chip-info  { @apply chip bg-accent-500/10  text-accent-400  border-accent-500/40; }
-  .chip-mute  { @apply chip bg-ink-800        text-zinc-300    border-zinc-700; }
+  .chip-ok    { @apply chip bg-success-500/10 text-success-600 dark:text-success-500 border-success-500/40; }
+  .chip-warn  { @apply chip bg-warn-500/10    text-warn-600    dark:text-warn-500    border-warn-500/40; }
+  .chip-err   { @apply chip bg-danger-500/10  text-danger-600  dark:text-danger-500  border-danger-500/40; }
+  .chip-info  { @apply chip bg-accent-500/10  text-accent-600  dark:text-accent-400  border-accent-500/40; }
+  .chip-mute  { @apply chip bg-ink-800        text-zinc-600 dark:text-zinc-300 border-ink-700; }
 
   .label { @apply text-xs uppercase tracking-wider text-zinc-400; }
   .stat  { @apply font-mono tabular-nums; }
 
   .dropzone {
-    @apply surface-soft p-8 text-center cursor-pointer transition border-dashed border-zinc-700
+    @apply surface-soft p-8 text-center cursor-pointer transition border-dashed border-ink-700
            hover:bg-ink-700/60 hover:border-accent-500/50;
   }
   .dropzone-active {
@@ -123,20 +154,20 @@ html, body {
 
   .tab {
     @apply inline-flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg
-           text-zinc-400 hover:bg-ink-700 hover:text-zinc-100;
+           text-zinc-500 dark:text-zinc-400 hover:bg-ink-700 hover:text-zinc-900 dark:hover:text-zinc-100;
   }
   .tab-active {
-    @apply bg-ink-700 text-accent-400 border border-accent-600/40;
+    @apply bg-ink-700 text-accent-600 dark:text-accent-400 border border-accent-500/40;
   }
 
   .switch {
     @apply relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full transition
-           bg-ink-700 border border-zinc-700;
+           bg-ink-700 border border-ink-600;
   }
   .switch[data-on="true"] { @apply bg-success-500/80 border-success-500; }
   .switch::after {
     content: "";
-    @apply absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-zinc-100 transition shadow;
+    @apply absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white transition shadow;
   }
   .switch[data-on="true"]::after { transform: translateX(20px); }
 }

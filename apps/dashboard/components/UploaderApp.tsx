@@ -384,7 +384,7 @@ function DesignPager({
           <span className="text-zinc-400">Design </span>
           <span className="font-mono text-accent-200">{display}</span>
           <span className="text-zinc-400"> of </span>
-          <span className="font-mono text-zinc-100">{total}</span>
+          <span className="font-mono text-zinc-900 dark:text-zinc-100">{total}</span>
         </span>
       </div>
 

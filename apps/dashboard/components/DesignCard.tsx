@@ -165,7 +165,7 @@ function RailItem({ active, label, count, onClick }: { active: boolean; label: s
         "group flex items-center justify-between gap-2 px-3 py-2.5 text-sm transition border-l-2 text-left",
         active
           ? "border-accent-500 text-accent-500 bg-ink-800/60"
-          : "border-transparent text-zinc-400 hover:text-zinc-200 hover:bg-ink-800/40"
+          : "border-transparent text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-ink-800/40"
       )}
     >
       <span>{label}</span>
@@ -290,7 +290,7 @@ function ProductsTab({
               className={clsx(
                 "group flex items-center gap-2.5 px-2 py-1.5 text-sm text-left rounded-sm transition",
                 editing ? "cursor-pointer hover:bg-ink-800" : "cursor-default",
-                on ? "text-zinc-100" : "text-zinc-500"
+                on ? "text-zinc-900 dark:text-zinc-100" : "text-zinc-500"
               )}
             >
               <span className={clsx("font-mono select-none shrink-0", on ? "text-accent-500" : "text-zinc-600")}>
@@ -317,7 +317,7 @@ function Field({ label, children, full = false }: { label: string; children: Rea
 
 function Readout({ text, multiline = false }: { text: string; multiline?: boolean }) {
   return (
-    <div className={clsx("surface-soft px-3 py-2 text-sm text-zinc-200", multiline && "whitespace-pre-wrap")}>
+    <div className={clsx("surface-soft px-3 py-2 text-sm text-zinc-700 dark:text-zinc-200", multiline && "whitespace-pre-wrap")}>
       {text}
     </div>
   );
