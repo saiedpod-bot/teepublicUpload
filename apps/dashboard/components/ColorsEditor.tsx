@@ -194,8 +194,10 @@ export function ColorsEditor({
         )}
       </div>
 
-      {/* Per-product colors — compact list rows: name left, swatch + dropdown right. */}
-      <div className="border-y border-zinc-700/40 divide-y divide-zinc-700/40">
+      {/* Per-product colors — split into two columns so every product is
+          visible at once (half the scrolling). Falls back to one column on
+          narrow screens. */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 border-t border-zinc-700/40">
         {slugs.map((slug) => {
           const label = SLUG_TO_PRODUCT_LABEL[slug];
           const palette = paletteFor(label);
@@ -204,7 +206,7 @@ export function ColorsEditor({
           return (
             <div
               key={slug}
-              className={`flex items-center justify-between gap-3 py-2 px-1 transition ${enabled ? "" : "opacity-55"}`}
+              className={`flex items-center justify-between gap-3 py-2 px-1 border-b border-zinc-700/30 transition ${enabled ? "" : "opacity-55"}`}
             >
               <span className="text-sm flex items-center gap-2 min-w-0">
                 <span className="truncate">{label}</span>
