@@ -16,47 +16,47 @@
   --radius: 8px;        /* Amplify "medium" */
   --radius-chip: 6px;   /* Amplify badge */
 
-  /* Neutral slate surface scale (darkest page → lighter cards). */
-  --ink-0:   2 6 12;
-  --ink-950: 15 18 25;   /* page background  #0f1219 */
-  --ink-900: 22 27 34;   /* card surface     #161b22 */
-  --ink-800: 30 37 46;   /* soft surface     #1e252e */
-  --ink-700: 44 52 63;   /* hover / divider  #2c343f */
-  --ink-600: 58 68 82;
-  --ink-500: 78 90 107;
+  /* Cool slate surface scale (darkest page → lighter cards). */
+  --ink-0:   6 10 20;
+  --ink-950: 15 23 42;    /* page background  #0f172a (slate-950) */
+  --ink-900: 30 41 59;    /* card surface     #1e293b (slate-800) */
+  --ink-800: 36 50 68;    /* soft surface     #243244 */
+  --ink-700: 51 65 85;    /* hover / divider  #334155 (slate-700) */
+  --ink-600: 71 85 105;   /* #475569 (slate-600) */
+  --ink-500: 100 116 139; /* #64748b (slate-500) */
 
-  /* Teal brand accent. */
-  --accent-50:  240 253 250;
-  --accent-200: 153 246 228;
-  --accent-400: 45 212 191;   /* #2dd4bf */
-  --accent-500: 20 184 166;   /* #14b8a6 */
-  --accent-600: 13 148 136;   /* #0d9488 */
-  --accent-700: 15 118 110;   /* #0f766e */
+  /* Ocean-blue brand accent. */
+  --accent-50:  239 246 255;
+  --accent-200: 191 219 254;
+  --accent-400: 96 165 250;   /* #60a5fa */
+  --accent-500: 59 130 246;   /* #3b82f6 */
+  --accent-600: 37 99 235;    /* #2563eb */
+  --accent-700: 29 78 216;    /* #1d4ed8 */
 
-  /* Neutral text scale (light → dark). */
-  --zinc-50:  246 248 250;
-  --zinc-100: 230 234 240;
-  --zinc-200: 202 209 219;
-  --zinc-300: 170 179 191;
-  --zinc-400: 138 149 163;
-  --zinc-500: 107 118 133;
-  --zinc-600: 78 88 102;
-  --zinc-700: 51 59 71;
-  --zinc-800: 36 43 54;
-  --zinc-900: 24 29 38;
-  --zinc-950: 15 18 25;
+  /* Neutral text scale (light → dark), slate-tinted. */
+  --zinc-50:  241 245 249;
+  --zinc-100: 226 232 240;   /* #e2e8f0 primary text */
+  --zinc-200: 203 213 225;
+  --zinc-300: 168 182 200;
+  --zinc-400: 148 163 184;   /* #94a3b8 muted */
+  --zinc-500: 100 116 139;
+  --zinc-600: 71 85 105;
+  --zinc-700: 51 65 85;      /* #334155 borders */
+  --zinc-800: 30 41 59;
+  --zinc-900: 15 23 42;
+  --zinc-950: 10 15 26;
 
   --violet2-500: 139 92 246; --violet2-600: 124 58 237;
-  --success-500: 33 186 121; --success-600: 22 150 95;
+  --success-500: 34 197 94;  --success-600: 22 163 74;
   --warn-500:    245 158 11; --warn-600:    217 119 6;
   --danger-500:  239 68 68;  --danger-600:  220 38 38;
 
   /* Flat: a subtle focus ring + a soft card shadow, no neon. */
-  --glow: 0 0 0 2px rgba(20, 184, 166, 0.35);
-  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.30), 0 0 0 1px rgba(255, 255, 255, 0.02) inset;
-  --grad-accent: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%);
+  --glow: 0 0 0 2px rgba(59, 130, 246, 0.35);
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.02) inset;
+  --grad-accent: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
   --grad-soft: none;
-  --btn-pri-bg: rgb(13 148 136);   /* teal-600 */
+  --btn-pri-bg: rgb(37 99 235);   /* blue-600 #2563eb */
   --btn-pri-fg: #ffffff;
   --btn-pri-border: transparent;
   --btn-pri-shadow: none;
