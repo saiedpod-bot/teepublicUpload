@@ -218,14 +218,19 @@ export function ColorsEditor({
                   style={{ background: colorHexForLabel(selected) }}
                 />
                 <select
-                  className="flex-1 min-w-0 bg-transparent text-sm outline-none disabled:cursor-not-allowed"
+                  // color-scheme:dark makes the browser render the native
+                  // option popup with a dark background + light text, so the
+                  // colors are readable (instead of light-grey on white).
+                  className="flex-1 min-w-0 bg-transparent text-sm outline-none disabled:cursor-not-allowed [color-scheme:dark]"
                   value={selected}
                   onChange={(e) => setColor(slug, e.target.value)}
                   disabled={readOnly || !enabled || palette.length === 0}
                 >
                   {palette.length === 0
-                    ? <option>No catalog</option>
-                    : palette.map((c) => <option key={c.label} value={c.label}>{c.label}</option>)}
+                    ? <option className="text-zinc-100 bg-ink-800">No catalog</option>
+                    : palette.map((c) => (
+                        <option key={c.label} value={c.label} className="text-zinc-100 bg-ink-800">{c.label}</option>
+                      ))}
                 </select>
               </label>
             </div>
