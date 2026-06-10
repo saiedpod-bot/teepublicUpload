@@ -93,8 +93,10 @@ export const TEEPUBLIC_CATALOG: Record<string, TPColor[]> = {
   "Kids Long Sleeve T-Shirt": list(
     "Black", "Navy", "Royal", "Deep Royal", "Red", "Pink", "Hot Pink", "Sport Green",
   ),
+  // Exactly TeePublic's trucker-hat dropdown — no other colors are offered.
   "Hats": list(
-    "White/Black", "Black/White", "Navy/White", "Heather", "Black", "Navy", "Khaki",
+    "Black", "Navy", "Deep Royal", "Red", "Creme",
+    "White/Black", "White/Royal", "White/Red", "White/Navy",
   ),
   "Shorts": list(
     "Black", "Heather", "Charcoal", "Navy", "Olive", "Military Green",
