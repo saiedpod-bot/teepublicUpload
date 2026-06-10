@@ -18,7 +18,7 @@
 
 import { sleep } from "../lib/delays";
 import { TP } from "../lib/selectors";
-import { findBestMatch, type MatchResult } from "../lib/colorNormalizer";
+import { findBestMatch, categorize, type MatchResult } from "../lib/colorNormalizer";
 
 const log = (msg: string) => console.info("[teepublic-cs] colors:", msg);
 
@@ -1646,7 +1646,12 @@ async function pickColorForProduct(productLabel: string, preferred: string): Pro
   // (some uploaders hide a real <select> behind a styled div facade).
   const select = findRowNativeSelect(row);
   if (select && select.options.length > 0) {
-    const available = Array.from(select.options).map((o) => o.text.trim()).filter((t) => t.length > 0);
+    // Exclude the "Select Default Color" placeholder so the matcher can never
+    // "pick" it (which would leave the product with no real color and trigger
+    // TeePublic's "You must choose a primary color" error on publish).
+    const available = Array.from(select.options)
+      .map((o) => o.text.trim())
+      .filter((t) => t.length > 0 && !isPlaceholderText(t));
     if (available.length > 0) {
       const match = findBestMatch(available, preferred);
       if (match) {
@@ -1680,7 +1685,10 @@ async function pickColorForProduct(productLabel: string, preferred: string): Pro
   }
 
   await sleep(350); // virtualized lists need a moment
-  const items = collectColorOptions(popup);
+  const allItems = collectColorOptions(popup);
+  // Drop the "Select Default Color" placeholder so it can't be chosen as a
+  // fallback (which leaves the product with no real color → publish error).
+  const items = allItems.filter((i) => !isPlaceholderText(i.text));
   if (items.length === 0) {
     dumpPopupContents(popup, productLabel);
     await closeAnyPopup();
@@ -1732,7 +1740,7 @@ async function pickColorForProduct(productLabel: string, preferred: string): Pro
         break;
       }
       await sleep(350);
-      const reItems = collectColorOptions(rePopup);
+      const reItems = collectColorOptions(rePopup).filter((i) => !isPlaceholderText(i.text));
       const reMatch = findBestMatch(reItems.map((i) => i.text), preferred);
       if (!reMatch || reMatch.method === "safe-default-first") {
         await closeAnyPopup();
