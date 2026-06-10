@@ -1,20 +1,17 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { ThemeSwitcher } from "@/components/ThemeSwitcher";
 import { AuthStatus } from "@/components/AuthStatus";
 
 export const metadata: Metadata = {
-  title: "teepublic://uploader",
-  description: "Local-first batch upload manager for TeePublic",
+  title: "TeePublic Uploader",
+  description: "Batch upload manager for TeePublic",
 };
 
-// Apply the saved UI theme before paint to avoid a flash. Mirrors lib/theme.ts;
-// kept tiny so it's safe to inline. All themes are dark-structured.
+// The app uses one fixed dark theme; flag it before paint so the native
+// controls (scrollbars, selects) render dark and there's no flash.
 const themeBootstrap = `
 (function(){
   try {
-    var t = localStorage.getItem("teepublic.uitheme") || "terminal";
-    document.documentElement.setAttribute("data-theme", t);
     document.documentElement.classList.add("dark");
     document.documentElement.style.colorScheme = "dark";
   } catch (e) {}
@@ -33,25 +30,24 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           rel="stylesheet"
         />
       </head>
-      <body className="min-h-screen bg-grad-soft">
+      <body className="min-h-screen">
         <div className="mx-auto max-w-7xl px-6 py-8">
           <header className="flex items-center justify-between mb-8">
             <div className="flex items-center gap-3">
-              <div className="h-9 w-9 rounded-sm border border-accent-700 bg-ink-800 shadow-glow grid place-items-center text-accent-500 font-bold">
+              <div className="h-9 w-9 rounded-lg bg-accent-600 grid place-items-center text-white font-bold">
                 T
               </div>
               <div>
-                <h1 className="text-lg font-semibold tracking-tight text-accent-400">
-                  teepublic<span className="text-zinc-500">://</span>uploader
+                <h1 className="text-lg font-semibold tracking-tight text-zinc-100">
+                  TeePublic Uploader
                 </h1>
                 <p className="text-xs text-zinc-400">
-                  <span className="text-accent-700">$</span> local-first batch upload manager
+                  Batch upload manager
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-2">
               <AuthStatus />
-              <ThemeSwitcher />
               <a
                 href="https://www.teepublic.com/design/quick_create"
                 target="_blank"
@@ -64,8 +60,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </header>
           {children}
           <footer className="mt-12 text-center text-xs text-zinc-500">
-            <span className="text-accent-700">{"// "}</span>
-            runs entirely on your machine. no data leaves your computer.
+            Runs entirely on your machine. No data leaves your computer.
           </footer>
         </div>
       </body>
