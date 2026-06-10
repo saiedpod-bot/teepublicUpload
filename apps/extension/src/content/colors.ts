@@ -933,6 +933,58 @@ function normalizeProductName(s: string): string {
     .replace(/\btee\b/g, "t shirt");
 }
 
+/** Canvas-tile class token (e.g. "hat" from div.canvas.hat) → display name.
+ *  Tiles have no data-name, so the product name comes from the container's
+ *  second class. Handles wall_art/wallart spelling variants. */
+export const TILE_CLASS_TO_NAME: Record<string, string> = {
+  hat: "Hats", sock: "Socks", sticker: "Stickers", case: "Cases", mug: "Mugs",
+  wall_art: "Wall Art", wallart: "Wall Art", "wall-art": "Wall Art",
+  pillow: "Pillows", tote: "Totes", tapestry: "Tapestries",
+  pin: "Pins", magnet: "Magnets",
+};
+
+/** Any product name/token (singular OR plural, Excel OR page) → one canonical
+ *  key, so "Hats"/"hat", "Bags"/"bag", "Totes"/"tote" all compare equal. The
+ *  Excel sheet sends plurals; the page's tile classes are singular tokens. */
+const PRODUCT_CANONICAL: Record<string, string> = {
+  // apparel
+  "t shirt": "t_shirt", "tee": "t_shirt",
+  "hoodie": "hoodie",
+  "tank": "tank", "tank top": "tank",
+  "crewneck": "crewneck",
+  "long sleeve t shirt": "long_sleeve", "long sleeve": "long_sleeve",
+  "baseball tee": "baseball_tee",
+  "kids": "kids",
+  "kids hoodie": "kids_hoodie",
+  "kids long sleeve t shirt": "kids_long_sleeve", "kids long sleeve": "kids_long_sleeve",
+  "shorts": "shorts", "short": "shorts",
+  "bags": "bags", "bag": "bags",
+  // tiles
+  "hats": "hats", "hat": "hats",
+  "socks": "socks", "sock": "socks",
+  "stickers": "stickers", "sticker": "stickers",
+  "cases": "cases", "case": "cases", "phone case": "cases", "phone cases": "cases",
+  "mugs": "mugs", "mug": "mugs",
+  "wall art": "wall_art", "wallart": "wall_art",
+  "pillows": "pillows", "pillow": "pillows",
+  "totes": "totes", "tote": "totes", "tote bag": "totes", "tote bags": "totes",
+  "tapestries": "tapestries", "tapestry": "tapestries",
+  "pins": "pins", "pin": "pins",
+  "magnets": "magnets", "magnet": "magnets",
+};
+
+/** Resolve a product name to its canonical key, tolerating singular/plural. */
+function canonicalProductKey(name: string): string {
+  const n = normalizeProductName(name);
+  if (PRODUCT_CANONICAL[n]) return PRODUCT_CANONICAL[n];
+  // naive plural/singular fallbacks
+  const singular = n.replace(/s$/, "");
+  if (PRODUCT_CANONICAL[singular]) return PRODUCT_CANONICAL[singular];
+  if (PRODUCT_CANONICAL[n + "s"]) return PRODUCT_CANONICAL[n + "s"];
+  // last resort: apparel slug map, then the normalized name itself
+  return canonicalApparelSlug(name) ?? n;
+}
+
 /** Resolve a product name (from Excel OR the page) to its canonical apparel
  *  slug, using PRODUCT_LABELS as the source of truth. Returns null for product
  *  names that aren't in the apparel map (Stickers, Mugs, Pillows, etc.) — the
@@ -954,10 +1006,9 @@ function canonicalApparelSlug(name: string): string | null {
  *  T-Shirt". Resolves both names to canonical apparel slugs and compares those.
  *  Falls back to exact normalized equality for non-apparel products. */
 function productNameMatch(excelName: string, pageName: string): boolean {
-  const a = canonicalApparelSlug(excelName);
-  const b = canonicalApparelSlug(pageName);
-  if (a && b) return a === b;
-  return normalizeProductName(excelName) === normalizeProductName(pageName);
+  // Both sides go through the same canonical resolver, so apparel and tile
+  // names match across singular/plural and Excel-vs-page spellings.
+  return canonicalProductKey(excelName) === canonicalProductKey(pageName);
 }
 
 /** Return the element that flips the Enable state when clicked. TeePublic's
@@ -1008,24 +1059,137 @@ export async function applyEnabledProducts(enabledProducts: string[]): Promise<v
     log(`enabled-products: empty list — leaving page toggles as-is`);
     return;
   }
-  const rows = findDdSelectRows();
-  log(`enabled-products: ${rows.length} apparel row(s) on page, ${enabledProducts.length} enabled in Excel: [${enabledProducts.join(", ")}]`);
+  const toggles = getAllProductToggles();
+  log(`getAllProductToggles: ${toggles.length} products found`);
+  log(`enabled-products: ${enabledProducts.length} enabled in Excel: [${enabledProducts.join(", ")}]`);
 
-  for (const { name, rowContainer } of rows) {
-    const wanted = enabledProducts.some((p) => productNameMatch(p, name));
-    const currently = isRowEnabled(rowContainer);
+  for (const t of toggles) {
+    const label = t.name || "(unnamed)";
+    // Default rule: any product NOT explicitly listed in the Excel enabled
+    // set is disabled. This is what stops tiles like Hats (which have no color
+    // picker) from blocking publish with "must choose a primary color".
+    const wanted = enabledProducts.some((p) => productNameMatch(p, t.name));
+    const currently = t.canvasOptionInput.value === "true";
+
     if (wanted === currently) {
-      log(`  ${name}: ${currently ? "ON" : "OFF"} — matches Excel, no change`);
+      log(`  ${label}: ${currently ? "ON" : "OFF"} — matches Excel, no change${!wanted ? " → OFF ✓" : ""}`);
       continue;
     }
-    const flipped = await flipEnableToggle(rowContainer, name, wanted);
-    if (!flipped) {
-      log(`    ✗ ${name}: state did NOT flip — dumping row HTML for diagnosis`);
-      dumpRowForToggleDebug(rowContainer, name);
+    const ok = await flipProductToggle(t, wanted);
+    if (ok) {
+      log(`    ✓ ${label}: now ${wanted ? "ON" : "OFF"}${!wanted ? " → OFF ✓" : ""}`);
     } else {
-      log(`    ✓ ${name}: now ${wanted ? "ON" : "OFF"}`);
+      log(`    ✗ ${label}: state did NOT flip (type=${t.type})`);
     }
   }
+}
+
+interface ProductToggle {
+  name: string;
+  canvasOptionInput: HTMLInputElement;
+  enableSpan: HTMLElement | null;
+  type: "apparel" | "tile";
+  container: HTMLElement;
+}
+
+/** Enumerate ALL products on the edit page (22), not just the apparel rows
+ *  that carry a color dropdown. Source of truth is the 22
+ *  input[name="canvas-option[N]"] enable inputs; each is classified as an
+ *  apparel row (inside <tr data-name>) or a canvas tile (inside div.canvas.<type>). */
+function getAllProductToggles(): ProductToggle[] {
+  const out: ProductToggle[] = [];
+  const inputs = document.querySelectorAll<HTMLInputElement>('input[name^="canvas-option"]');
+
+  for (const input of inputs) {
+    const enableSpanIn = (el: HTMLElement) =>
+      el.querySelector<HTMLElement>('.on-off.canvas-enable span, .canvas-enable span, .on-off span');
+
+    // Type A — apparel row: <tr data-name="T-Shirt">
+    const tr = input.closest<HTMLElement>("tr[data-name]");
+    if (tr) {
+      out.push({
+        name: tr.getAttribute("data-name") ?? "",
+        canvasOptionInput: input,
+        enableSpan: enableSpanIn(tr),
+        type: "apparel",
+        container: tr,
+      });
+      continue;
+    }
+
+    // Type B — canvas tile: <div class="canvas hat"> (name from 2nd class token)
+    const canvas = input.closest<HTMLElement>("div.canvas");
+    if (canvas) {
+      const token = Array.from(canvas.classList).find((c) => c !== "canvas");
+      const name = token ? (TILE_CLASS_TO_NAME[token] ?? token) : "";
+      out.push({
+        name,
+        canvasOptionInput: input,
+        enableSpan: enableSpanIn(canvas),
+        type: "tile",
+        container: canvas,
+      });
+      continue;
+    }
+
+    // Fallback — unknown structure: keep the toggle so it can still be driven.
+    const container = input.closest<HTMLElement>(".canvas-enable, .on-off")?.parentElement
+      ?? input.parentElement ?? input;
+    out.push({
+      name: "",
+      canvasOptionInput: input,
+      enableSpan: enableSpanIn(container),
+      type: "tile",
+      container,
+    });
+  }
+  return out;
+}
+
+/** Flip a product's enable state. Tries clicking the toggle; if the hidden
+ *  canvas-option value doesn't flip, sets it directly (the proven fallback).
+ *  Works for both apparel rows and canvas tiles. */
+async function flipProductToggle(t: ProductToggle, wanted: boolean): Promise<boolean> {
+  const matches = () => (t.canvasOptionInput.value === "true") === wanted;
+
+  const clickTargets: (HTMLElement | null)[] = [
+    t.enableSpan,
+    t.container.querySelector<HTMLElement>(".on-off.canvas-enable, .canvas-enable"),
+    t.container.querySelector<HTMLElement>(".on-off"),
+  ];
+  for (const el of clickTargets) {
+    if (!el) continue;
+    await fullClick(el);
+    await sleep(220);
+    if (matches()) return true;
+  }
+
+  // Direct fallback — drive the hidden input + mirror the span class.
+  setHiddenInputValue(t.canvasOptionInput, wanted ? "true" : "false");
+  if (t.enableSpan) {
+    t.enableSpan.classList.toggle("enabled", wanted);
+    t.enableSpan.classList.toggle("disabled", !wanted);
+  }
+  await sleep(150);
+  return matches();
+}
+
+/** Names of primary_colors inputs that are empty while their product is still
+ *  enabled — these are exactly what makes TeePublic reject Publish with
+ *  "You must choose a primary color for X". Returns the blocking input names. */
+export function findBlockingEmptyColors(): string[] {
+  const blocking: string[] = [];
+  for (const colorInput of document.querySelectorAll<HTMLInputElement>('input[name^="primary_colors"]')) {
+    const m = colorInput.name.match(/\[(\d+)\]/);
+    if (!m) continue;
+    const enable = document.querySelector<HTMLInputElement>(`input[name="canvas-option[${m[1]}]"]`);
+    const enabled = enable ? enable.value === "true" : true;
+    if (enabled && !colorInput.value.trim()) {
+      blocking.push(colorInput.name);
+      log(`BLOCKING: ${colorInput.name} enabled but has empty color`);
+    }
+  }
+  return blocking;
 }
 
 /** Escalate through every plausible click target, then fall back to directly

@@ -16,7 +16,7 @@ import {
   findRadioByLabel,
 } from "../lib/dom";
 import { humanDelay, sleep } from "../lib/delays";
-import { configureProductTable, configureOtherProducts, applyEnabledProducts, applyProductColorPalette, fullClick } from "./colors";
+import { configureProductTable, configureOtherProducts, applyEnabledProducts, applyProductColorPalette, findBlockingEmptyColors, fullClick } from "./colors";
 
 console.info("[teepublic-cs] ready on", location.href);
 
@@ -405,6 +405,17 @@ async function runUpload(
       }
     } catch (e) {
       log(`terms checkbox handling failed: ${(e as Error).message}`);
+    }
+
+    // ── 7.5. Pre-publish guard — any product still ENABLED but with an empty
+    // primary color will make TeePublic reject Publish ("You must choose a
+    // primary color for X"). Catch it here and fail with a clear reason
+    // instead of clicking Publish and silently bouncing.
+    const blocking = findBlockingEmptyColors();
+    if (blocking.length > 0) {
+      const err = `enabled products with no color (would block publish): ${blocking.join(", ")}`;
+      log(`✗ aborting before publish — ${err}`);
+      return { ok: false, error: err };
     }
 
     // ── 8. Publish — success is detected by URL change to /t-shirt/<id>-<slug>
