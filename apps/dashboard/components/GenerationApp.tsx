@@ -711,10 +711,19 @@ function DesignConfigCard({
 
       <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-6">
         <div className="relative">
-          <div className="aspect-square w-full bg-zinc-50 dark:bg-ink-700 rounded-xl overflow-hidden grid place-items-center border border-zinc-200 dark:border-white/5">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={image.previewUrl} alt={image.serverFilename} className="object-contain max-h-full max-w-full p-3" />
-          </div>
+          {(() => {
+            const previewBg = dominantColorHex(design.config.productColors);
+            return (
+              <div
+                className="aspect-square w-full bg-zinc-50 dark:bg-ink-700 rounded-xl overflow-hidden grid place-items-center border border-zinc-200 dark:border-white/5"
+                style={previewBg ? { background: previewBg } : undefined}
+                title={previewBg ? "Preview on the selected color" : undefined}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={image.previewUrl} alt={image.serverFilename} className="object-contain max-h-full max-w-full p-3" />
+              </div>
+            );
+          })()}
           <button
             type="button"
             onClick={onRemove}
@@ -791,6 +800,20 @@ function DesignColorSwatches({ productColors }: { productColors: Record<string, 
       </div>
     </div>
   );
+}
+
+// The most-used selected color — used to tint the design preview background
+// so the artwork is shown on the color it'll actually be listed on.
+function dominantColorHex(productColors: Record<string, string>): string | null {
+  const counts = new Map<string, number>();
+  for (const v of Object.values(productColors)) {
+    if (!v) continue;
+    counts.set(v, (counts.get(v) ?? 0) + 1);
+  }
+  if (counts.size === 0) return null;
+  let best = "", n = -1;
+  for (const [label, c] of counts) if (c > n) { best = label; n = c; }
+  return colorHexForLabel(best);
 }
 
 // A small color dot; combo labels like "White/Black" render as a split dot.
