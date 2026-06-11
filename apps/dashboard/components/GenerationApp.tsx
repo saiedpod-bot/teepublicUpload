@@ -13,7 +13,7 @@ import { getGeminiKey, setGeminiKey, getGeminiModel, setGeminiModel, getGeminiPr
 import type { ColorProductConfigValue } from "./ColorProductConfig";
 import { allEnabledProducts, applyPreset, type ColorPreset } from "@/lib/colorPresets";
 import { loadCustomBasicColors, saveCustomBasicColors, type CustomBasicColor } from "@/lib/batchConfig";
-import { ColorsEditor } from "./ColorsEditor";
+import { ColorsEditor, colorHexForLabel } from "./ColorsEditor";
 
 interface StagedImage {
   id: string;
@@ -724,6 +724,7 @@ function DesignConfigCard({
           <div className="mt-2 truncate text-xs text-zinc-500 dark:text-zinc-400" title={image.serverFilename}>
             {image.serverFilename}
           </div>
+          <DesignColorSwatches productColors={design.config.productColors} />
         </div>
 
         <div className="space-y-4">
@@ -756,6 +757,55 @@ function DesignConfigCard({
       </div>
     </section>
   );
+}
+
+// ─── Selected-colors strip under the design image ───────────────────────────
+// Shows the distinct colors chosen across products so the user can eyeball how
+// well they match the artwork without opening the Colors tab.
+function DesignColorSwatches({ productColors }: { productColors: Record<string, string> }) {
+  const seen = new Set<string>();
+  const colors: string[] = [];
+  for (const v of Object.values(productColors)) {
+    if (!v) continue;
+    const key = v.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    colors.push(v);
+  }
+  if (colors.length === 0) return null;
+
+  return (
+    <div className="mt-3">
+      <div className="text-[10px] uppercase tracking-wider text-zinc-500 mb-1.5">Selected colors</div>
+      <div className="flex flex-wrap gap-1.5">
+        {colors.map((label) => (
+          <span
+            key={label}
+            title={label}
+            className="inline-flex items-center gap-1 rounded-full border border-zinc-300 dark:border-white/10 bg-zinc-50 dark:bg-ink-800 pl-1 pr-2 py-0.5"
+          >
+            <ColorDot label={label} />
+            <span className="text-[11px] text-zinc-700 dark:text-zinc-200">{label}</span>
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// A small color dot; combo labels like "White/Black" render as a split dot.
+function ColorDot({ label }: { label: string }) {
+  const parts = label.split("/").map((s) => s.trim()).filter(Boolean);
+  const base = "h-3.5 w-3.5 rounded-full border border-black/10 shrink-0";
+  if (parts.length >= 2) {
+    return (
+      <span
+        className={base}
+        style={{ background: `linear-gradient(135deg, ${colorHexForLabel(parts[0])} 0 50%, ${colorHexForLabel(parts[1])} 50% 100%)` }}
+      />
+    );
+  }
+  return <span className={base} style={{ background: colorHexForLabel(label) }} />;
 }
 
 // ─── Tabs ───────────────────────────────────────────────────────────────────

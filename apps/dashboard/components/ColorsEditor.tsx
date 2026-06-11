@@ -299,7 +299,7 @@ const COLOR_HEX: Record<string, string> = {
   teal: "#0d9488", sage: "#9caf88", olive: "#6b7d3a", indigo: "#4f46e5",
 };
 
-function colorHexForLabel(label: string): string {
+export function colorHexForLabel(label: string): string {
   if (!label) return "#52525b";
   const l = label.toLowerCase().trim();
   const first = l.split("/")[0].trim();
