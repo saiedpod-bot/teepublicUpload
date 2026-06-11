@@ -135,7 +135,11 @@ async function runUpload(
     log(`──── starting "${m.title}" ────`);
     log(`page url:     ${location.href}`);
     if (!location.pathname.includes("/design/quick_create")) {
-      log(`⚠ NOT on /design/quick_create — TeePublic may have redirected. Form/colors logic may misbehave.`);
+      // Not a failure: TeePublic often redirects to /designs/<id>/edit. The
+      // product enable/disable + (non-apparel) color logic keys off the DOM
+      // (canvas-option inputs, div.canvas tiles, #primary_color_* containers),
+      // not the URL, so it runs the same on either page.
+      log(`note: on ${location.pathname} (not /design/quick_create) — color/toggle logic is DOM-keyed, continuing.`);
     }
     log(`title:        ${JSON.stringify(m.title)}`);
     log(`primary tag:  ${JSON.stringify(m.primaryTag ?? "")}`);

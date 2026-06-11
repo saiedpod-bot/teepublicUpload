@@ -1484,6 +1484,18 @@ function findNonApparelColorDropdowns(): NonApparelDropdown[] {
   return out;
 }
 
+/** Poll (DOM-keyed, not URL-keyed) for the non-apparel dropdowns to mount.
+ *  Returns as soon as at least one appears, or the full list at timeout. */
+async function pollForNonApparelDropdowns(timeoutMs: number): Promise<NonApparelDropdown[]> {
+  const deadline = Date.now() + timeoutMs;
+  let found = findNonApparelColorDropdowns();
+  while (found.length === 0 && Date.now() < deadline) {
+    await sleep(150);
+    found = findNonApparelColorDropdowns();
+  }
+  return found;
+}
+
 /** Find a canvas tile (div.canvas.<type>) by class token without CSS-escaping. */
 function findCanvasTile(canvasType: string): HTMLElement | null {
   for (const el of document.querySelectorAll<HTMLElement>("div.canvas")) {
@@ -1512,12 +1524,24 @@ async function pollForOptions(container: HTMLElement, timeoutMs: number): Promis
 
 /** Configure the ENABLED non-apparel color dropdowns (Hats, …): activate the
  *  tile so options populate, then reuse setRowColor. Disabled products are
- *  skipped — they need no color and won't block Publish. */
+ *  skipped — they need no color and won't block Publish.
+ *
+ *  URL-agnostic: this keys off the DOM (div.canvas.<type> tiles +
+ *  div[id^="primary_color_"] containers), so it runs the same on
+ *  /design/quick_create and on a redirected /designs/<id>/edit page. The
+ *  tiles can mount late, so we reveal the product section and poll for them
+ *  before giving up. */
 export async function configureNonApparelColors(
   productColors?: Record<string, string>,
 ): Promise<{ ok: boolean; configured: string[]; unconfigured: string[] }> {
-  const dropdowns = findNonApparelColorDropdowns();
-  log(`non-apparel color dropdowns found: ${dropdowns.length}`);
+  // Make sure the product section is mounted/visible (it lazy-renders), then
+  // wait for the non-apparel dropdowns to appear regardless of the URL.
+  await expandAndRevealProductTable();
+  const dropdowns = await pollForNonApparelDropdowns(5000);
+
+  log(`non-apparel color dropdowns found: ${dropdowns.length} (url: ${location.pathname}, ` +
+      `canvas tiles: ${document.querySelectorAll("div.canvas").length}, ` +
+      `primary_color containers: ${document.querySelectorAll('[id^="primary_color_"]').length})`);
   const configured: string[] = [];
   const unconfigured: string[] = [];
 
