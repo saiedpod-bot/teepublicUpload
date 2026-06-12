@@ -1,5 +1,5 @@
 import type { QueueBatch, QueueItem } from "@teepublic/shared";
-import { QueueStore } from "../services/queueStore";
+import { QueueStore, SettingsStore, type UploadMode } from "../services/queueStore";
 
 function $(id: string) { return document.getElementById(id) as HTMLElement; }
 
@@ -108,6 +108,19 @@ async function init() {
   $("ext-id").textContent = `ID: ${chrome.runtime.id}`;
   render(await QueueStore.get());
   QueueStore.installCrossPageListener(render);
+
+  // Upload-mode toggle (Single = quick_create one-at-a-time; Bulk = bulk_uploader).
+  const modeBtn = $("btn-mode");
+  const paintMode = (mode: UploadMode) => {
+    modeBtn.textContent = mode === "bulk" ? "Mode: Bulk" : "Mode: Single";
+  };
+  paintMode((await SettingsStore.get()).uploadMode);
+  modeBtn.onclick = async () => {
+    const cur = (await SettingsStore.get()).uploadMode;
+    const next: UploadMode = cur === "bulk" ? "single" : "bulk";
+    await SettingsStore.set({ uploadMode: next });
+    paintMode(next);
+  };
 
   // Stable controls (independent of grid contents).
   $("btn-toggle-all").onclick = async () => {

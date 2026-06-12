@@ -4,10 +4,11 @@
 // (queue, retries, delays-between-items) lives in the AutomationEngine.
 
 import type { QueueItem } from "@teepublic/shared";
-import { TP } from "../lib/selectors";
+import { TP, BULK } from "../lib/selectors";
 import {
   firstMatching,
   setFileInput,
+  setFileInputMultiple,
   typeInto,
   waitForSelector,
   findFieldByLabel,
@@ -77,6 +78,10 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     }
     if (message?.type === "AUTOMATION_START_ITEM") {
       const result = await runUpload(message.item, message.imageDataUrl);
+      return sendResponse(result);
+    }
+    if (message?.type === "AUTOMATION_BULK") {
+      const result = await runBulkUpload(message.items, message.imageDataUrls);
       return sendResponse(result);
     }
     return sendResponse({ ok: false, error: "unknown message" });
@@ -482,6 +487,235 @@ async function runUpload(
     fireItemStatus(item.id, "failed", undefined, msg);
     return { ok: false, error: msg };
   }
+}
+
+// ─── BULK upload (/designs/bulk_uploader) ─────────────────────────────────
+// Upload all selected designs at once, then fill each design's listing in the
+// order the page presents them. Each design's listing is keyed off the page's
+// OWN "Design X of N" counter (never a counter we keep), so design 1 always
+// gets listing 1, design 2 gets listing 2 — they can never cross.
+
+interface BulkItemResult { id: string; ok: boolean; error?: string; publishedUrl?: string }
+
+async function runBulkUpload(
+  items: QueueItem[],
+  imageDataUrls: string[],
+): Promise<{ ok: boolean; error?: string; results: BulkItemResult[] }> {
+  const results: BulkItemResult[] = items.map((it) => ({ id: it.id, ok: false }));
+  log(`──── BULK upload: ${items.length} design(s) on ${location.pathname} ────`);
+
+  try {
+    // 1. Drop ALL files into the multi-file input, in queue order.
+    const input = await firstMatching<HTMLInputElement>([...BULK.multiFileInput], 15_000);
+    const files = items.map((it, i) =>
+      dataUrlToFile(imageDataUrls[i], it.metadata.filename || `design_${i + 1}.png`, it.imageMime || "image/png"));
+    await setFileInputMultiple(input, files);
+    log(`dispatched ${files.length} files to the bulk uploader`);
+
+    // 2. GET STARTED — wait for it to be present/clickable (thumbnails mount async).
+    const getStarted = await findClickable([...BULK.getStarted], 60_000);
+    await fullClick(getStarted);
+    log(`clicked GET STARTED`);
+
+    // 3. Wait for the first design's editor.
+    await waitForFormReady();
+
+    // 4. Loop designs by the PAGE's own counter.
+    const n = items.length;
+    let guard = 0;
+    while (guard++ < n + 3) {
+      const pos = readCurrentDesignIndex();
+      if (!pos) { log(`⚠ couldn't read "Design X of N" — stopping bulk loop`); break; }
+      const { index, total } = pos;
+      log(`── editing design ${index + 1} of ${total} (queue has ${n}) ──`);
+      if (index < 0 || index >= n) { log(`⚠ design index ${index} out of range — stopping`); break; }
+
+      const item = items[index];
+      const filled = new Set<Element>();
+      let fill: { ok: true } | { ok: false; error: string };
+      try {
+        fill = await fillCurrentDesign(item, filled);
+      } catch (e) {
+        fill = { ok: false, error: e instanceof Error ? e.message : String(e) };
+      }
+      results[index] = { id: item.id, ok: fill.ok, error: fill.ok ? undefined : fill.error };
+      log(`design ${index + 1} (${item.metadata.filename}): ${fill.ok ? "filled ✓" : "FAILED — " + fill.error}`);
+
+      const isLast = index >= total - 1;
+      if (isLast) {
+        // 5. Publish the whole bulk.
+        const beforeUrl = location.href;
+        const publish = await findClickable([...TP.publishButton], 15_000);
+        await fullClick(publish);
+        log(`clicked PUBLISH (final design ${index + 1}/${total})`);
+        const changed = await waitForUrlChangeAwayFromEdit(beforeUrl, 60_000);
+        const finalUrl = location.href;
+        for (const r of results) if (r.ok) r.publishedUrl = finalUrl;
+        log(changed ? `bulk published → ${finalUrl}` : `⚠ bulk publish: URL didn't change in 60s — verify manually`);
+        break;
+      }
+
+      // 6. Advance to the next design and wait for the editor to re-render.
+      const next = await findClickable([...BULK.nextDesign], 15_000);
+      await fullClick(next);
+      log(`clicked NEXT DESIGN`);
+      await waitForDesignIndexChange(index, 25_000);
+      await waitForFormReady().catch(() => { /* best-effort */ });
+    }
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    log(`✗ bulk upload aborted: ${msg}`);
+    // Report whatever we managed; unfilled ones stay failed.
+    for (const r of results) {
+      if (r.ok) fireItemStatus(r.id, "succeeded", r.publishedUrl);
+      else fireItemStatus(r.id, "failed", undefined, r.error ?? msg);
+    }
+    return { ok: false, error: msg, results };
+  }
+
+  // Report per-item statuses so the queue reflects each design individually.
+  for (const r of results) {
+    if (r.ok) fireItemStatus(r.id, "succeeded", r.publishedUrl);
+    else fireItemStatus(r.id, "failed", undefined, r.error);
+  }
+  const okCount = results.filter((r) => r.ok).length;
+  log(`bulk done: ${okCount}/${items.length} filled`);
+  return { ok: okCount > 0, results };
+}
+
+/** Parse the page's "Currently Editing Design X of N" counter → 0-based index. */
+function readCurrentDesignIndex(): { index: number; total: number } | null {
+  const m = (document.body.textContent || "").match(/Design\s+(\d+)\s+of\s+(\d+)/i);
+  if (!m) return null;
+  return { index: parseInt(m[1], 10) - 1, total: parseInt(m[2], 10) };
+}
+
+/** Wait until the page's "Design X of N" counter moves off `prevIndex`. */
+async function waitForDesignIndexChange(prevIndex: number, timeoutMs: number): Promise<void> {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    const pos = readCurrentDesignIndex();
+    if (pos && pos.index !== prevIndex) return;
+    await sleep(200);
+  }
+}
+
+/** Fill the CURRENTLY-VISIBLE design editor (listing + colors + products),
+ *  reusing the same field/color/product logic as the single flow. Does NOT
+ *  upload a file and does NOT publish. Returns the blocking-color failure so
+ *  the bulk loop can record it per design. */
+async function fillCurrentDesign(
+  item: QueueItem,
+  filled: Set<Element>,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const m = item.metadata;
+
+  // Title (required).
+  const titleInput = await findInput([...TP.titleInput], "Design Title", "text", filled) as HTMLInputElement;
+  await typeAndVerify(titleInput, m.title, "title");
+  filled.add(titleInput);
+  await humanDelay(400, 800);
+
+  // Description (optional).
+  if (m.description) {
+    try {
+      const descInput = await findInput([...TP.descriptionInput], "Description", "textarea", filled) as HTMLTextAreaElement;
+      await typeAndVerify(descInput, m.description, "description");
+      filled.add(descInput);
+      await humanDelay(400, 800);
+    } catch (e) { log(`description not found — skipping: ${(e as Error).message}`); }
+  }
+
+  // Main tag (optional).
+  if (m.primaryTag) {
+    try {
+      const mainTag = await findInput([...TP.mainTagInput], "Main Tag", "text", filled) as HTMLInputElement;
+      await typeAndVerify(mainTag, m.primaryTag, "main tag");
+      filled.add(mainTag);
+      await humanDelay(400, 800);
+    } catch (e) { log(`main tag not found — skipping: ${(e as Error).message}`); }
+  }
+
+  // Supporting tags — CSS/label, else the only unfilled visible textarea.
+  if (m.tags.length > 0) {
+    let tagsInput: HTMLInputElement | HTMLTextAreaElement | null = null;
+    scrollLabelIntoView("Supporting Tags");
+    await sleep(250);
+    try { tagsInput = await findInput([...TP.supportingTagsInput], "Supporting Tags", "any", filled, 3_000); }
+    catch { /* fall through */ }
+    if (!tagsInput) {
+      const remaining = Array.from(document.querySelectorAll<HTMLTextAreaElement>("textarea")).filter((t) => {
+        if (filled.has(t)) return false;
+        const r = t.getBoundingClientRect();
+        return r.width > 0 && r.height > 0;
+      });
+      if (remaining.length >= 1) {
+        remaining.sort((a, b) => b.getBoundingClientRect().left - a.getBoundingClientRect().left);
+        tagsInput = remaining[0];
+      }
+    }
+    if (tagsInput) {
+      const enterInit = { key: "Enter", code: "Enter", keyCode: 13, which: 13, bubbles: true, cancelable: true };
+      for (const tag of m.tags) {
+        await typeInto(tagsInput, tag, { clear: true, humanLike: true });
+        await sleep(150);
+        tagsInput.focus();
+        tagsInput.dispatchEvent(new KeyboardEvent("keydown",  enterInit));
+        tagsInput.dispatchEvent(new KeyboardEvent("keypress", enterInit));
+        tagsInput.dispatchEvent(new KeyboardEvent("keyup",    enterInit));
+        await humanDelay(250, 500);
+      }
+      filled.add(tagsInput);
+      await humanDelay(300, 600);
+    } else { log(`supporting tags field not found — skipping`); }
+  }
+
+  await humanDelay(800, 1400);
+
+  // Mature radio.
+  try {
+    const want = m.matureContent ? "Yes" : "No";
+    const radio = await findMatureRadio(want);
+    if (!radio.checked) {
+      const wrap = radio.closest("label");
+      if (wrap) await fullClick(wrap as HTMLElement); else await fullClick(radio);
+      if (!radio.checked) radio.checked = true;
+      radio.dispatchEvent(new Event("input",  { bubbles: true }));
+      radio.dispatchEvent(new Event("change", { bubbles: true }));
+      log(`mature → ${want}`);
+      await humanDelay(200, 400);
+    }
+  } catch (e) { log(`mature radio not set — skipping: ${(e as Error).message}`); }
+
+  // Colors + products (same as single flow).
+  await waitForArtworkProcessingDone();
+  await applyEnabledProducts(m.enabledProducts ?? []);
+  await humanDelay(200, 400);
+
+  let configResult = await configureProductTable(m.productColors);
+  if (!configResult.ok) {
+    await sleep(500);
+    configResult = await configureProductTable(m.productColors);
+  }
+  if (!configResult.ok) {
+    return { ok: false, error: `enabled rows still have empty Default Color: ${configResult.unconfigured.join(", ")}` };
+  }
+
+  try {
+    await configureNonApparelColors(m.productColors);
+  } catch (e) { log(`non-apparel colors failed — continuing: ${(e as Error).message}`); }
+  try {
+    await configureOtherProducts(m.productColors);
+  } catch (e) { log(`configure-other-products failed — continuing: ${(e as Error).message}`); }
+  try {
+    await applyProductColorPalette("all");
+  } catch (e) { log(`palette click failed — continuing: ${(e as Error).message}`); }
+
+  const blocking = findBlockingEmptyColors();
+  if (blocking.length > 0) {
+    return { ok: false, error: `enabled products with no color: ${blocking.join(", ")}` };
+  }
+  return { ok: true };
 }
 
 // Watches for either TeePublic's "you must choose…" validation modal or the

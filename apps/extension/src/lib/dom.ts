@@ -89,6 +89,27 @@ export async function setFileInput(input: HTMLInputElement, file: File): Promise
   }
 }
 
+/** Like setFileInput but loads MANY files at once (TeePublic's bulk uploader). */
+export async function setFileInputMultiple(input: HTMLInputElement, files: File[]): Promise<void> {
+  const dt = new DataTransfer();
+  for (const f of files) dt.items.add(f);
+  input.files = dt.files;
+  input.dispatchEvent(new Event("input",  { bubbles: true }));
+  input.dispatchEvent(new Event("change", { bubbles: true }));
+
+  const dropzone = findDropzoneAncestor(input);
+  if (dropzone) {
+    const make = (type: string): DragEvent => {
+      const ev = new DragEvent(type, { bubbles: true, cancelable: true });
+      try { Object.defineProperty(ev, "dataTransfer", { value: dt }); } catch { /* readonly in some envs */ }
+      return ev;
+    };
+    dropzone.dispatchEvent(make("dragenter"));
+    dropzone.dispatchEvent(make("dragover"));
+    dropzone.dispatchEvent(make("drop"));
+  }
+}
+
 function findDropzoneAncestor(input: HTMLElement): HTMLElement | null {
   let cur: HTMLElement | null = input.parentElement;
   for (let i = 0; cur && i < 8; i++, cur = cur.parentElement) {

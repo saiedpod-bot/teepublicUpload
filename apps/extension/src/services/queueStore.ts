@@ -6,12 +6,15 @@ import type { QueueBatch, QueueItem, QueueItemStatus } from "@teepublic/shared";
 const KEY = "teepublic.batch";
 const SETTINGS_KEY = "teepublic.settings";
 
+export type UploadMode = "single" | "bulk";
+
 export interface ExtensionSettings {
   dashboardOrigin: string;        // where to fetch design files from
   betweenItemsMinMs: number;      // min wait between items
   betweenItemsMaxMs: number;      // max wait between items
   retryMax: number;               // attempts per item
   paused: boolean;
+  uploadMode: UploadMode;         // "single" = quick_create one-at-a-time; "bulk" = bulk_uploader
 }
 
 const DEFAULT_SETTINGS: ExtensionSettings = {
@@ -20,6 +23,7 @@ const DEFAULT_SETTINGS: ExtensionSettings = {
   betweenItemsMaxMs: 18_000,
   retryMax: 2,
   paused: false,
+  uploadMode: "single",
 };
 
 type Listener = (batch: QueueBatch | null) => void;

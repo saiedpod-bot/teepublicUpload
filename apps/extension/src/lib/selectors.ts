@@ -128,3 +128,28 @@ export const TP = {
     'a.dd-option',
   ],
 } as const;
+
+// ── Bulk uploader (/designs/bulk_uploader) ────────────────────────────────
+// Drop all designs → GET STARTED → per-design editor (same listing/colors/
+// products form as the single flow) → NEXT DESIGN … → PUBLISH on the last.
+export const BULK = {
+  multiFileInput: [
+    'input[type="file"][multiple]',
+    'input[type="file"][accept*="image" i]',
+    'input[type="file"]',
+  ],
+  getStarted: [
+    'button:contains("GET STARTED")',
+    'button:contains("Get Started")',
+    'button:contains("Get started")',
+    'a:contains("GET STARTED")',
+    'a:contains("Get Started")',
+  ],
+  nextDesign: [
+    'button:contains("NEXT DESIGN")',
+    'button:contains("Next Design")',
+    'button:contains("Next design")',
+    'a:contains("NEXT DESIGN")',
+    'a:contains("Next Design")',
+  ],
+} as const;

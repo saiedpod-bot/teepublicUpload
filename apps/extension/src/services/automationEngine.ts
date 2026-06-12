@@ -10,6 +10,7 @@ import { humanDelay } from "../lib/delays";
 type EngineState = "idle" | "running" | "paused" | "stopped";
 
 const QUICK_CREATE_URL = "https://www.teepublic.com/design/quick_create";
+const BULK_UPLOAD_URL = "https://www.teepublic.com/designs/bulk_uploader";
 const LOGIN_URL_FRAGMENTS = ["sign_in", "/login", "/users/sign_in", "/auth/", "/account/login"];
 
 class AutomationEngine {
@@ -46,6 +47,17 @@ class AutomationEngine {
       const batch = await QueueStore.get();
       if (!batch) { this.state = "idle"; return; }
 
+      // Bulk mode: upload every selected pending design in one bulk_uploader run.
+      if (settings.uploadMode === "bulk") {
+        const pending = batch.items.filter((i) =>
+          (i.status === "pending" || i.status === "queued") && i.selected !== false
+        );
+        if (pending.length === 0) { this.state = "idle"; return; }
+        await this.runBulk(pending);
+        this.state = "idle";
+        return; // a bulk run handles the whole selection at once
+      }
+
       const next = batch.items.find((i) =>
         (i.status === "pending" || i.status === "queued") && i.selected !== false
       );
@@ -54,6 +66,63 @@ class AutomationEngine {
       await this.runOne(next);
       await humanDelay(settings.betweenItemsMinMs, settings.betweenItemsMaxMs);
     }
+  }
+
+  /** Bulk path: open /designs/bulk_uploader, upload all images, and let the
+   *  content script fill each design's listing in page order (Design X of N). */
+  private async runBulk(items: QueueItem[]) {
+    for (const it of items) {
+      await QueueStore.setItemStatus(it.id, "running", { attempts: it.attempts + 1, lastError: undefined });
+    }
+    try {
+      const tabId = await this.ensureBulkTab();
+      this.currentTabId = tabId;
+
+      const imageDataUrls: string[] = [];
+      for (const it of items) imageDataUrls.push(await fetchDesignAsDataUrl(it.imageUrl));
+
+      await ensureContentScriptReady(tabId);
+      const result = await sendToTab<{
+        ok: boolean; error?: string;
+        results?: { id: string; ok: boolean; error?: string; publishedUrl?: string }[];
+      }>(tabId, { type: "AUTOMATION_BULK", items, imageDataUrls });
+
+      if (result?.results?.length) {
+        for (const r of result.results) {
+          if (r.ok) await QueueStore.setItemStatus(r.id, "succeeded", { publishedUrl: r.publishedUrl });
+          else      await QueueStore.setItemStatus(r.id, "failed", { lastError: r.error });
+        }
+      } else if (!result?.ok) {
+        for (const it of items) await QueueStore.setItemStatus(it.id, "failed", { lastError: result?.error ?? "bulk upload failed" });
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      for (const it of items) {
+        const batch = await QueueStore.get();
+        const cur = batch?.items.find((i) => i.id === it.id);
+        if (cur?.status === "succeeded") continue; // content script may have already marked it
+        await QueueStore.setItemStatus(it.id, "failed", { lastError: message });
+      }
+    }
+  }
+
+  private async ensureBulkTab(): Promise<number> {
+    if (this.currentTabId != null) {
+      try {
+        const tab = await chrome.tabs.get(this.currentTabId);
+        if (tab && tab.url?.includes("teepublic.com")) {
+          await navigateAndWait(this.currentTabId, BULK_UPLOAD_URL);
+          await assertNotLoginPage(this.currentTabId);
+          return this.currentTabId;
+        }
+      } catch { /* tab gone */ }
+    }
+    const tab = await chrome.tabs.create({ url: BULK_UPLOAD_URL, active: true });
+    if (tab.id == null) throw new Error("failed to open TeePublic bulk uploader tab");
+    this.currentTabId = tab.id;
+    await waitForTabComplete(tab.id);
+    await assertNotLoginPage(tab.id);
+    return tab.id;
   }
 
   private async runOne(item: QueueItem) {
