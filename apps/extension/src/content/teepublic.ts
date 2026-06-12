@@ -81,6 +81,15 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       const result = await runUpload(message.item, message.imageDataUrl);
       return sendResponse(result);
     }
+    if (message?.type === "AUTOMATION_UPLOAD_ONLY") {
+      const result = await runUploadOnly(message.item, message.imageDataUrl);
+      return sendResponse(result);
+    }
+    if (message?.type === "AUTOMATION_FILL_PUBLISH") {
+      // Already on the draft's /designs/<id>/edit page — fill + publish, no upload.
+      const result = await runUpload(message.item, "", true);
+      return sendResponse(result);
+    }
     return sendResponse({ ok: false, error: "unknown message" });
   })();
   return true;
@@ -116,6 +125,7 @@ function isPublishedListingUrl(url: string = location.href): boolean {
 async function runUpload(
   item: QueueItem,
   imageDataUrl: string,
+  skipUpload = false, // Phase-2 bulk: the draft already has the file; just fill+publish
 ): Promise<{ ok: boolean; error?: string; publishedUrl?: string }> {
   // Reset the duplicate-fire guard for this new item.
   if (item.id !== lastFiredItemId) lastFiredItemId = null;
@@ -155,10 +165,16 @@ async function runUpload(
     const filled = new Set<Element>();
 
     // ── 1. Upload the design file ────────────────────────────────────────
-    const file = dataUrlToFile(imageDataUrl, m.filename || "design.png", item.imageMime || "image/png");
-    const fileInput = await firstMatching<HTMLInputElement>([...TP.fileInput]);
-    await setFileInput(fileInput, file);
-    log("file dispatched — waiting for TeePublic to render the full upload form…");
+    // Skipped in Phase-2 bulk: we're already on the draft's /designs/<id>/edit
+    // page, which already holds the uploaded artwork — just fill + publish it.
+    if (!skipUpload) {
+      const file = dataUrlToFile(imageDataUrl, m.filename || "design.png", item.imageMime || "image/png");
+      const fileInput = await firstMatching<HTMLInputElement>([...TP.fileInput]);
+      await setFileInput(fileInput, file);
+      log("file dispatched — waiting for TeePublic to render the full upload form…");
+    } else {
+      log("skipUpload: filling existing draft (no file dispatch)");
+    }
 
     // ── 1b. Wait until the design is 100% loaded ────────────────────────
     // TeePublic renders the form fields + Item table + Configure Other Products
@@ -484,6 +500,50 @@ async function runUpload(
     fireItemStatus(item.id, "failed", undefined, msg);
     return { ok: false, error: msg };
   }
+}
+
+// ─── BULK Phase 1: upload ONLY (no listing, no publish) ─────────────────────
+// Dispatch one design's file, wait for processing to finish, and report the
+// draft's edit URL + id so Phase 2 can navigate straight back to it (matched by
+// filename — never by image).
+async function runUploadOnly(
+  item: QueueItem,
+  imageDataUrl: string,
+): Promise<{ ok: boolean; editUrl?: string; designId?: string; error?: string }> {
+  try {
+    if (isPublishedListingUrl(location.href)) {
+      return { ok: false, error: "on a published listing page, not the uploader" };
+    }
+    const m = item.metadata;
+    log(`upload-only: ${m.filename}`);
+    const file = dataUrlToFile(imageDataUrl, m.filename || "design.png", item.imageMime || "image/png");
+    const fileInput = await firstMatching<HTMLInputElement>([...TP.fileInput]);
+    await setFileInput(fileInput, file);
+    log("dispatched 1 file — waiting for processing…");
+    await waitForFormReady();
+    await waitForArtworkProcessingDone();
+
+    const designId = (location.href.match(/\/designs\/(\d+)\/edit/) || [])[1] || readDesignIdFromDom();
+    const editUrl = designId ? `https://www.teepublic.com/designs/${designId}/edit` : location.href;
+    log(`upload-only done: ${m.filename} → draft ${designId ?? "(id?)"} (${editUrl})`);
+    return { ok: true, editUrl, designId: designId ?? undefined };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : String(e) };
+  }
+}
+
+/** Best-effort read of the current design's numeric id from the DOM, for when
+ *  the URL hasn't turned into /designs/<id>/edit yet. */
+function readDesignIdFromDom(): string | null {
+  const a = document.querySelector<HTMLAnchorElement>('a[href*="/designs/"][href*="/edit"]');
+  const am = a?.href.match(/\/designs\/(\d+)\/edit/);
+  if (am) return am[1];
+  for (const inp of document.querySelectorAll<HTMLInputElement>('input[name*="design" i][name*="id" i], input[name="id"]')) {
+    if (/^\d+$/.test(inp.value)) return inp.value;
+  }
+  const formAction = document.querySelector<HTMLFormElement>('form[action*="/designs/"]')?.action ?? "";
+  const fm = formAction.match(/\/designs\/(\d+)/);
+  return fm ? fm[1] : null;
 }
 
 // Watches for either TeePublic's "you must choose…" validation modal or the

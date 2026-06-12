@@ -46,24 +46,102 @@ class AutomationEngine {
       const batch = await QueueStore.get();
       if (!batch) { this.state = "idle"; return; }
 
-      // Both Single and Bulk modes process the selection strictly one design at
-      // a time: upload → wait for processing → fill → publish (awaited fully) →
-      // next. "Bulk" just means "keep going through the whole selection". This
-      // sequential approach avoids the scrambling the batched bulk_uploader hit.
+      // Bulk mode: two strict phases — (1) upload every selected design as a
+      // draft, then (2) navigate back to each draft (by stored editUrl, matched
+      // by filename) to fill its listing + publish. Handles the whole selection
+      // in one runBulk call.
+      if (settings.uploadMode === "bulk") {
+        const pending = batch.items.filter((i) =>
+          (i.status === "pending" || i.status === "queued") && i.selected !== false
+        );
+        if (pending.length === 0) { this.state = "idle"; return; }
+        await this.runBulk(pending);
+        this.state = "idle";
+        return;
+      }
+
+      // Single mode: one design at a time through the full flow.
       const next = batch.items.find((i) =>
         (i.status === "pending" || i.status === "queued") && i.selected !== false
       );
       if (!next) { this.state = "idle"; return; }
 
-      const remaining = batch.items.filter((i) =>
-        (i.status === "pending" || i.status === "queued") && i.selected !== false
-      ).length;
-      const total = batch.items.filter((i) => i.selected !== false).length;
-      BulkLogStore.append(`── ${total - remaining + 1}/${total}: ${next.metadata.filename} (${next.metadata.title}) ──`);
-
       await this.runOne(next);
       await humanDelay(settings.betweenItemsMinMs, settings.betweenItemsMaxMs);
     }
+  }
+
+  /** Two-phase bulk: upload all drafts, then list+publish each by stored URL. */
+  private async runBulk(items: QueueItem[]) {
+    interface Draft { item: QueueItem; editUrl?: string; designId?: string; uploaded: boolean }
+    const drafts: Draft[] = items.map((it) => ({ item: it, uploaded: false }));
+    const total = drafts.length;
+
+    // ── PHASE 1 — upload only (no listing, no publish) ─────────────────────
+    for (let i = 0; i < drafts.length; i++) {
+      const d = drafts[i];
+      await QueueStore.setItemStatus(d.item.id, "running", { attempts: d.item.attempts + 1, lastError: undefined });
+      BulkLogStore.append(`── upload ${i + 1}/${total}: ${d.item.metadata.filename} ──`);
+      try {
+        const tabId = await this.ensureTeePublicTab(); // single uploader (quick_create)
+        this.currentTabId = tabId;
+        const imageDataUrl = await fetchDesignAsDataUrl(d.item.imageUrl);
+        await ensureContentScriptReady(tabId);
+        const r = await sendToTab<{ ok: boolean; editUrl?: string; designId?: string; error?: string }>(
+          tabId, { type: "AUTOMATION_UPLOAD_ONLY", item: d.item, imageDataUrl });
+        if (!r?.ok || !r.editUrl) throw new Error(r?.error ?? "upload failed (no edit URL captured)");
+        d.editUrl = r.editUrl; d.designId = r.designId; d.uploaded = true;
+        BulkLogStore.append(`upload ${i + 1}/${total}: ${d.item.metadata.filename} → draft ${r.designId ?? "?"}`);
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        await QueueStore.setItemStatus(d.item.id, "failed", { lastError: `upload: ${msg}` });
+        BulkLogStore.append(`upload ${i + 1}/${total} FAILED: ${msg}`);
+      }
+      await humanDelay(1_000, 2_000);
+    }
+
+    // ── PHASE 2 — listing + publish, matched by filename via stored editUrl ─
+    for (let i = 0; i < drafts.length; i++) {
+      const d = drafts[i];
+      if (!d.uploaded || !d.editUrl) continue; // upload failed — already marked failed
+      BulkLogStore.append(`── listing ${i + 1}/${total}: ${d.item.metadata.filename} (draft ${d.designId ?? "?"}) ──`);
+      try {
+        const tabId = await this.ensureTabAt(d.editUrl);
+        this.currentTabId = tabId;
+        await ensureContentScriptReady(tabId);
+        const r = await sendToTab<{ ok: boolean; error?: string; publishedUrl?: string }>(
+          tabId, { type: "AUTOMATION_FILL_PUBLISH", item: d.item });
+        if (!r?.ok) throw new Error(r?.error ?? "fill/publish failed");
+        await QueueStore.setItemStatus(d.item.id, "succeeded", { publishedUrl: r.publishedUrl });
+        BulkLogStore.append(`listing ${i + 1}/${total}: ${d.item.metadata.filename} published → ${r.publishedUrl}`);
+      } catch (err) {
+        if (await waitForSucceededSignal(d.item.id, this.currentTabId, 8_000)) continue;
+        const msg = err instanceof Error ? err.message : String(err);
+        await QueueStore.setItemStatus(d.item.id, "failed", { lastError: `listing: ${msg}` });
+        BulkLogStore.append(`listing ${i + 1}/${total} FAILED: ${msg}`);
+      }
+      await humanDelay(1_000, 2_000);
+    }
+  }
+
+  /** Navigate the automation tab to a specific URL (Phase-2 draft edit page). */
+  private async ensureTabAt(url: string): Promise<number> {
+    if (this.currentTabId != null) {
+      try {
+        const tab = await chrome.tabs.get(this.currentTabId);
+        if (tab && tab.url?.includes("teepublic.com")) {
+          await navigateAndWait(this.currentTabId, url);
+          await assertNotLoginPage(this.currentTabId);
+          return this.currentTabId;
+        }
+      } catch { /* tab gone */ }
+    }
+    const tab = await chrome.tabs.create({ url, active: true });
+    if (tab.id == null) throw new Error("failed to open draft edit tab");
+    this.currentTabId = tab.id;
+    await waitForTabComplete(tab.id);
+    await assertNotLoginPage(tab.id);
+    return tab.id;
   }
 
   private async runOne(item: QueueItem) {
