@@ -152,4 +152,18 @@ export const BULK = {
     'a:contains("NEXT DESIGN")',
     'a:contains("Next Design")',
   ],
+  // Drops a design from the bulk batch (used to discard leftovers that aren't
+  // part of this run, so we never publish them with the wrong/empty listing).
+  skipDesign: [
+    'a:contains("Skip & Cancel This Design")',
+    'button:contains("Skip & Cancel This Design")',
+    'a:contains("Skip & Cancel")',
+    'a:contains("Skip")',
+  ],
+  // The final bulk publish button (publishes the whole batch).
+  publishAll: [
+    'button:contains("PUBLISH ALL")',
+    'button:contains("Publish All")',
+    'a:contains("PUBLISH ALL")',
+  ],
 } as const;

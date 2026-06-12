@@ -86,6 +86,8 @@ export interface BulkState {
   imageDataUrls: string[];
   phase: "upload" | "editing";
   lastDesignId: string | null; // design id we last filled — dedupes re-inits
+  filledItemIds: string[];      // queue items already filled — never fill twice
+  steps: number;                // navigations handled — bounds the loop
   startedAt: number;
 }
 

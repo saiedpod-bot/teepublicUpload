@@ -540,43 +540,171 @@ async function bulkUploadAllAndStart(state: BulkState): Promise<void> {
 // each navigation.
 async function bulkEditCurrentDesign(state: BulkState): Promise<void> {
   const designId = (location.pathname.match(/\/designs\/(\d+)\/edit/) || [])[1] || null;
-  // Dedupe: never fill the same design twice (guards spurious re-inits).
+  // Dedupe: never act on the same design page twice (guards spurious re-inits).
   if (designId && designId === state.lastDesignId) {
     log(`bulk: design ${designId} already handled — skipping`);
     return;
   }
-
-  await waitForFormReady();
-  const pos = readCurrentDesignIndex();
-  if (!pos) { log(`bulk: couldn't read "Design X of N" — aborting bulk`); await BulkStateStore.set(null); return; }
-  const { index, total } = pos;
-  if (index < 0 || index >= state.items.length) {
-    log(`bulk: design index ${index} out of range [0,${state.items.length}) — aborting`);
+  // Bound the loop so a misbehaving page can never spin forever.
+  if (state.steps > state.items.length * 3 + 20) {
+    log(`bulk: step budget exhausted — aborting`);
     await BulkStateStore.set(null);
     return;
   }
-  const item = state.items[index];
-  log(`── bulk editing design ${index + 1} of ${total} (${item.metadata.filename}) ──`);
-  // Mark this design handled up-front so a mid-fill re-init can't double it.
-  await BulkStateStore.patch({ lastDesignId: designId });
+
+  await waitForFormReady();
+  await BulkStateStore.patch({ lastDesignId: designId, steps: state.steps + 1 });
+
+  // Match the design the page is SHOWING to the right queue item by its image
+  // (robust to TeePublic reordering and to leftover designs from prior runs).
+  const matchIndex = await matchDisplayedDesign(state);
+
+  if (matchIndex < 0) {
+    // Not one of our designs (a leftover) or already filled — drop it from the
+    // batch so it isn't published with the wrong/empty listing.
+    log(`bulk: displayed design isn't an unfilled item of this run — skip & cancel`);
+    if (await clickFirst([...BULK.skipDesign])) {
+      log(`clicked "Skip & Cancel This Design"`);
+    } else if (await clickFirst([...BULK.nextDesign])) {
+      log(`(no Skip link) clicked NEXT DESIGN to move past it`);
+    } else {
+      log(`bulk: no skip/next control — aborting`);
+      await BulkStateStore.set(null);
+    }
+    return;
+  }
+
+  const item = state.items[matchIndex];
+  log(`── bulk editing → item ${matchIndex + 1} (${item.metadata.filename}) [matched by image] ──`);
 
   let fill: { ok: true } | { ok: false; error: string };
   try { fill = await fillCurrentDesign(item, new Set<Element>()); }
   catch (e) { fill = { ok: false, error: e instanceof Error ? e.message : String(e) }; }
   fireItemStatus(item.id, fill.ok ? "succeeded" : "failed", undefined, fill.ok ? undefined : fill.error);
-  log(`design ${index + 1} (${item.metadata.filename}): ${fill.ok ? "filled ✓" : "FAILED — " + fill.error}`);
+  log(`item ${item.metadata.filename}: ${fill.ok ? "filled ✓" : "FAILED — " + fill.error}`);
 
-  const isLast = index >= total - 1;
-  if (isLast) {
-    log(`bulk: last design — clicking PUBLISH`);
+  const filledItemIds = [...state.filledItemIds, item.id];
+  await BulkStateStore.patch({ filledItemIds });
+
+  // Publish once every item of THIS run is filled (don't trust page index).
+  const allDone = state.items.every((it) => filledItemIds.includes(it.id));
+  if (allDone) {
+    log(`bulk: all ${state.items.length} designs filled — accepting terms + PUBLISH ALL`);
+    // The bulk publish page requires the Terms & Conditions checkbox; TeePublic
+    // blocks "PUBLISH ALL" with "You must accept the terms & conditions" otherwise.
+    await acceptTermsAndConditions();
+    await sleep(400);
     await BulkStateStore.set(null); // run complete
-    const publish = await findClickable([...TP.publishButton], 15_000);
+    const publish = await findClickable([...BULK.publishAll, ...TP.publishButton], 15_000);
     await fullClick(publish);
   } else {
     const next = await findClickable([...BULK.nextDesign], 15_000);
     await fullClick(next);
-    log(`clicked NEXT DESIGN — navigating to design ${index + 2}`);
+    log(`clicked NEXT DESIGN (${filledItemIds.length}/${state.items.length} done)`);
   }
+}
+
+// Match the design currently shown in the editor to one of THIS run's unfilled
+// items, by perceptual (average) hash of the artwork. Returns the item index,
+// or -1 if it's a leftover / already filled / can't be matched.
+async function matchDisplayedDesign(state: BulkState): Promise<number> {
+  const img = findArtworkImg();
+  if (!img) { log(`bulk: no artwork image found — can't match`); return -1; }
+  const dispHash = await imageAHash(img.currentSrc || img.src);
+  if (dispHash == null) {
+    log(`bulk: displayed artwork not readable (CORS) — can't image-match`);
+    return -1;
+  }
+  let best = -1, bestDist = 99;
+  for (let k = 0; k < state.imageDataUrls.length; k++) {
+    if (state.filledItemIds.includes(state.items[k].id)) continue; // already done
+    const hk = await imageAHash(state.imageDataUrls[k]);
+    if (hk == null) continue;
+    const d = hammingBigInt(hk, dispHash);
+    if (d < bestDist) { bestDist = d; best = k; }
+  }
+  log(`bulk: image match → index ${best} (distance ${best < 0 ? "n/a" : bestDist})`);
+  return bestDist <= 16 ? best : -1; // require a confident match
+}
+
+/** The large design-preview <img> in the editor (biggest visible image). */
+function findArtworkImg(): HTMLImageElement | null {
+  const imgs = Array.from(document.querySelectorAll<HTMLImageElement>("img"))
+    .filter((im) => { const r = im.getBoundingClientRect(); return r.width >= 120 && r.height >= 120; });
+  if (imgs.length === 0) return null;
+  imgs.sort((a, b) => b.getBoundingClientRect().width - a.getBoundingClientRect().width);
+  return imgs[0];
+}
+
+/** 64-bit average hash of an image (transparent pixels composited over white). */
+async function imageAHash(src: string): Promise<bigint | null> {
+  try {
+    const im = await new Promise<HTMLImageElement>((res, rej) => {
+      const el = new Image();
+      el.crossOrigin = "anonymous";
+      el.onload = () => res(el);
+      el.onerror = () => rej(new Error("img load failed"));
+      el.src = src;
+    });
+    const c = document.createElement("canvas"); c.width = 8; c.height = 8;
+    const ctx = c.getContext("2d", { willReadFrequently: true });
+    if (!ctx) return null;
+    ctx.drawImage(im, 0, 0, 8, 8);
+    const data = ctx.getImageData(0, 0, 8, 8).data; // throws if cross-origin tainted
+    const gray: number[] = [];
+    for (let i = 0; i < 64; i++) {
+      const a = data[i * 4 + 3] / 255;
+      const r = data[i * 4] * a + 255 * (1 - a);
+      const g = data[i * 4 + 1] * a + 255 * (1 - a);
+      const b = data[i * 4 + 2] * a + 255 * (1 - a);
+      gray.push(0.299 * r + 0.587 * g + 0.114 * b);
+    }
+    const avg = gray.reduce((s, v) => s + v, 0) / 64;
+    let h = 0n;
+    for (let i = 0; i < 64; i++) if (gray[i] >= avg) h |= (1n << BigInt(i));
+    return h;
+  } catch { return null; }
+}
+
+function hammingBigInt(a: bigint, b: bigint): number {
+  let x = a ^ b, c = 0;
+  while (x) { c += Number(x & 1n); x >>= 1n; }
+  return c;
+}
+
+/** Tick the Terms & Conditions checkbox (required before the bulk PUBLISH ALL,
+ *  and harmless if it's already checked or absent). */
+async function acceptTermsAndConditions(): Promise<void> {
+  try {
+    let terms: HTMLInputElement | null = null;
+    try { terms = await firstMatching<HTMLInputElement>([...TP.termsCheckbox], 4_000); }
+    catch {
+      const cbs = Array.from(document.querySelectorAll<HTMLInputElement>('input[type="checkbox"]'));
+      terms = cbs.find((cb) => /agree|terms|conditions/i.test((cb.closest("label, div, p")?.textContent ?? ""))) ?? null;
+    }
+    if (terms && !terms.checked) {
+      const wrap = terms.closest("label");
+      if (wrap) await fullClick(wrap as HTMLElement); else await fullClick(terms);
+      if (!terms.checked) terms.checked = true;
+      terms.dispatchEvent(new Event("input",  { bubbles: true }));
+      terms.dispatchEvent(new Event("change", { bubbles: true }));
+      log("terms & conditions checked");
+      await sleep(300);
+    } else if (!terms) {
+      log("terms checkbox not found — PUBLISH ALL may be blocked");
+    }
+  } catch (e) {
+    log(`terms handling failed: ${(e as Error).message}`);
+  }
+}
+
+/** Click the first matching control (if present). Returns whether it clicked. */
+async function clickFirst(candidates: string[]): Promise<boolean> {
+  try {
+    const el = await findClickable(candidates, 4_000);
+    await fullClick(el);
+    return true;
+  } catch { return false; }
 }
 
 /** Parse the page's "Currently Editing Design X of N" counter → 0-based index. */

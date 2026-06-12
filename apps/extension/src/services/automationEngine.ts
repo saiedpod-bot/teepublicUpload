@@ -86,6 +86,8 @@ class AutomationEngine {
         imageDataUrls,
         phase: "upload",
         lastDesignId: null,
+        filledItemIds: [],
+        steps: 0,
         startedAt: Date.now(),
       });
 
