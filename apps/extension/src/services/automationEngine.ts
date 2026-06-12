@@ -4,13 +4,12 @@
 // - Delegates all in-page work to the content script via chrome.tabs.sendMessage.
 
 import type { QueueItem } from "@teepublic/shared";
-import { QueueStore, SettingsStore, BulkStateStore } from "./queueStore";
+import { QueueStore, SettingsStore, BulkLogStore } from "./queueStore";
 import { humanDelay } from "../lib/delays";
 
 type EngineState = "idle" | "running" | "paused" | "stopped";
 
 const QUICK_CREATE_URL = "https://www.teepublic.com/design/quick_create";
-const BULK_UPLOAD_URL = "https://www.teepublic.com/designs/bulk_uploader";
 const LOGIN_URL_FRAGMENTS = ["sign_in", "/login", "/users/sign_in", "/auth/", "/account/login"];
 
 class AutomationEngine {
@@ -47,92 +46,24 @@ class AutomationEngine {
       const batch = await QueueStore.get();
       if (!batch) { this.state = "idle"; return; }
 
-      // Bulk mode: upload every selected pending design in one bulk_uploader run.
-      if (settings.uploadMode === "bulk") {
-        const pending = batch.items.filter((i) =>
-          (i.status === "pending" || i.status === "queued") && i.selected !== false
-        );
-        if (pending.length === 0) { this.state = "idle"; return; }
-        await this.runBulk(pending);
-        this.state = "idle";
-        return; // a bulk run handles the whole selection at once
-      }
-
+      // Both Single and Bulk modes process the selection strictly one design at
+      // a time: upload → wait for processing → fill → publish (awaited fully) →
+      // next. "Bulk" just means "keep going through the whole selection". This
+      // sequential approach avoids the scrambling the batched bulk_uploader hit.
       const next = batch.items.find((i) =>
         (i.status === "pending" || i.status === "queued") && i.selected !== false
       );
       if (!next) { this.state = "idle"; return; }
 
+      const remaining = batch.items.filter((i) =>
+        (i.status === "pending" || i.status === "queued") && i.selected !== false
+      ).length;
+      const total = batch.items.filter((i) => i.selected !== false).length;
+      BulkLogStore.append(`── ${total - remaining + 1}/${total}: ${next.metadata.filename} (${next.metadata.title}) ──`);
+
       await this.runOne(next);
       await humanDelay(settings.betweenItemsMinMs, settings.betweenItemsMaxMs);
     }
-  }
-
-  /** Bulk path: persist the run, open /designs/bulk_uploader, and let the
-   *  content script self-drive across navigations (upload → GET STARTED → fill
-   *  each design by its "Design X of N" → NEXT DESIGN → PUBLISH). The content
-   *  script reports each design's status via ITEM_STATUS; we just wait here. */
-  private async runBulk(items: QueueItem[]) {
-    for (const it of items) {
-      await QueueStore.setItemStatus(it.id, "running", { attempts: it.attempts + 1, lastError: undefined });
-    }
-    try {
-      const imageDataUrls: string[] = [];
-      for (const it of items) imageDataUrls.push(await fetchDesignAsDataUrl(it.imageUrl));
-
-      await BulkStateStore.set({
-        active: true,
-        items,
-        imageDataUrls,
-        phase: "upload",
-        lastDesignId: null,
-        filledItemIds: [],
-        steps: 0,
-        startedAt: Date.now(),
-      });
-
-      // Open the bulk uploader; the content script picks up the run on load.
-      const tabId = await this.ensureBulkTab();
-      this.currentTabId = tabId;
-      await ensureContentScriptReady(tabId);
-
-      // Wait until the run finishes (content script clears BulkStateStore) or
-      // a generous cap elapses. Per-item statuses update as designs complete.
-      const deadline = Date.now() + 30 * 60_000;
-      while (Date.now() < deadline) {
-        const st = await BulkStateStore.get();
-        if (!st || !st.active) break;
-        await new Promise((r) => setTimeout(r, 2_000));
-      }
-    } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
-      await BulkStateStore.set(null);
-      for (const it of items) {
-        const batch = await QueueStore.get();
-        const cur = batch?.items.find((i) => i.id === it.id);
-        if (cur?.status === "succeeded") continue; // content script may have already marked it
-        await QueueStore.setItemStatus(it.id, "failed", { lastError: message });
-      }
-    }
-  }
-
-  private async ensureBulkTab(): Promise<number> {
-    if (this.currentTabId != null) {
-      try {
-        const tab = await chrome.tabs.get(this.currentTabId);
-        if (tab && tab.url?.includes("teepublic.com")) {
-          await navigateAndWait(this.currentTabId, BULK_UPLOAD_URL);
-          await assertNotLoginPage(this.currentTabId);
-          return this.currentTabId;
-        }
-      } catch { /* tab gone */ }
-    }
-    const tab = await chrome.tabs.create({ url: BULK_UPLOAD_URL, active: true });
-    if (tab.id == null) throw new Error("failed to open TeePublic bulk uploader tab");
-    this.currentTabId = tab.id;
-    await waitForTabComplete(tab.id);
-    await assertNotLoginPage(tab.id);
-    return tab.id;
   }
 
   private async runOne(item: QueueItem) {
