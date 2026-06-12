@@ -5,6 +5,7 @@
 
 import type { QueueItem } from "@teepublic/shared";
 import { TP, BULK } from "../lib/selectors";
+import { BulkStateStore, type BulkState } from "../services/queueStore";
 import {
   firstMatching,
   setFileInput,
@@ -37,6 +38,10 @@ if (typeof location !== "undefined" && /\/(t-shirt|hoodie|tank-top|crewneck-swea
     console.warn("[teepublic-cs] PUBLISHED_URL_DETECTED send failed:", e);
   }
 }
+
+// Self-drive an in-progress bulk run (if any). The bulk flow spans full page
+// navigations, so we re-enter it on every content-script load.
+void maybeRunBulk();
 
 /** URLs we've already announced as publish-success during this content
  *  script's lifetime. Prevents duplicate success events from re-triggering
@@ -78,10 +83,6 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     }
     if (message?.type === "AUTOMATION_START_ITEM") {
       const result = await runUpload(message.item, message.imageDataUrl);
-      return sendResponse(result);
-    }
-    if (message?.type === "AUTOMATION_BULK") {
-      const result = await runBulkUpload(message.items, message.imageDataUrls);
       return sendResponse(result);
     }
     return sendResponse({ ok: false, error: "unknown message" });
@@ -489,98 +490,93 @@ async function runUpload(
   }
 }
 
-// ─── BULK upload (/designs/bulk_uploader) ─────────────────────────────────
-// Upload all selected designs at once, then fill each design's listing in the
-// order the page presents them. Each design's listing is keyed off the page's
-// OWN "Design X of N" counter (never a counter we keep), so design 1 always
-// gets listing 1, design 2 gets listing 2 — they can never cross.
+// ─── BULK upload (/designs/bulk_uploader) — self-driving across navigations ──
+// A bulk run spans full page loads: bulk_uploader → /designs/<id>/edit (design
+// 1) → NEXT DESIGN → /designs/<id>/edit (design 2) → … → PUBLISH. Each load
+// destroys the content script, so the run is persisted in BulkStateStore and
+// re-entered on every page load via maybeRunBulk(). Each design's listing is
+// keyed off the page's OWN "Design X of N" counter, so design 1 always gets
+// listing 1 — they can never cross.
 
-interface BulkItemResult { id: string; ok: boolean; error?: string; publishedUrl?: string }
-
-async function runBulkUpload(
-  items: QueueItem[],
-  imageDataUrls: string[],
-): Promise<{ ok: boolean; error?: string; results: BulkItemResult[] }> {
-  const results: BulkItemResult[] = items.map((it) => ({ id: it.id, ok: false }));
-  log(`──── BULK upload: ${items.length} design(s) on ${location.pathname} ────`);
+async function maybeRunBulk(): Promise<void> {
+  let state: BulkState | null;
+  try { state = await BulkStateStore.get(); } catch { return; }
+  if (!state || !state.active) return;
+  // Stale guard: abandon runs older than 2h (e.g. the user wandered off).
+  if (Date.now() - state.startedAt > 2 * 60 * 60 * 1000) { await BulkStateStore.set(null); return; }
 
   try {
-    // 1. Drop ALL files into the multi-file input, in queue order.
-    const input = await firstMatching<HTMLInputElement>([...BULK.multiFileInput], 15_000);
-    const files = items.map((it, i) =>
-      dataUrlToFile(imageDataUrls[i], it.metadata.filename || `design_${i + 1}.png`, it.imageMime || "image/png"));
-    await setFileInputMultiple(input, files);
-    log(`dispatched ${files.length} files to the bulk uploader`);
-
-    // 2. GET STARTED — wait for it to be present/clickable (thumbnails mount async).
-    const getStarted = await findClickable([...BULK.getStarted], 60_000);
-    await fullClick(getStarted);
-    log(`clicked GET STARTED`);
-
-    // 3. Wait for the first design's editor.
-    await waitForFormReady();
-
-    // 4. Loop designs by the PAGE's own counter.
-    const n = items.length;
-    let guard = 0;
-    while (guard++ < n + 3) {
-      const pos = readCurrentDesignIndex();
-      if (!pos) { log(`⚠ couldn't read "Design X of N" — stopping bulk loop`); break; }
-      const { index, total } = pos;
-      log(`── editing design ${index + 1} of ${total} (queue has ${n}) ──`);
-      if (index < 0 || index >= n) { log(`⚠ design index ${index} out of range — stopping`); break; }
-
-      const item = items[index];
-      const filled = new Set<Element>();
-      let fill: { ok: true } | { ok: false; error: string };
-      try {
-        fill = await fillCurrentDesign(item, filled);
-      } catch (e) {
-        fill = { ok: false, error: e instanceof Error ? e.message : String(e) };
-      }
-      results[index] = { id: item.id, ok: fill.ok, error: fill.ok ? undefined : fill.error };
-      log(`design ${index + 1} (${item.metadata.filename}): ${fill.ok ? "filled ✓" : "FAILED — " + fill.error}`);
-
-      const isLast = index >= total - 1;
-      if (isLast) {
-        // 5. Publish the whole bulk.
-        const beforeUrl = location.href;
-        const publish = await findClickable([...TP.publishButton], 15_000);
-        await fullClick(publish);
-        log(`clicked PUBLISH (final design ${index + 1}/${total})`);
-        const changed = await waitForUrlChangeAwayFromEdit(beforeUrl, 60_000);
-        const finalUrl = location.href;
-        for (const r of results) if (r.ok) r.publishedUrl = finalUrl;
-        log(changed ? `bulk published → ${finalUrl}` : `⚠ bulk publish: URL didn't change in 60s — verify manually`);
-        break;
-      }
-
-      // 6. Advance to the next design and wait for the editor to re-render.
-      const next = await findClickable([...BULK.nextDesign], 15_000);
-      await fullClick(next);
-      log(`clicked NEXT DESIGN`);
-      await waitForDesignIndexChange(index, 25_000);
-      await waitForFormReady().catch(() => { /* best-effort */ });
+    if (/\/designs\/bulk_uploader/.test(location.pathname) && state.phase === "upload") {
+      await bulkUploadAllAndStart(state);
+    } else if (/\/designs\/\d+\/edit/.test(location.pathname) && state.phase === "editing") {
+      await bulkEditCurrentDesign(state);
     }
   } catch (e) {
-    const msg = e instanceof Error ? e.message : String(e);
-    log(`✗ bulk upload aborted: ${msg}`);
-    // Report whatever we managed; unfilled ones stay failed.
-    for (const r of results) {
-      if (r.ok) fireItemStatus(r.id, "succeeded", r.publishedUrl);
-      else fireItemStatus(r.id, "failed", undefined, r.error ?? msg);
-    }
-    return { ok: false, error: msg, results };
+    log(`bulk self-drive error: ${e instanceof Error ? e.message : String(e)}`);
+  }
+}
+
+// On /designs/bulk_uploader: drop all files, then click GET STARTED (which
+// navigates to the first design's editor).
+async function bulkUploadAllAndStart(state: BulkState): Promise<void> {
+  log(`──── BULK: uploading ${state.items.length} design(s) ────`);
+  const input = await firstMatching<HTMLInputElement>([...BULK.multiFileInput], 15_000);
+  const files = state.items.map((it, i) =>
+    dataUrlToFile(state.imageDataUrls[i], it.metadata.filename || `design_${i + 1}.png`, it.imageMime || "image/png"));
+  await setFileInputMultiple(input, files);
+  await sleep(500);
+  log(`dispatched ${files.length} files (input holds ${input.files?.length ?? 0})`);
+
+  const getStarted = await findClickable([...BULK.getStarted], 60_000);
+  // Flip to "editing" BEFORE navigating, so the next page load fills designs.
+  await BulkStateStore.patch({ phase: "editing", lastDesignId: null });
+  await sleep(400);
+  await fullClick(getStarted);
+  log(`clicked GET STARTED — navigating to the first design`);
+}
+
+// On /designs/<id>/edit: fill the design the page is showing (keyed off its
+// "Design X of N"), then NEXT DESIGN (or PUBLISH on the last). Re-entered on
+// each navigation.
+async function bulkEditCurrentDesign(state: BulkState): Promise<void> {
+  const designId = (location.pathname.match(/\/designs\/(\d+)\/edit/) || [])[1] || null;
+  // Dedupe: never fill the same design twice (guards spurious re-inits).
+  if (designId && designId === state.lastDesignId) {
+    log(`bulk: design ${designId} already handled — skipping`);
+    return;
   }
 
-  // Report per-item statuses so the queue reflects each design individually.
-  for (const r of results) {
-    if (r.ok) fireItemStatus(r.id, "succeeded", r.publishedUrl);
-    else fireItemStatus(r.id, "failed", undefined, r.error);
+  await waitForFormReady();
+  const pos = readCurrentDesignIndex();
+  if (!pos) { log(`bulk: couldn't read "Design X of N" — aborting bulk`); await BulkStateStore.set(null); return; }
+  const { index, total } = pos;
+  if (index < 0 || index >= state.items.length) {
+    log(`bulk: design index ${index} out of range [0,${state.items.length}) — aborting`);
+    await BulkStateStore.set(null);
+    return;
   }
-  const okCount = results.filter((r) => r.ok).length;
-  log(`bulk done: ${okCount}/${items.length} filled`);
-  return { ok: okCount > 0, results };
+  const item = state.items[index];
+  log(`── bulk editing design ${index + 1} of ${total} (${item.metadata.filename}) ──`);
+  // Mark this design handled up-front so a mid-fill re-init can't double it.
+  await BulkStateStore.patch({ lastDesignId: designId });
+
+  let fill: { ok: true } | { ok: false; error: string };
+  try { fill = await fillCurrentDesign(item, new Set<Element>()); }
+  catch (e) { fill = { ok: false, error: e instanceof Error ? e.message : String(e) }; }
+  fireItemStatus(item.id, fill.ok ? "succeeded" : "failed", undefined, fill.ok ? undefined : fill.error);
+  log(`design ${index + 1} (${item.metadata.filename}): ${fill.ok ? "filled ✓" : "FAILED — " + fill.error}`);
+
+  const isLast = index >= total - 1;
+  if (isLast) {
+    log(`bulk: last design — clicking PUBLISH`);
+    await BulkStateStore.set(null); // run complete
+    const publish = await findClickable([...TP.publishButton], 15_000);
+    await fullClick(publish);
+  } else {
+    const next = await findClickable([...BULK.nextDesign], 15_000);
+    await fullClick(next);
+    log(`clicked NEXT DESIGN — navigating to design ${index + 2}`);
+  }
 }
 
 /** Parse the page's "Currently Editing Design X of N" counter → 0-based index. */

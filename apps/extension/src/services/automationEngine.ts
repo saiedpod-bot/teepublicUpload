@@ -4,7 +4,7 @@
 // - Delegates all in-page work to the content script via chrome.tabs.sendMessage.
 
 import type { QueueItem } from "@teepublic/shared";
-import { QueueStore, SettingsStore } from "./queueStore";
+import { QueueStore, SettingsStore, BulkStateStore } from "./queueStore";
 import { humanDelay } from "../lib/delays";
 
 type EngineState = "idle" | "running" | "paused" | "stopped";
@@ -68,35 +68,43 @@ class AutomationEngine {
     }
   }
 
-  /** Bulk path: open /designs/bulk_uploader, upload all images, and let the
-   *  content script fill each design's listing in page order (Design X of N). */
+  /** Bulk path: persist the run, open /designs/bulk_uploader, and let the
+   *  content script self-drive across navigations (upload → GET STARTED → fill
+   *  each design by its "Design X of N" → NEXT DESIGN → PUBLISH). The content
+   *  script reports each design's status via ITEM_STATUS; we just wait here. */
   private async runBulk(items: QueueItem[]) {
     for (const it of items) {
       await QueueStore.setItemStatus(it.id, "running", { attempts: it.attempts + 1, lastError: undefined });
     }
     try {
-      const tabId = await this.ensureBulkTab();
-      this.currentTabId = tabId;
-
       const imageDataUrls: string[] = [];
       for (const it of items) imageDataUrls.push(await fetchDesignAsDataUrl(it.imageUrl));
 
-      await ensureContentScriptReady(tabId);
-      const result = await sendToTab<{
-        ok: boolean; error?: string;
-        results?: { id: string; ok: boolean; error?: string; publishedUrl?: string }[];
-      }>(tabId, { type: "AUTOMATION_BULK", items, imageDataUrls });
+      await BulkStateStore.set({
+        active: true,
+        items,
+        imageDataUrls,
+        phase: "upload",
+        lastDesignId: null,
+        startedAt: Date.now(),
+      });
 
-      if (result?.results?.length) {
-        for (const r of result.results) {
-          if (r.ok) await QueueStore.setItemStatus(r.id, "succeeded", { publishedUrl: r.publishedUrl });
-          else      await QueueStore.setItemStatus(r.id, "failed", { lastError: r.error });
-        }
-      } else if (!result?.ok) {
-        for (const it of items) await QueueStore.setItemStatus(it.id, "failed", { lastError: result?.error ?? "bulk upload failed" });
+      // Open the bulk uploader; the content script picks up the run on load.
+      const tabId = await this.ensureBulkTab();
+      this.currentTabId = tabId;
+      await ensureContentScriptReady(tabId);
+
+      // Wait until the run finishes (content script clears BulkStateStore) or
+      // a generous cap elapses. Per-item statuses update as designs complete.
+      const deadline = Date.now() + 30 * 60_000;
+      while (Date.now() < deadline) {
+        const st = await BulkStateStore.get();
+        if (!st || !st.active) break;
+        await new Promise((r) => setTimeout(r, 2_000));
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
+      await BulkStateStore.set(null);
       for (const it of items) {
         const batch = await QueueStore.get();
         const cur = batch?.items.find((i) => i.id === it.id);

@@ -74,6 +74,39 @@ export const QueueStore = {
   },
 };
 
+// ── Bulk-run state ─────────────────────────────────────────────────────────
+// A bulk upload spans several full page navigations (bulk_uploader → each
+// /designs/<id>/edit), each of which destroys the content script. So the run
+// is persisted here and the content script self-drives off it on every load.
+const BULK_KEY = "teepublic.bulk";
+
+export interface BulkState {
+  active: boolean;
+  items: QueueItem[];
+  imageDataUrls: string[];
+  phase: "upload" | "editing";
+  lastDesignId: string | null; // design id we last filled — dedupes re-inits
+  startedAt: number;
+}
+
+export const BulkStateStore = {
+  async get(): Promise<BulkState | null> {
+    const all = await chrome.storage.local.get(BULK_KEY);
+    return (all[BULK_KEY] as BulkState | undefined) ?? null;
+  },
+  async set(state: BulkState | null): Promise<void> {
+    if (state == null) await chrome.storage.local.remove(BULK_KEY);
+    else await chrome.storage.local.set({ [BULK_KEY]: state });
+  },
+  async patch(p: Partial<BulkState>): Promise<BulkState | null> {
+    const cur = await this.get();
+    if (!cur) return null;
+    const next = { ...cur, ...p };
+    await chrome.storage.local.set({ [BULK_KEY]: next });
+    return next;
+  },
+};
+
 export const SettingsStore = {
   async get(): Promise<ExtensionSettings> {
     const all = await chrome.storage.local.get(SETTINGS_KEY);
