@@ -557,20 +557,33 @@ async function bulkEditCurrentDesign(state: BulkState): Promise<void> {
 
   // Match the design the page is SHOWING to the right queue item by its image
   // (robust to TeePublic reordering and to leftover designs from prior runs).
-  const matchIndex = await matchDisplayedDesign(state);
+  const m = await matchDisplayedDesign(state);
+  let matchIndex = -1;
+  if (m.kind === "match") {
+    matchIndex = m.index;
+  } else if (m.kind === "unknown") {
+    // Couldn't read the displayed artwork (e.g. cross-origin). Fall back to the
+    // page's own "Design X of N" so filling still proceeds.
+    const pos = readCurrentDesignIndex();
+    if (pos && pos.index >= 0 && pos.index < state.items.length && !state.filledItemIds.includes(state.items[pos.index].id)) {
+      matchIndex = pos.index;
+      log(`bulk: image unreadable — falling back to page index ${pos.index + 1}`);
+    } else {
+      log(`bulk: image unreadable and page index unusable (${pos ? `${pos.index + 1}/${pos.total}` : "no counter"})`);
+    }
+  }
+  // m.kind === "leftover" → matchIndex stays -1 → skip-cancel below.
 
   if (matchIndex < 0) {
-    // Not one of our designs (a leftover) or already filled — drop it from the
-    // batch so it isn't published with the wrong/empty listing.
-    log(`bulk: displayed design isn't an unfilled item of this run — skip & cancel`);
-    if (await clickFirst([...BULK.skipDesign])) {
-      log(`clicked "Skip & Cancel This Design"`);
-    } else if (await clickFirst([...BULK.nextDesign])) {
-      log(`(no Skip link) clicked NEXT DESIGN to move past it`);
-    } else {
-      log(`bulk: no skip/next control — aborting`);
-      await BulkStateStore.set(null);
+    if (m.kind === "leftover") {
+      log(`bulk: displayed design isn't part of this run — skip & cancel`);
+      if (await clickFirst([...BULK.skipDesign])) { log(`clicked "Skip & Cancel This Design"`); return; }
     }
+    // Can't fill and not a known leftover — just advance.
+    if (await clickFirst([...BULK.nextDesign])) { log(`clicked NEXT DESIGN to move on`); return; }
+    if (await clickFirst([...BULK.skipDesign])) { log(`clicked "Skip & Cancel This Design"`); return; }
+    log(`bulk: no skip/next control — aborting`);
+    await BulkStateStore.set(null);
     return;
   }
 
@@ -604,16 +617,20 @@ async function bulkEditCurrentDesign(state: BulkState): Promise<void> {
   }
 }
 
+type DesignMatch =
+  | { kind: "match"; index: number }   // confidently one of our unfilled items
+  | { kind: "leftover" }               // hash read OK but matches none of ours
+  | { kind: "unknown" };               // couldn't read the artwork (CORS / none)
+
 // Match the design currently shown in the editor to one of THIS run's unfilled
-// items, by perceptual (average) hash of the artwork. Returns the item index,
-// or -1 if it's a leftover / already filled / can't be matched.
-async function matchDisplayedDesign(state: BulkState): Promise<number> {
+// items, by perceptual (average) hash of the artwork.
+async function matchDisplayedDesign(state: BulkState): Promise<DesignMatch> {
   const img = findArtworkImg();
-  if (!img) { log(`bulk: no artwork image found — can't match`); return -1; }
+  if (!img) { log(`bulk: no artwork image found`); return { kind: "unknown" }; }
   const dispHash = await imageAHash(img.currentSrc || img.src);
   if (dispHash == null) {
-    log(`bulk: displayed artwork not readable (CORS) — can't image-match`);
-    return -1;
+    log(`bulk: displayed artwork not readable (CORS) — using page index instead`);
+    return { kind: "unknown" };
   }
   let best = -1, bestDist = 99;
   for (let k = 0; k < state.imageDataUrls.length; k++) {
@@ -624,7 +641,8 @@ async function matchDisplayedDesign(state: BulkState): Promise<number> {
     if (d < bestDist) { bestDist = d; best = k; }
   }
   log(`bulk: image match → index ${best} (distance ${best < 0 ? "n/a" : bestDist})`);
-  return bestDist <= 16 ? best : -1; // require a confident match
+  if (best >= 0 && bestDist <= 16) return { kind: "match", index: best };
+  return { kind: "leftover" };
 }
 
 /** The large design-preview <img> in the editor (biggest visible image). */
