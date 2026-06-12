@@ -91,6 +91,9 @@ export async function setFileInput(input: HTMLInputElement, file: File): Promise
 
 /** Like setFileInput but loads MANY files at once (TeePublic's bulk uploader). */
 export async function setFileInputMultiple(input: HTMLInputElement, files: File[]): Promise<void> {
+  // Force the input to accept multiple — some dropzones omit the attribute and
+  // would otherwise keep only the first file.
+  try { input.multiple = true; input.setAttribute("multiple", ""); } catch { /* readonly */ }
   const dt = new DataTransfer();
   for (const f of files) dt.items.add(f);
   input.files = dt.files;

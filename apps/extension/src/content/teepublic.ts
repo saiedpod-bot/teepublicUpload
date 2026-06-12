@@ -959,11 +959,10 @@ async function findClickable(candidates: string[], timeoutMs = 8_000): Promise<H
   const start = Date.now();
   while (Date.now() - start < timeoutMs) {
     for (const sel of candidates) {
-      const m = sel.match(/^([a-zA-Z]+):contains\("(.+?)"\)$/);
+      const m = sel.match(/^([a-zA-Z*]+):contains\("(.+?)"\)$/);
       if (m) {
         const [, tag, text] = m;
-        const els = Array.from(document.querySelectorAll<HTMLElement>(tag));
-        const hit = els.find((e) => e.textContent?.trim().toLowerCase() === text.toLowerCase());
+        const hit = findByVisibleText(tag, text);
         if (hit) return hit;
       } else {
         const el = document.querySelector<HTMLElement>(sel);
@@ -973,6 +972,43 @@ async function findClickable(candidates: string[], timeoutMs = 8_000): Promise<H
     await sleep(150);
   }
   throw new Error(`no clickable matched: ${candidates.join(" | ")}`);
+}
+
+/** Find a clickable element by its visible text. Tolerant: searches common
+ *  clickable tags (not just the named one), matches the element's own text
+ *  (exact, then "contains" for short labels) or an <input>'s value, and
+ *  returns the nearest button-like ancestor so we click the control, not a
+ *  text node inside it. */
+function findByVisibleText(tag: string, text: string): HTMLElement | null {
+  const want = text.trim().toLowerCase();
+  const scope = tag === "*" || tag === "button" || tag === "a"
+    ? "button, a, [role='button'], input[type='submit'], input[type='button'], div, span, label"
+    : tag;
+  const els = Array.from(document.querySelectorAll<HTMLElement>(scope))
+    .filter((e) => { const r = e.getBoundingClientRect(); return r.width > 0 && r.height > 0; });
+
+  const textOf = (e: HTMLElement) =>
+    (e instanceof HTMLInputElement ? e.value : (e.textContent ?? "")).trim().toLowerCase();
+
+  // 1. exact label
+  let hit = els.find((e) => textOf(e) === want);
+  // 2. short element that contains the label (avoids matching big wrappers)
+  if (!hit) hit = els.find((e) => { const t = textOf(e); return t.includes(want) && t.length <= want.length + 16; });
+  if (!hit) return null;
+  return clickableAncestor(hit);
+}
+
+/** Walk up to the nearest button/link/role=button, else return the element. */
+function clickableAncestor(el: HTMLElement): HTMLElement {
+  let cur: HTMLElement | null = el;
+  for (let i = 0; cur && i < 5; i++, cur = cur.parentElement) {
+    const tag = cur.tagName.toLowerCase();
+    if (tag === "button" || tag === "a" || cur.getAttribute("role") === "button" ||
+        (tag === "input" && /submit|button/i.test((cur as HTMLInputElement).type))) {
+      return cur;
+    }
+  }
+  return el;
 }
 
 function log(msg: string) {
