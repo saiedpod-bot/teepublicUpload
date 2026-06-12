@@ -1,5 +1,5 @@
 import type { QueueBatch, QueueItem } from "@teepublic/shared";
-import { QueueStore, SettingsStore, type UploadMode } from "../services/queueStore";
+import { QueueStore, SettingsStore, BulkLogStore, type UploadMode } from "../services/queueStore";
 
 function $(id: string) { return document.getElementById(id) as HTMLElement; }
 
@@ -120,6 +120,20 @@ async function init() {
     const next: UploadMode = cur === "bulk" ? "single" : "bulk";
     await SettingsStore.set({ uploadMode: next });
     paintMode(next);
+  };
+
+  // Copy the captured bulk run log to the clipboard for diagnostics.
+  const logBtn = $("btn-log");
+  logBtn.onclick = async () => {
+    const lines = await BulkLogStore.get();
+    const text = lines.join("\n") || "(no log captured yet)";
+    try {
+      await navigator.clipboard.writeText(text);
+      logBtn.textContent = `Copied ${lines.length} lines`;
+    } catch {
+      logBtn.textContent = "Copy failed";
+    }
+    setTimeout(() => { logBtn.textContent = "Copy log"; }, 2000);
   };
 
   // Stable controls (independent of grid contents).

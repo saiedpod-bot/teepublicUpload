@@ -5,7 +5,7 @@
 
 import type { QueueItem } from "@teepublic/shared";
 import { TP, BULK } from "../lib/selectors";
-import { BulkStateStore, type BulkState } from "../services/queueStore";
+import { BulkStateStore, BulkLogStore, type BulkState } from "../services/queueStore";
 import {
   firstMatching,
   setFileInput,
@@ -1155,4 +1155,5 @@ function clickableAncestor(el: HTMLElement): HTMLElement {
 
 function log(msg: string) {
   console.info("[teepublic-cs]", msg);
+  BulkLogStore.append(msg);
 }

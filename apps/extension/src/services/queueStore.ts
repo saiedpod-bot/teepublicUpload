@@ -109,6 +109,30 @@ export const BulkStateStore = {
   },
 };
 
+// ── Bulk run log ────────────────────────────────────────────────────────────
+// The bulk flow spans page navigations, so its console logs are scattered
+// across tabs. Mirror them into storage so the popup can offer a one-click
+// "Copy log" for diagnostics.
+const BULK_LOG_KEY = "teepublic.bulklog";
+let _logChain: Promise<void> = Promise.resolve();
+
+export const BulkLogStore = {
+  append(line: string): void {
+    _logChain = _logChain.then(async () => {
+      const all = await chrome.storage.local.get(BULK_LOG_KEY);
+      const arr = (all[BULK_LOG_KEY] as string[] | undefined) ?? [];
+      arr.push(`${new Date().toISOString().slice(11, 19)} ${line}`);
+      while (arr.length > 500) arr.shift();
+      await chrome.storage.local.set({ [BULK_LOG_KEY]: arr });
+    }).catch(() => { /* logging must never throw */ });
+  },
+  async get(): Promise<string[]> {
+    const all = await chrome.storage.local.get(BULK_LOG_KEY);
+    return (all[BULK_LOG_KEY] as string[] | undefined) ?? [];
+  },
+  async clear(): Promise<void> { await chrome.storage.local.remove(BULK_LOG_KEY); },
+};
+
 export const SettingsStore = {
   async get(): Promise<ExtensionSettings> {
     const all = await chrome.storage.local.get(SETTINGS_KEY);
