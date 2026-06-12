@@ -141,6 +141,12 @@ button.small {
   font-size: 11px;
 }
 
+.pager {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  padding: 4px 14px 10px;
+}
+.pager button.small[disabled] { opacity: 0.4; cursor: default; }
+
 .empty {
   margin: 0; padding: 12px 14px 16px;
   color: var(--muted); font-size: 12px;

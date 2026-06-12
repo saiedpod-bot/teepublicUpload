@@ -20,6 +20,9 @@ function tileHtml(item: QueueItem): string {
 
 let lastBatch: QueueBatch | null = null;
 
+const PAGE_SIZE = 12;
+let currentPage = 0; // 0-based
+
 function render(batch: QueueBatch | null) {
   lastBatch = batch;
   const total = batch?.items.length ?? 0;
@@ -32,15 +35,38 @@ function render(batch: QueueBatch | null) {
   $("s-fail").textContent   = String(fail);
   ($("empty") as HTMLElement).style.display = batch ? "none" : "block";
 
+  // Paginate: show PAGE_SIZE tiles per page. Stats above stay whole-batch.
+  const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  if (currentPage > pageCount - 1) currentPage = pageCount - 1;
+  if (currentPage < 0) currentPage = 0;
+  const start = currentPage * PAGE_SIZE;
+  const pageItems = batch ? batch.items.slice(start, start + PAGE_SIZE) : [];
+
   const grid = $("grid");
-  grid.innerHTML = batch ? batch.items.map(tileHtml).join("") : "";
+  grid.innerHTML = pageItems.map(tileHtml).join("");
   $("picked-summary").textContent = batch ? `${picked} of ${total} selected for upload` : "";
 
   // Toggle button label flips based on current state.
   const allSelected = total > 0 && picked === total;
   $("btn-toggle-all").textContent = allSelected ? "Deselect all" : "Select all";
 
+  renderPager(total, pageCount, start, pageItems.length);
   wireTiles(grid);
+}
+
+function renderPager(total: number, pageCount: number, start: number, shown: number): void {
+  const pager = $("pager");
+  if (total <= PAGE_SIZE) { pager.innerHTML = ""; pager.style.display = "none"; return; }
+  pager.style.display = "flex";
+  const from = total === 0 ? 0 : start + 1;
+  const to = start + shown;
+  pager.innerHTML = `
+    <button id="pg-prev" class="small" ${currentPage === 0 ? "disabled" : ""}>‹ Prev</button>
+    <span class="muted-sm">${from}–${to} of ${total} · page ${currentPage + 1}/${pageCount}</span>
+    <button id="pg-next" class="small" ${currentPage >= pageCount - 1 ? "disabled" : ""}>Next ›</button>
+  `;
+  ($("pg-prev") as HTMLButtonElement).onclick = () => { currentPage--; render(lastBatch); };
+  ($("pg-next") as HTMLButtonElement).onclick = () => { currentPage++; render(lastBatch); };
 }
 
 function wireTiles(grid: HTMLElement) {
