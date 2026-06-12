@@ -622,27 +622,45 @@ type DesignMatch =
   | { kind: "leftover" }               // hash read OK but matches none of ours
   | { kind: "unknown" };               // couldn't read the artwork (CORS / none)
 
+// Accept the closest design if it's within this Hamming distance (out of 64).
+// TeePublic re-encodes/resizes via Cloudinary, so even the correct match sits
+// around ~20; unrelated designs land ~32+. 26 separates the two.
+const PHASH_ACCEPT_MAX = 26;
+const PHASH_MARGIN_WARN = 6;
+
 // Match the design currently shown in the editor to one of THIS run's unfilled
-// items, by perceptual (average) hash of the artwork.
+// items, by a perceptual difference-hash (dHash) of the artwork — robust to the
+// resize + re-encode TeePublic's Cloudinary CDN applies.
 async function matchDisplayedDesign(state: BulkState): Promise<DesignMatch> {
   const img = findArtworkImg();
   if (!img) { log(`bulk: no artwork image found`); return { kind: "unknown" }; }
-  const dispHash = await imageAHash(img.currentSrc || img.src);
+  const dispHash = await imageDHash(img.currentSrc || img.src);
   if (dispHash == null) {
     log(`bulk: displayed artwork not readable (CORS) — using page index instead`);
     return { kind: "unknown" };
   }
-  let best = -1, bestDist = 99;
+
+  const cands: { index: number; name: string; d: number }[] = [];
   for (let k = 0; k < state.imageDataUrls.length; k++) {
     if (state.filledItemIds.includes(state.items[k].id)) continue; // already done
-    const hk = await imageAHash(state.imageDataUrls[k]);
+    const hk = await imageDHash(state.imageDataUrls[k]);
     if (hk == null) continue;
     const d = hammingBigInt(hk, dispHash);
-    if (d < bestDist) { bestDist = d; best = k; }
+    cands.push({ index: k, name: state.items[k].metadata.filename, d });
+    log(`bulk: phash candidate ${state.items[k].metadata.filename} hamming=${d}`);
   }
-  log(`bulk: image match → index ${best} (distance ${best < 0 ? "n/a" : bestDist})`);
-  if (best >= 0 && bestDist <= 16) return { kind: "match", index: best };
-  return { kind: "leftover" };
+  if (cands.length === 0) return { kind: "unknown" };
+
+  cands.sort((a, b) => a.d - b.d);
+  const best = cands[0];
+  const second = cands[1];
+  const margin = second ? second.d - best.d : 64;
+  const accept = best.d <= PHASH_ACCEPT_MAX;
+  log(`bulk: best match ${best.name} hamming=${best.d}${second ? ` (2nd=${second.d}, margin=${margin})` : ""} → ${accept ? "accept" : "skip"}`);
+  if (accept && second && margin < PHASH_MARGIN_WARN) {
+    log(`bulk: ⚠ close call (margin ${margin}) — taking the nearest by image`);
+  }
+  return accept ? { kind: "match", index: best.index } : { kind: "leftover" };
 }
 
 /** The large design-preview <img> in the editor (biggest visible image). */
@@ -654,8 +672,10 @@ function findArtworkImg(): HTMLImageElement | null {
   return imgs[0];
 }
 
-/** 64-bit average hash of an image (transparent pixels composited over white). */
-async function imageAHash(src: string): Promise<bigint | null> {
+/** 64-bit difference hash (dHash). Downscale to 9×8 over a white background
+ *  (designs are transparent PNGs), grayscale, then bit = left pixel brighter
+ *  than its right neighbour. Robust to resize + JPEG/Cloudinary re-encode. */
+async function imageDHash(src: string): Promise<bigint | null> {
   try {
     const im = await new Promise<HTMLImageElement>((res, rej) => {
       const el = new Image();
@@ -664,22 +684,24 @@ async function imageAHash(src: string): Promise<bigint | null> {
       el.onerror = () => rej(new Error("img load failed"));
       el.src = src;
     });
-    const c = document.createElement("canvas"); c.width = 8; c.height = 8;
+    const W = 9, H = 8;
+    const c = document.createElement("canvas"); c.width = W; c.height = H;
     const ctx = c.getContext("2d", { willReadFrequently: true });
     if (!ctx) return null;
-    ctx.drawImage(im, 0, 0, 8, 8);
-    const data = ctx.getImageData(0, 0, 8, 8).data; // throws if cross-origin tainted
-    const gray: number[] = [];
-    for (let i = 0; i < 64; i++) {
-      const a = data[i * 4 + 3] / 255;
-      const r = data[i * 4] * a + 255 * (1 - a);
-      const g = data[i * 4 + 1] * a + 255 * (1 - a);
-      const b = data[i * 4 + 2] * a + 255 * (1 - a);
-      gray.push(0.299 * r + 0.587 * g + 0.114 * b);
+    ctx.fillStyle = "#ffffff"; ctx.fillRect(0, 0, W, H); // composite transparency over white
+    ctx.drawImage(im, 0, 0, W, H);
+    const data = ctx.getImageData(0, 0, W, H).data; // throws if cross-origin tainted
+    const gray = (x: number, y: number): number => {
+      const i = (y * W + x) * 4;
+      return 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+    };
+    let h = 0n, bit = 0n;
+    for (let y = 0; y < H; y++) {
+      for (let x = 0; x < W - 1; x++) {
+        if (gray(x, y) > gray(x + 1, y)) h |= (1n << bit);
+        bit++;
+      }
     }
-    const avg = gray.reduce((s, v) => s + v, 0) / 64;
-    let h = 0n;
-    for (let i = 0; i < 64; i++) if (gray[i] >= avg) h |= (1n << BigInt(i));
     return h;
   } catch { return null; }
 }
