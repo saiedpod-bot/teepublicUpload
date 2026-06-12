@@ -555,40 +555,25 @@ async function bulkEditCurrentDesign(state: BulkState): Promise<void> {
   await waitForFormReady();
   await BulkStateStore.patch({ lastDesignId: designId, steps: state.steps + 1 });
 
-  // Match the design the page is SHOWING to the right queue item by its image
-  // (robust to TeePublic reordering and to leftover designs from prior runs).
+  // Identify which design the editor is showing (position-primary, phash-confirm).
   const m = await matchDisplayedDesign(state);
-  let matchIndex = -1;
-  if (m.kind === "match") {
-    matchIndex = m.index;
-  } else if (m.kind === "unknown") {
-    // Couldn't read the displayed artwork (e.g. cross-origin). Fall back to the
-    // page's own "Design X of N" so filling still proceeds.
-    const pos = readCurrentDesignIndex();
-    if (pos && pos.index >= 0 && pos.index < state.items.length && !state.filledItemIds.includes(state.items[pos.index].id)) {
-      matchIndex = pos.index;
-      log(`bulk: image unreadable — falling back to page index ${pos.index + 1}`);
-    } else {
-      log(`bulk: image unreadable and page index unusable (${pos ? `${pos.index + 1}/${pos.total}` : "no counter"})`);
-    }
-  }
-  // m.kind === "leftover" → matchIndex stays -1 → skip-cancel below.
 
-  if (matchIndex < 0) {
-    if (m.kind === "leftover") {
-      log(`bulk: displayed design isn't part of this run — skip & cancel`);
-      if (await clickFirst([...BULK.skipDesign])) { log(`clicked "Skip & Cancel This Design"`); return; }
-    }
-    // Can't fill and not a known leftover — just advance.
-    if (await clickFirst([...BULK.nextDesign])) { log(`clicked NEXT DESIGN to move on`); return; }
+  if (m.kind !== "match") {
+    // leftover (matches none of ours) or unknown (can't identify) — drop it so
+    // it isn't published with the wrong/empty listing, then move on.
+    log(m.kind === "leftover"
+      ? `bulk: displayed design isn't part of this run — skip & cancel`
+      : `bulk: couldn't identify the displayed design — skipping it`);
     if (await clickFirst([...BULK.skipDesign])) { log(`clicked "Skip & Cancel This Design"`); return; }
+    if (await clickFirst([...BULK.nextDesign])) { log(`clicked NEXT DESIGN to move on`); return; }
     log(`bulk: no skip/next control — aborting`);
     await BulkStateStore.set(null);
     return;
   }
 
+  const matchIndex = m.index;
   const item = state.items[matchIndex];
-  log(`── bulk editing → item ${matchIndex + 1} (${item.metadata.filename}) [matched by image] ──`);
+  log(`── bulk editing → item ${matchIndex + 1} (${item.metadata.filename}) ──`);
 
   let fill: { ok: true } | { ok: false; error: string };
   try { fill = await fillCurrentDesign(item, new Set<Element>()); }
@@ -622,27 +607,54 @@ type DesignMatch =
   | { kind: "leftover" }               // hash read OK but matches none of ours
   | { kind: "unknown" };               // couldn't read the artwork (CORS / none)
 
-// Accept the closest design if it's within this Hamming distance (out of 64).
-// TeePublic re-encodes/resizes via Cloudinary, so even the correct match sits
-// around ~20; unrelated designs land ~32+. 26 separates the two.
-const PHASH_ACCEPT_MAX = 26;
-const PHASH_MARGIN_WARN = 6;
+// phash thresholds (Hamming out of 64). Cloudinary resize/re-encode pushes even
+// the correct match to ~20–25; unrelated designs land ~32+.
+const PHASH_ACCEPT_MAX = 28; // phash-best fallback accepts at/under this
+const PHASH_DESYNC_MAX = 35; // position pick is rejected as desync only above this
 
-// Match the design currently shown in the editor to one of THIS run's unfilled
-// items, by a perceptual difference-hash (dHash) of the artwork — robust to the
-// resize + re-encode TeePublic's Cloudinary CDN applies.
+// Identify the design the editor is SHOWING.
+//   PRIMARY: upload position — TeePublic edits designs strictly in the order
+//   they were dispatched to the file input and shows "Currently Editing Design
+//   X of N". state.items is in that exact dispatch order, so position X → item
+//   X-1. This is deterministic.
+//   CONFIRM: a perceptual dHash sanity-checks the position pick and, if it's
+//   wildly off (order desync from leftover designs), falls back to phash-best.
 async function matchDisplayedDesign(state: BulkState): Promise<DesignMatch> {
   const img = findArtworkImg();
-  if (!img) { log(`bulk: no artwork image found`); return { kind: "unknown" }; }
-  const dispHash = await imageDHash(img.currentSrc || img.src);
-  if (dispHash == null) {
-    log(`bulk: displayed artwork not readable (CORS) — using page index instead`);
-    return { kind: "unknown" };
+  const dispHash = img ? await imageDHash(img.currentSrc || img.src) : null;
+  const pos = readCurrentDesignIndex();
+
+  // ── PRIMARY: position ──────────────────────────────────────────────────
+  if (pos && pos.index >= 0 && pos.index < state.items.length &&
+      !state.filledItemIds.includes(state.items[pos.index].id)) {
+    const idx = pos.index;
+    const name = state.items[idx].metadata.filename;
+    if (dispHash != null) {
+      const hk = await imageDHash(state.imageDataUrls[idx]);
+      const d = hk != null ? hammingBigInt(hk, dispHash) : null;
+      if (d == null || d <= PHASH_DESYNC_MAX) {
+        log(`bulk: position 'Design ${idx + 1} of ${pos.total}' → run[${idx}] = ${name}` +
+            (d == null ? ` (phash n/a)` : ` (phash confirm hamming=${d} ${d <= PHASH_ACCEPT_MAX ? "✓" : "~"})`));
+        return { kind: "match", index: idx };
+      }
+      log(`bulk: position → run[${idx}] = ${name} but phash hamming=${d} > ${PHASH_DESYNC_MAX} — likely order desync, trying phash-best`);
+      // fall through to phash-best
+    } else {
+      log(`bulk: position 'Design ${idx + 1} of ${pos.total}' → run[${idx}] = ${name} (image unreadable — trusting position)`);
+      return { kind: "match", index: idx };
+    }
+  } else if (pos) {
+    log(`bulk: position ${pos.index + 1}/${pos.total} isn't a usable unfilled run item (run size ${state.items.length}) — trying phash-best`);
   }
 
+  // ── FALLBACK: phash-best among unfilled items ──────────────────────────
+  if (dispHash == null) {
+    log(`bulk: no usable position and artwork unreadable — can't identify design`);
+    return { kind: "unknown" };
+  }
   const cands: { index: number; name: string; d: number }[] = [];
   for (let k = 0; k < state.imageDataUrls.length; k++) {
-    if (state.filledItemIds.includes(state.items[k].id)) continue; // already done
+    if (state.filledItemIds.includes(state.items[k].id)) continue;
     const hk = await imageDHash(state.imageDataUrls[k]);
     if (hk == null) continue;
     const d = hammingBigInt(hk, dispHash);
@@ -650,16 +662,10 @@ async function matchDisplayedDesign(state: BulkState): Promise<DesignMatch> {
     log(`bulk: phash candidate ${state.items[k].metadata.filename} hamming=${d}`);
   }
   if (cands.length === 0) return { kind: "unknown" };
-
   cands.sort((a, b) => a.d - b.d);
-  const best = cands[0];
-  const second = cands[1];
-  const margin = second ? second.d - best.d : 64;
+  const best = cands[0], second = cands[1];
   const accept = best.d <= PHASH_ACCEPT_MAX;
-  log(`bulk: best match ${best.name} hamming=${best.d}${second ? ` (2nd=${second.d}, margin=${margin})` : ""} → ${accept ? "accept" : "skip"}`);
-  if (accept && second && margin < PHASH_MARGIN_WARN) {
-    log(`bulk: ⚠ close call (margin ${margin}) — taking the nearest by image`);
-  }
+  log(`bulk: best match ${best.name} hamming=${best.d}${second ? ` (2nd=${second.d})` : ""} → ${accept ? "accept" : "skip"}`);
   return accept ? { kind: "match", index: best.index } : { kind: "leftover" };
 }
 
