@@ -2,7 +2,7 @@
 // using chrome.runtime.sendMessage(extensionId, msg).
 // The extension's manifest.json declares this origin in "externally_connectable".
 
-import type { DashboardToExtensionMessage, ExtensionToDashboardResponse } from "@teepublic/shared";
+import type { DashboardToExtensionMessage, ExtensionToDashboardResponse, QueueBatch } from "@teepublic/shared";
 
 // Minimal shape of the chrome.runtime API we use. Declared locally (not as a
 // global Window augmentation) to avoid colliding with @types/chrome, which is
@@ -61,6 +61,31 @@ export function sendToExtension(
       reject(e instanceof Error ? e : new Error(String(e)));
     }
   });
+}
+
+/** Send a queue to the extension WITHOUT exceeding Chrome's 64 MiB per-message
+ *  limit. Local designs carry their image as a multi-MB base64 data URL, so a
+ *  whole batch in one QUEUE_INIT can blow the cap. Instead: send QUEUE_INIT with
+ *  images stripped (metadata only), then each image in its own QUEUE_IMAGE. */
+export async function sendQueueToExtension(
+  batch: QueueBatch,
+  extensionId?: string,
+): Promise<void> {
+  const lightBatch: QueueBatch = {
+    ...batch,
+    items: batch.items.map((it) => ({ ...it, imageUrl: "" })),
+  };
+  const init = await sendToExtension({ type: "QUEUE_INIT", batch: lightBatch }, extensionId);
+  if (!init.ok) throw new Error(init.error);
+
+  for (const it of batch.items) {
+    if (!it.imageUrl) continue;
+    const res = await sendToExtension(
+      { type: "QUEUE_IMAGE", itemId: it.id, imageUrl: it.imageUrl },
+      extensionId,
+    );
+    if (!res.ok) throw new Error(`image for ${it.metadata.filename || it.id}: ${res.error}`);
+  }
 }
 
 export async function pingExtension(extensionId?: string): Promise<boolean> {

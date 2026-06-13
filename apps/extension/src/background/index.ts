@@ -51,6 +51,18 @@ chrome.runtime.onMessageExternal.addListener((message: DashboardToExtensionMessa
           await openQueuePage();
           return sendResponse({ ok: true });
 
+        case "QUEUE_IMAGE": {
+          // Images arrive separately (after QUEUE_INIT) so no single message
+          // exceeds Chrome's 64 MiB cap. Attach each to its queue item.
+          const batch = await QueueStore.get();
+          if (!batch) return sendResponse({ ok: false, error: "no active batch" });
+          const item = batch.items.find((i) => i.id === message.itemId);
+          if (!item) return sendResponse({ ok: false, error: `item ${message.itemId} not found` });
+          item.imageUrl = message.imageUrl;
+          await QueueStore.set(batch);
+          return sendResponse({ ok: true });
+        }
+
         case "QUEUE_START":
           await engine.start();
           return sendResponse({ ok: true });

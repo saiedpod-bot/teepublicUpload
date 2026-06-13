@@ -5,7 +5,7 @@ import { nanoid } from "nanoid";
 import { parseSpreadsheet, stemName, type ParsedRow } from "@/lib/parser";
 import { validateRows, type ValidationResult } from "@/lib/validator";
 import { buildQueue, type MatchedImage } from "@/lib/queue";
-import { isExtensionAvailable, sendToExtension, pingExtension, getExtensionId, setExtensionId } from "@/lib/bridge";
+import { isExtensionAvailable, sendQueueToExtension, pingExtension, getExtensionId, setExtensionId } from "@/lib/bridge";
 import type { QueueBatch } from "@teepublic/shared";
 import { Dropzone } from "./Dropzone";
 import { DesignCard } from "./DesignCard";
@@ -198,9 +198,9 @@ export function UploaderApp() {
         { spreadsheetName, rowCount: rows.length },
       );
       // Send the queue to the extension only — the user picks which designs
-      // to upload in the popup, then clicks Start there.
-      const res = await sendToExtension({ type: "QUEUE_INIT", batch }, extensionId);
-      if (!res.ok) throw new Error(res.error);
+      // to upload in the popup, then clicks Start there. Chunked so large
+      // local images don't exceed Chrome's 64 MiB per-message limit.
+      await sendQueueToExtension(batch, extensionId);
       setStage("sent");
     } catch (e) {
       setError((e as Error).message);

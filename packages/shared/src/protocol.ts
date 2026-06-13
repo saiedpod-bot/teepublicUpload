@@ -7,6 +7,10 @@ import type { QueueBatch, QueueItem, QueueItemStatus } from "./types";
 export type DashboardToExtensionMessage =
   | { type: "PING" }
   | { type: "QUEUE_INIT"; batch: QueueBatch }
+  // Images travel separately: QUEUE_INIT carries metadata only (imageUrl="") and
+  // each design's (possibly multi-MB base64) image is sent in its own message,
+  // so no single message exceeds Chrome's 64 MiB runtime-message limit.
+  | { type: "QUEUE_IMAGE"; itemId: string; imageUrl: string }
   | { type: "QUEUE_START" }
   | { type: "QUEUE_PAUSE" }
   | { type: "ITEM_RETRY"; itemId: string };

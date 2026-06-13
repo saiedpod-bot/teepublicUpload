@@ -5,7 +5,7 @@ import { nanoid } from "nanoid";
 import type { DesignMetadata, QueueBatch, QueueItem } from "@teepublic/shared";
 import { SLUG_TO_PRODUCT_LABEL } from "@teepublic/shared";
 import { Dropzone } from "./Dropzone";
-import { sendToExtension, getExtensionId } from "@/lib/bridge";
+import { sendQueueToExtension, getExtensionId } from "@/lib/bridge";
 import { fileToBase64, urlToBase64, generateListing, GEMINI_MODELS, DEFAULT_GEMINI_MODEL, type GeneratedListing } from "@/lib/gemini";
 import { loadDesigns, saveDesigns, type PersistedDesign } from "@/lib/designsStore";
 import { uploadDesignImage } from "@/lib/uploadImage";
@@ -420,8 +420,8 @@ export function GenerationApp({ sessionId }: { sessionId: string }) {
         },
       };
 
-      const res = await sendToExtension({ type: "QUEUE_INIT", batch }, extId);
-      if (!res.ok) throw new Error(res.error);
+      // Chunked send so large local images don't exceed Chrome's 64 MiB limit.
+      await sendQueueToExtension(batch, extId);
       setStage("sent");
     } catch (e) {
       setError((e as Error).message);
