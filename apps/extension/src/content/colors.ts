@@ -1011,6 +1011,20 @@ function productNameMatch(excelName: string, pageName: string): boolean {
   return canonicalProductKey(excelName) === canonicalProductKey(pageName);
 }
 
+// The 12 products the dashboard actually controls. Only these are enabled/
+// disabled to match the dashboard; the other TeePublic products (Socks,
+// Stickers, Cases, Mugs, Wall Art, Pillows, Totes, Pins, Magnets) are left at
+// TeePublic's own default so we don't silently switch off products the user
+// never saw on the dashboard.
+const MANAGED_PRODUCT_KEYS = new Set([
+  "t_shirt", "hoodie", "tank", "crewneck", "long_sleeve", "baseball_tee",
+  "kids", "kids_hoodie", "kids_long_sleeve", "hats", "shorts", "bags",
+]);
+
+function isManagedProduct(name: string): boolean {
+  return MANAGED_PRODUCT_KEYS.has(canonicalProductKey(name));
+}
+
 /** Return the element that flips the Enable state when clicked. TeePublic's
  *  toggle is a <span> inside .on-off.canvas-enable — its class swaps between
  *  "enabled" and "disabled" and the hidden canvas-option input mirrors it.
@@ -1061,18 +1075,23 @@ export async function applyEnabledProducts(enabledProducts: string[]): Promise<v
   }
   const toggles = getAllProductToggles();
   log(`getAllProductToggles: ${toggles.length} products found`);
-  log(`enabled-products: ${enabledProducts.length} enabled in Excel: [${enabledProducts.join(", ")}]`);
+  log(`enabled-products: ${enabledProducts.length} enabled from dashboard: [${enabledProducts.join(", ")}]`);
 
   for (const t of toggles) {
     const label = t.name || "(unnamed)";
-    // Default rule: any product NOT explicitly listed in the Excel enabled
-    // set is disabled. This is what stops tiles like Hats (which have no color
-    // picker) from blocking publish with "must choose a primary color".
+    // Only manage the products the DASHBOARD controls. The dashboard knows 12
+    // products; TeePublic has 22. Products the dashboard can't represent
+    // (Socks, Stickers, Cases, Mugs, Wall Art, Pillows, Totes, Pins, Magnets)
+    // are left at TeePublic's default instead of being force-disabled.
+    if (!isManagedProduct(t.name)) {
+      log(`  ${label}: not managed by dashboard — leaving at TeePublic default`);
+      continue;
+    }
     const wanted = enabledProducts.some((p) => productNameMatch(p, t.name));
     const currently = t.canvasOptionInput.value === "true";
 
     if (wanted === currently) {
-      log(`  ${label}: ${currently ? "ON" : "OFF"} — matches Excel, no change${!wanted ? " → OFF ✓" : ""}`);
+      log(`  ${label}: ${currently ? "ON" : "OFF"} — matches dashboard, no change`);
       continue;
     }
     const ok = await flipProductToggle(t, wanted);
