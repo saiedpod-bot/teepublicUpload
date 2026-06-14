@@ -16,6 +16,7 @@ import type { DesignMetadata } from "@teepublic/shared";
 import { loadCustomBasicColors, saveCustomBasicColors, type CustomBasicColor } from "@/lib/batchConfig";
 import { loadSpreadsheet, saveSpreadsheet } from "@/lib/spreadsheetStore";
 import { uploadDesignImage } from "@/lib/uploadImage";
+import { expandDroppedFiles, isZip } from "@/lib/zip";
 
 type Stage = "idle" | "validated" | "sending" | "sent";
 type Mode  = "spreadsheet" | "generate";
@@ -110,6 +111,9 @@ export function UploaderApp() {
 
   async function handleSpreadsheet(file: File) {
     setError(null);
+    // A .zip may carry the spreadsheet AND the images — route it through the
+    // same expansion as the image dropzone.
+    if (isZip(file)) { await handleImages([file]); return; }
     try {
       const parsed = await parseSpreadsheet(file);
       setSpreadsheetName(file.name);
@@ -120,10 +124,26 @@ export function UploaderApp() {
     }
   }
 
-  async function handleImages(files: File[]) {
+  async function handleImages(rawFiles: File[]) {
     setError(null);
+    // Expand any dropped .zip into its image + spreadsheet files.
+    const { images: imgFiles, sheets } = await expandDroppedFiles(rawFiles);
+
+    // If a spreadsheet came along (zip with an .xlsx/.csv) and we don't have one
+    // yet, parse it so the rows are ready to match against the images.
+    let nextRows = rows;
+    if (sheets.length > 0 && rows.length === 0) {
+      try {
+        nextRows = await parseSpreadsheet(sheets[0]);
+        setSpreadsheetName(sheets[0].name);
+        setRows(nextRows);
+      } catch (e) {
+        setError(`Failed to parse spreadsheet: ${(e as Error).message}`);
+      }
+    }
+
     const next = new Map(images);
-    for (const file of files) {
+    for (const file of imgFiles) {
       try {
         const up = await uploadDesignImage(sessionId, file);
         const stem = stemName(up.originalName);
@@ -139,7 +159,7 @@ export function UploaderApp() {
       }
     }
     setImages(next);
-    revalidate(rows, next);
+    revalidate(nextRows, next);
   }
 
   function removeImage(stem: string) {
@@ -256,15 +276,15 @@ export function UploaderApp() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Dropzone
           title="Spreadsheet"
-          hint="Drop an .xlsx or .csv. Columns: filename, title, description, primary_tag, tags, products, mature_content"
-          accept=".xlsx,.csv"
+          hint="Drop an .xlsx/.csv — or a .zip containing the spreadsheet + design images. Columns: filename, title, description, primary_tag, tags, products, mature_content"
+          accept=".xlsx,.csv,.zip,application/zip"
           onFiles={(f) => handleSpreadsheet(f[0])}
           badge={spreadsheetName ? `${spreadsheetName} • ${rows.length} rows` : undefined}
         />
         <Dropzone
           title="Design images"
-          hint="Drop .png/.jpg files. Filenames match the `filename` column with or without extension (`1` matches `1.png`)."
-          accept="image/png,image/jpeg,image/webp"
+          hint="Drop .png/.jpg files or a .zip folder. Filenames match the `filename` column with or without extension (`1` matches `1.png`)."
+          accept="image/png,image/jpeg,image/webp,.zip,application/zip"
           multiple
           onFiles={handleImages}
           badge={images.size > 0 ? `${images.size} images staged` : undefined}

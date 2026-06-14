@@ -9,6 +9,7 @@ import { sendQueueToExtension, getExtensionId } from "@/lib/bridge";
 import { fileToBase64, urlToBase64, generateListing, GEMINI_MODELS, DEFAULT_GEMINI_MODEL, type GeneratedListing } from "@/lib/gemini";
 import { loadDesigns, saveDesigns, type PersistedDesign } from "@/lib/designsStore";
 import { uploadDesignImage } from "@/lib/uploadImage";
+import { expandDroppedFiles } from "@/lib/zip";
 import { getGeminiKey, setGeminiKey, getGeminiModel, setGeminiModel, getGeminiPrompt, setGeminiPrompt } from "@/lib/aiSettings";
 import type { ColorProductConfigValue } from "./ColorProductConfig";
 import { allEnabledProducts, applyPreset, type ColorPreset } from "@/lib/colorPresets";
@@ -204,8 +205,11 @@ export function GenerationApp({ sessionId }: { sessionId: string }) {
     if (currentIndex >= designs.length) setCurrentIndex(Math.max(0, designs.length - 1));
   }, [designs.length, currentIndex]);
 
-  async function handleImages(files: File[]) {
+  async function handleImages(rawFiles: File[]) {
     setError(null);
+    // Expand any dropped .zip into its image files.
+    const { images: files } = await expandDroppedFiles(rawFiles);
+    if (files.length === 0) { setError("No PNG/JPG images found in the drop."); return; }
     const next: StagedImage[] = [];
     for (const file of files) {
       try {
@@ -483,8 +487,8 @@ export function GenerationApp({ sessionId }: { sessionId: string }) {
       {/* Images */}
       <Dropzone
         title="Design images"
-        hint="Drop the design files Gemini should describe. Each image becomes one TeePublic listing."
-        accept="image/png,image/jpeg,image/webp"
+        hint="Drop .png/.jpg files or a .zip folder of designs. Each image becomes one TeePublic listing."
+        accept="image/png,image/jpeg,image/webp,.zip,application/zip"
         multiple
         onFiles={handleImages}
         badge={images.length > 0 ? `${images.length} images staged` : undefined}
