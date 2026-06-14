@@ -24,6 +24,9 @@ class AutomationEngine {
     // Reset any items left in "running" (service worker was suspended mid-run,
     // browser closed, etc.) — without this, the loop would skip them forever.
     await resurrectStaleRunningItems();
+    // A FAILED design that the user re-selected and pressed Start = "retry this".
+    // Re-queue selected failed items so the loop will process them again.
+    await requeueSelectedFailed();
     this.state = "running";
     void this.loop();
   }
@@ -235,6 +238,27 @@ async function pingContentScript(tabId: number, timeoutMs: number): Promise<bool
 // next .start() picks them up. Safe to run anytime — only touches items
 // we know aren't actually being processed (we always re-mark "running"
 // at the top of runOne).
+// Reset any SELECTED "failed" items back to "pending" so pressing Start retries
+// them. Failed items left UNSELECTED stay failed (skipped). Their image is still
+// in ImageStore (kept on failure), so the retry has the artwork.
+async function requeueSelectedFailed(): Promise<void> {
+  const batch = await QueueStore.get();
+  if (!batch) return;
+  let changed = 0;
+  for (const item of batch.items) {
+    if (item.status === "failed" && item.selected !== false) {
+      item.status = "pending";
+      item.lastError = undefined;
+      item.updatedAt = Date.now();
+      changed++;
+    }
+  }
+  if (changed > 0) {
+    await QueueStore.set(batch);
+    console.info(`[teepublic] re-queued ${changed} selected failed item(s) for retry`);
+  }
+}
+
 async function resurrectStaleRunningItems(): Promise<void> {
   const batch = await QueueStore.get();
   if (!batch) return;
