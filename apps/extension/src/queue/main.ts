@@ -1,5 +1,5 @@
 import type { QueueBatch, QueueItem } from "@teepublic/shared";
-import { QueueStore } from "../services/queueStore";
+import { QueueStore, ImageStore } from "../services/queueStore";
 
 function $(id: string) { return document.getElementById(id) as HTMLElement; }
 
@@ -26,6 +26,7 @@ function render(batch: QueueBatch | null) {
   setMeta(`Source: ${escapeHtml(batch.source.spreadsheetName)} • ${total} items • ${picked} selected • batch ${batch.id}`);
 
   list.innerHTML = batch.items.map(cardHtml).join("");
+  void loadThumbnails(list);
 
   list.querySelectorAll<HTMLButtonElement>("[data-retry]").forEach((btn) => {
     btn.onclick = (e) => { e.stopPropagation(); chrome.runtime.sendMessage({ type: "ITEM_RETRY", itemId: btn.dataset.retry }); };
@@ -51,7 +52,7 @@ function cardHtml(item: QueueItem): string {
   return `
     <div class="card ${selected ? "" : "deselected"}" data-toggle-id="${item.id}">
       <div class="thumb">
-        <img src="${escapeHtml(item.imageUrl)}" alt="${escapeHtml(item.metadata.title)}" onerror="this.outerHTML='<span class=meta>image unavailable</span>'" />
+        <img ${item.imageUrl ? `src="${escapeHtml(item.imageUrl)}"` : `data-img-id="${escapeHtml(item.id)}"`} alt="${escapeHtml(item.metadata.title)}" />
         <div class="select-mark">${selected ? "✓" : ""}</div>
       </div>
       <div class="row">
@@ -67,6 +68,16 @@ function cardHtml(item: QueueItem): string {
       </div>
     </div>
   `;
+}
+
+/** Fill in thumbnails from ImageStore (images live in their own keys). */
+async function loadThumbnails(list: HTMLElement): Promise<void> {
+  for (const img of Array.from(list.querySelectorAll<HTMLImageElement>("img[data-img-id]"))) {
+    const id = img.dataset.imgId;
+    if (!id) continue;
+    const dataUrl = await ImageStore.get(id);
+    if (dataUrl) img.src = dataUrl;
+  }
 }
 
 function setStats(total: number, picked: number, done: number, fail: number, left: number) {

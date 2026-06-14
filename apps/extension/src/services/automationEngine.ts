@@ -4,7 +4,7 @@
 // - Delegates all in-page work to the content script via chrome.tabs.sendMessage.
 
 import type { QueueItem } from "@teepublic/shared";
-import { QueueStore, SettingsStore, BulkLogStore } from "./queueStore";
+import { QueueStore, SettingsStore, BulkLogStore, ImageStore } from "./queueStore";
 import { humanDelay } from "../lib/delays";
 
 type EngineState = "idle" | "running" | "paused" | "stopped";
@@ -85,12 +85,13 @@ class AutomationEngine {
       try {
         const tabId = await this.ensureTeePublicTab(); // single uploader (quick_create)
         this.currentTabId = tabId;
-        const imageDataUrl = await fetchDesignAsDataUrl(d.item.imageUrl);
+        const imageDataUrl = await imageDataUrlFor(d.item);
         await ensureContentScriptReady(tabId);
         const r = await sendToTab<{ ok: boolean; editUrl?: string; designId?: string; error?: string }>(
           tabId, { type: "AUTOMATION_UPLOAD_ONLY", item: d.item, imageDataUrl });
         if (!r?.ok || !r.editUrl) throw new Error(r?.error ?? "upload failed (no edit URL captured)");
         d.editUrl = r.editUrl; d.designId = r.designId; d.uploaded = true;
+        await ImageStore.remove(d.item.id); // draft now holds the file — free local copy
         BulkLogStore.append(`upload ${i + 1}/${total}: ${d.item.metadata.filename} → draft ${r.designId ?? "?"}`);
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
@@ -164,7 +165,7 @@ class AutomationEngine {
       const tabId = await this.ensureTeePublicTab();
       this.currentTabId = tabId;
 
-      const imageDataUrl = await fetchDesignAsDataUrl(item.imageUrl);
+      const imageDataUrl = await imageDataUrlFor(item);
       await ensureContentScriptReady(tabId);
 
       const result = await sendToTab<{ ok: boolean; error?: string; publishedUrl?: string }>(tabId, {
@@ -178,6 +179,7 @@ class AutomationEngine {
       // Mark succeeded BEFORE logging — guarantees the next loop iteration
       // sees a non-pending status and won't pick this item again.
       await QueueStore.setItemStatus(item.id, "succeeded", { publishedUrl: result.publishedUrl });
+      await ImageStore.remove(item.id); // free its (large) stored image
       console.info(`[teepublic-cs] item ${item.id} succeeded: ${result.publishedUrl} — moving on`);
     } catch (err) {
       // The content script's ITEM_STATUS / PUBLISHED_URL_DETECTED may already
@@ -361,6 +363,15 @@ async function waitForSucceededSignal(itemId: string, tabId: number | null, time
     await new Promise((r) => setTimeout(r, 300));
   }
   return false;
+}
+
+// Get a design's image as a data URL: prefer the locally-stored copy (kept in
+// its own ImageStore key, out of the batch), else fetch the http(s) URL.
+async function imageDataUrlFor(item: QueueItem): Promise<string> {
+  const stored = await ImageStore.get(item.id);
+  if (stored) return stored;
+  if (item.imageUrl) return await fetchDesignAsDataUrl(item.imageUrl);
+  throw new Error("no image available for this item");
 }
 
 async function fetchDesignAsDataUrl(imageUrl: string): Promise<string> {

@@ -5,7 +5,7 @@
 
 import type { DashboardToExtensionMessage } from "@teepublic/shared";
 import type { QueueBatch } from "@teepublic/shared";
-import { QueueStore, SettingsStore } from "../services/queueStore";
+import { QueueStore, SettingsStore, ImageStore } from "../services/queueStore";
 import { engine } from "../services/automationEngine";
 
 console.info("[teepublic] background ready");
@@ -51,17 +51,13 @@ chrome.runtime.onMessageExternal.addListener((message: DashboardToExtensionMessa
           await openQueuePage();
           return sendResponse({ ok: true });
 
-        case "QUEUE_IMAGE": {
+        case "QUEUE_IMAGE":
           // Images arrive separately (after QUEUE_INIT) so no single message
-          // exceeds Chrome's 64 MiB cap. Attach each to its queue item.
-          const batch = await QueueStore.get();
-          if (!batch) return sendResponse({ ok: false, error: "no active batch" });
-          const item = batch.items.find((i) => i.id === message.itemId);
-          if (!item) return sendResponse({ ok: false, error: `item ${message.itemId} not found` });
-          item.imageUrl = message.imageUrl;
-          await QueueStore.set(batch);
+          // exceeds Chrome's 64 MiB cap. Store each under its OWN key — NOT in
+          // the batch — so we never rewrite all images when one arrives (that
+          // O(N²) rewrite was filling storage → FILE_ERROR_NO_SPACE).
+          await ImageStore.set(message.itemId, message.imageUrl);
           return sendResponse({ ok: true });
-        }
 
         case "QUEUE_START":
           await engine.start();
@@ -97,7 +93,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       case "ITEMS_INVERT_SELECTED": await invertAllSelected(); return sendResponse({ ok: true });
       case "ITEM_STATUS":           await handleItemStatus(message.itemId, message.status, message.publishedUrl, message.error); return sendResponse({ ok: true });
       case "PUBLISHED_URL_DETECTED": await handlePublishedUrlDetected(message.url); return sendResponse({ ok: true });
-      case "QUEUE_CLEAR":           await QueueStore.set(null); return sendResponse({ ok: true });
+      case "QUEUE_CLEAR":           await QueueStore.set(null); await ImageStore.clearAll(); return sendResponse({ ok: true });
       default:                      return sendResponse({ ok: false, error: "unknown message" });
     }
   })();

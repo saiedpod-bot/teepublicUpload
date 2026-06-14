@@ -1,5 +1,5 @@
 import type { QueueBatch, QueueItem } from "@teepublic/shared";
-import { QueueStore, SettingsStore, BulkLogStore, type UploadMode } from "../services/queueStore";
+import { QueueStore, SettingsStore, BulkLogStore, ImageStore, type UploadMode } from "../services/queueStore";
 
 function $(id: string) { return document.getElementById(id) as HTMLElement; }
 
@@ -9,13 +9,26 @@ function escapeHtml(s: string): string {
 
 function tileHtml(item: QueueItem): string {
   const selected = item.selected !== false;
+  // Image lives in ImageStore (its own key), not item.imageUrl — load it after
+  // render via loadThumbnails. Fall back to item.imageUrl if it's a real URL.
+  const srcAttr = item.imageUrl ? `src="${escapeHtml(item.imageUrl)}"` : `data-img-id="${escapeHtml(item.id)}"`;
   return `
     <div class="tile ${selected ? "selected" : ""}" data-id="${item.id}" title="${escapeHtml(item.metadata.title)}">
-      <img src="${escapeHtml(item.imageUrl)}" alt="${escapeHtml(item.metadata.title)}" onerror="this.style.opacity=0.2" />
+      <img ${srcAttr} alt="${escapeHtml(item.metadata.title)}" onerror="this.style.opacity=0.2" />
       <div class="check">${selected ? "✓" : ""}</div>
       <div class="status ${item.status}">${item.status}</div>
     </div>
   `;
+}
+
+/** Fill in tile thumbnails from ImageStore (images aren't kept in the batch). */
+async function loadThumbnails(grid: HTMLElement): Promise<void> {
+  for (const img of Array.from(grid.querySelectorAll<HTMLImageElement>("img[data-img-id]"))) {
+    const id = img.dataset.imgId;
+    if (!id) continue;
+    const dataUrl = await ImageStore.get(id);
+    if (dataUrl) img.src = dataUrl;
+  }
 }
 
 let lastBatch: QueueBatch | null = null;
@@ -44,6 +57,7 @@ function render(batch: QueueBatch | null) {
 
   const grid = $("grid");
   grid.innerHTML = pageItems.map(tileHtml).join("");
+  void loadThumbnails(grid);
   $("picked-summary").textContent = batch ? `${picked} of ${total} selected for upload` : "";
 
   // Toggle button label flips based on current state.

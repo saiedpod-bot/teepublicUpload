@@ -133,6 +133,32 @@ export const BulkLogStore = {
   async clear(): Promise<void> { await chrome.storage.local.remove(BULK_LOG_KEY); },
 };
 
+// ── Image storage ───────────────────────────────────────────────────────────
+// Design images (multi-MB base64 data URLs for local uploads) are stored under
+// their OWN key, NOT inside the batch. Keeping them out of the batch means we
+// never rewrite all images when one changes — the O(N²) rewrite was bloating
+// chrome.storage's LevelDB until it hit FILE_ERROR_NO_SPACE.
+const IMG_PREFIX = "teepublic.img.";
+
+export const ImageStore = {
+  async set(itemId: string, dataUrl: string): Promise<void> {
+    await chrome.storage.local.set({ [IMG_PREFIX + itemId]: dataUrl });
+  },
+  async get(itemId: string): Promise<string | null> {
+    const key = IMG_PREFIX + itemId;
+    const all = await chrome.storage.local.get(key);
+    return (all[key] as string | undefined) ?? null;
+  },
+  async remove(itemId: string): Promise<void> {
+    await chrome.storage.local.remove(IMG_PREFIX + itemId);
+  },
+  async clearAll(): Promise<void> {
+    const all = await chrome.storage.local.get(null);
+    const keys = Object.keys(all).filter((k) => k.startsWith(IMG_PREFIX));
+    if (keys.length) await chrome.storage.local.remove(keys);
+  },
+};
+
 export const SettingsStore = {
   async get(): Promise<ExtensionSettings> {
     const all = await chrome.storage.local.get(SETTINGS_KEY);
