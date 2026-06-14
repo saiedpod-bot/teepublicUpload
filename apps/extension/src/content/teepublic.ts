@@ -164,29 +164,22 @@ async function runUpload(
     // Track every field we've already filled so the next lookup can't reuse it.
     const filled = new Set<Element>();
 
-    // ── 1. Upload the design file ────────────────────────────────────────
+    // ── 1. Upload the design file (ONE attempt — TeePublic caps ~50/day, so we
+    //       never re-dispatch and burn extra daily slots). ──────────────────
     if (!skipUpload) {
       const file = dataUrlToFile(imageDataUrl, m.filename || "design.png", item.imageMime || "image/png");
-      let accepted = false;
-      for (let attempt = 1; attempt <= 3 && !accepted; attempt++) {
-        const fileInput = await firstMatching<HTMLInputElement>([...TP.fileInput]);
-        await setFileInput(fileInput, file);
-        log(`file dispatched (attempt ${attempt}) — waiting for TeePublic to accept the artwork…`);
-        const outcome = await waitForUploadOutcome(30_000);
-        if (outcome === "failed") {
-          log(`⚠ TeePublic reported "UPLOAD FAILED" — retrying`);
-          await sleep(1_200);
-          continue;
-        }
-        accepted = true; // "ok" or "timeout" (form rendered) — proceed
-      }
-      if (!accepted) {
-        // Do NOT fill the listing onto a design with no artwork.
+      const fileInput = await firstMatching<HTMLInputElement>([...TP.fileInput]);
+      await setFileInput(fileInput, file);
+      log("file dispatched — waiting for TeePublic to accept the artwork…");
+      const outcome = await waitForUploadOutcome(30_000);
+      if (outcome === "failed") {
+        // Don't fill the listing onto a design with no artwork, and don't retry.
         const err = "artwork upload failed (TeePublic rejected the file — needs a transparent PNG ≥ 1500×1995px)";
-        log(`✗ ${err}`);
+        log(`✗ ${err} — skipping (no retry)`);
         fireItemStatus(item.id, "failed", undefined, err);
         return { ok: false, error: err };
       }
+      // "ok" or "timeout" (form rendered) — proceed to fill the listing.
     } else {
       log("skipUpload: filling existing draft (no file dispatch)");
     }
