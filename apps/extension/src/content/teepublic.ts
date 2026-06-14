@@ -165,13 +165,28 @@ async function runUpload(
     const filled = new Set<Element>();
 
     // ── 1. Upload the design file ────────────────────────────────────────
-    // Skipped in Phase-2 bulk: we're already on the draft's /designs/<id>/edit
-    // page, which already holds the uploaded artwork — just fill + publish it.
     if (!skipUpload) {
       const file = dataUrlToFile(imageDataUrl, m.filename || "design.png", item.imageMime || "image/png");
-      const fileInput = await firstMatching<HTMLInputElement>([...TP.fileInput]);
-      await setFileInput(fileInput, file);
-      log("file dispatched — waiting for TeePublic to render the full upload form…");
+      let accepted = false;
+      for (let attempt = 1; attempt <= 3 && !accepted; attempt++) {
+        const fileInput = await firstMatching<HTMLInputElement>([...TP.fileInput]);
+        await setFileInput(fileInput, file);
+        log(`file dispatched (attempt ${attempt}) — waiting for TeePublic to accept the artwork…`);
+        const outcome = await waitForUploadOutcome(30_000);
+        if (outcome === "failed") {
+          log(`⚠ TeePublic reported "UPLOAD FAILED" — retrying`);
+          await sleep(1_200);
+          continue;
+        }
+        accepted = true; // "ok" or "timeout" (form rendered) — proceed
+      }
+      if (!accepted) {
+        // Do NOT fill the listing onto a design with no artwork.
+        const err = "artwork upload failed (TeePublic rejected the file — needs a transparent PNG ≥ 1500×1995px)";
+        log(`✗ ${err}`);
+        fireItemStatus(item.id, "failed", undefined, err);
+        return { ok: false, error: err };
+      }
     } else {
       log("skipUpload: filling existing draft (no file dispatch)");
     }
@@ -544,6 +559,31 @@ function readDesignIdFromDom(): string | null {
   const formAction = document.querySelector<HTMLFormElement>('form[action*="/designs/"]')?.action ?? "";
   const fm = formAction.match(/\/designs\/(\d+)/);
   return fm ? fm[1] : null;
+}
+
+// After dispatching the design file, watch for TeePublic to either accept the
+// artwork ("Change Artwork" appears) or reject it ("UPLOAD FAILED, PLEASE TRY
+// AGAIN"). Returns "timeout" if neither shows (the form may have rendered).
+async function waitForUploadOutcome(timeoutMs: number): Promise<"ok" | "failed" | "timeout"> {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    if (pageShowsText(/upload failed/i)) return "failed";
+    if (pageShowsText(/change artwork/i)) return "ok";
+    await sleep(400);
+  }
+  return "timeout";
+}
+
+/** True if a small, visible element on the page contains text matching `rx`. */
+function pageShowsText(rx: RegExp): boolean {
+  for (const el of document.querySelectorAll<HTMLElement>("button, a, p, span, div, h1, h2, h3, label")) {
+    const r = el.getBoundingClientRect();
+    if (r.width === 0 || r.height === 0) continue;
+    const t = (el.textContent ?? "").trim();
+    if (t.length === 0 || t.length > 80) continue;
+    if (rx.test(t)) return true;
+  }
+  return false;
 }
 
 // Watches for either TeePublic's "you must choose…" validation modal or the
