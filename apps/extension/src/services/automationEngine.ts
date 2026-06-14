@@ -114,10 +114,11 @@ class AutomationEngine {
         console.info(`[teepublic] item ${item.id} confirmed succeeded after sendToTab rejected — keeping`);
         return;
       }
+      // Skip a failed design (mark FAILED, don't re-queue) so the run finishes
+      // the rest. Keep its stored image so the user can Retry it afterward.
       const message = err instanceof Error ? err.message : String(err);
-      const attempts = (item.attempts + 1);
-      const final = attempts >= settings.retryMax + 1;
-      await QueueStore.setItemStatus(item.id, final ? "failed" : "queued", { lastError: message, attempts });
+      await QueueStore.setItemStatus(item.id, "failed", { lastError: message, attempts: item.attempts + 1 });
+      console.info(`[teepublic] item ${item.id} FAILED — skipping, continuing: ${message}`);
     }
   }
 
