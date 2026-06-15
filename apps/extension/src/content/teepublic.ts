@@ -82,11 +82,22 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       const result = await runUpload(message.item, message.imageDataUrl);
       return sendResponse(result);
     }
-    if (message?.type === "AUTOMATION_BULK") {
-      // TeePublic's official bulk flow, all on one page (no URL navigation):
-      // dispatch all files → GET STARTED → fill each in upload order → Next
-      // Design → Publish All. No image matching — order is deterministic.
-      const result = await runBulkInPlace(message.items, message.imageDataUrls);
+    if (message?.type === "AUTOMATION_BULK_DISPATCH") {
+      // On /designs/bulk_uploader: pre-validate sizes, dispatch the valid files,
+      // wait for GET STARTED, reply with the valid ids (in upload order), THEN
+      // click GET STARTED (which navigates to design 1's /designs/<id>/edit).
+      const result = await runBulkDispatch(message.items, message.imageDataUrls);
+      sendResponse(result);
+      if (result.ok && result.validIds.length > 0) {
+        await sleep(500);
+        await clickGetStarted();
+      }
+      return;
+    }
+    if (message?.type === "AUTOMATION_FILL_PUBLISH_DRAFT") {
+      // On a /designs/<id>/edit bulk page: fill listing + colors and publish.
+      // Publishing auto-advances TeePublic to the next design's /edit page.
+      const result = await fillAndPublishDraft(message.item);
       return sendResponse(result);
     }
     return sendResponse({ ok: false, error: "unknown message" });
@@ -529,21 +540,22 @@ async function runUpload(
   }
 }
 
-// ─── BULK upload — TeePublic's official in-place flow ───────────────────────
-// On /designs/bulk_uploader: dispatch ALL files → GET STARTED → fill each design
-// IN PLACE in upload order (the page does NOT navigate between designs, so
-// identity is purely positional — no image/phash matching) → "Next Design"
-// between designs → "Publish All" at the end. Reuses runUpload(skipUpload,
-// skipPublish) so the single-flow fill/color/products/BLOCKING logic is shared.
-async function runBulkInPlace(
+// ─── BULK upload — TeePublic's real flow (one /edit page per design) ────────
+// After GET STARTED, TeePublic opens each design on its OWN /designs/<id>/edit
+// page and auto-advances to the next after each publish (no "Next Design" or
+// "Publish All" buttons). So the ENGINE drives the navigation: this content
+// script only (a) dispatches files + GET STARTED on /designs/bulk_uploader, and
+// (b) fills + publishes ONE draft /edit page at a time. Order is deterministic
+// (upload order) — no image/phash matching.
+
+/** On /designs/bulk_uploader: pre-validate sizes, dispatch the valid files, wait
+ *  for GET STARTED, and return the valid item ids in upload order. The handler
+ *  clicks GET STARTED after this responds (it navigates to design 1's /edit). */
+async function runBulkDispatch(
   items: QueueItem[],
   imageDataUrls: string[],
-): Promise<{ ok: boolean; error?: string; results: { id: string; ok: boolean; error?: string }[] }> {
-  const results: { id: string; ok: boolean; error?: string }[] = [];
-  log(`──── BULK: ${items.length} design(s) on ${location.pathname} ────`);
-
-  // 0. Pre-validate sizes — skip too-small files BEFORE dispatch so they don't
-  //    cascade into "GET STARTED never appears" / "form not ready forever".
+): Promise<{ ok: boolean; error?: string; validIds: string[] }> {
+  log(`──── BULK dispatch: ${items.length} design(s) on ${location.pathname} ────`);
   const valid: { item: QueueItem; dataUrl: string }[] = [];
   for (let i = 0; i < items.length; i++) {
     const it = items[i];
@@ -552,138 +564,96 @@ async function runBulkInPlace(
       const err = `skipped ${it.metadata.filename}: ${dim.w}×${dim.h} below TeePublic minimum ${MIN_SHORT_SIDE}×${MIN_LONG_SIDE}`;
       log(err);
       fireItemStatus(it.id, "failed", undefined, err);
-      results.push({ id: it.id, ok: false, error: err });
       continue;
     }
     valid.push({ item: it, dataUrl: imageDataUrls[i] });
   }
-  const N = valid.length;
-  if (N === 0) {
+  if (valid.length === 0) {
     log(`bulk aborted: no designs passed TeePublic's size check`);
-    return { ok: false, error: "no designs passed TeePublic's size check", results };
+    return { ok: false, error: "no designs passed TeePublic's size check", validIds: [] };
   }
 
   try {
-    // 1. Dispatch ONLY the valid files.
     const input = await firstMatching<HTMLInputElement>([...BULK.multiFileInput], 15_000);
     const files = valid.map((v, i) =>
       dataUrlToFile(v.dataUrl, v.item.metadata.filename || `design_${i + 1}.png`, v.item.imageMime || "image/png"));
     await setFileInputMultiple(input, files);
-    log(`dispatched ${files.length} files — waiting for tiles to process…`);
+    log(`dispatched ${files.length} files — waiting for GET STARTED…`);
 
-    // 2. GET STARTED — only appears after tiles process. Poll, then clean-abort
-    //    (no raw selector error) if it never shows.
-    let getStarted: HTMLElement;
+    // Wait for GET STARTED to appear (tiles finished processing). Don't click
+    // yet — the handler clicks it after this response is sent.
     try {
-      getStarted = await findClickable([...BULK.getStarted], 60_000);
+      await findClickable([...BULK.getStarted], 60_000);
     } catch {
       const err = "no designs passed TeePublic's size check (GET STARTED never appeared)";
       log(`bulk aborted: ${err}`);
-      for (const v of valid) { fireItemStatus(v.item.id, "failed", undefined, err); results.push({ id: v.item.id, ok: false, error: err }); }
-      return { ok: false, error: err, results };
+      for (const v of valid) fireItemStatus(v.item.id, "failed", undefined, err);
+      return { ok: false, error: err, validIds: [] };
     }
-    await fullClick(getStarted);
-    log(`clicked GET STARTED`);
-
-    // 3. Fill each VALID design IN PLACE, in upload order.
-    for (let i = 0; i < N; i++) {
-      const item = valid[i].item;
-      lastFiredItemId = null; // per-design isolation (the filled set is per runUpload call)
-      log(`── bulk ${i + 1}/${N} (upload order): ${item.metadata.filename} ──`);
-      const prevSrc = currentArtworkSrc();
-
-      // Wait for this design's form, OR detect TeePublic rejected it (no form).
-      // Bounded so a rejected design never loops "form not ready" forever.
-      const state = await waitForDesignFormOrError(45_000);
-      if (state === "rejected") {
-        log(`bulk ${i + 1}/${N}: TeePublic rejected the artwork — Skip & Cancel`);
-        fireItemStatus(item.id, "failed", undefined, "rejected by TeePublic (size/format)");
-        results.push({ id: item.id, ok: false, error: "rejected by TeePublic" });
-        if (!(await clickFirst([...BULK.skipDesign])) && i < N - 1) await clickFirst([...BULK.nextDesign]);
-        await waitForNextDesign(prevSrc, 10_000);
-        continue;
-      }
-
-      try { await waitForArtworkProcessingDone(); } catch { /* may already be ready */ }
-      let fill: { ok: boolean; error?: string };
-      try {
-        fill = await runUpload(item, "", true, true); // skipUpload + skipPublish → in-place fill only
-      } catch (e) {
-        fill = { ok: false, error: e instanceof Error ? e.message : String(e) };
-      }
-      results.push({ id: item.id, ok: fill.ok, error: fill.ok ? undefined : fill.error });
-
-      if (!fill.ok) {
-        // Don't abort the batch — Skip & Cancel this one and continue.
-        log(`bulk ${i + 1}/${N} FAILED: ${fill.error} — Skip & Cancel This Design`);
-        fireItemStatus(item.id, "failed", undefined, fill.error);
-        if (await clickFirst([...BULK.skipDesign])) {
-          await waitForNextDesign(prevSrc, 10_000);
-          continue;
-        }
-        // No Skip control found — fall through to Next Design so we still advance.
-      } else {
-        log(`bulk ${i + 1}/${N}: filled, colors ok`);
-      }
-
-      if (i < N - 1) {
-        const next = await findClickable([...BULK.nextDesign], 15_000);
-        await fullClick(next);
-        log(`clicked Next Design`);
-        await waitForNextDesign(prevSrc, 10_000);
-      }
-    }
-
-    // 4. Terms (once), then report each design's status BEFORE Publish All — the
-    //    Publish All navigation can destroy this content script — then publish.
-    await acceptBulkTerms();
-    await sleep(400);
-    for (const r of results) {
-      if (r.ok) fireItemStatus(r.id, "succeeded");
-      else fireItemStatus(r.id, "failed", undefined, r.error ?? "not filled");
-    }
-    const beforeUrl = location.href;
-    const publishAll = await findClickable([...BULK.publishAll, ...TP.publishButton], 15_000);
-    await fullClick(publishAll);
-    log(`clicked Publish All`);
-    await waitForUrlChangeAwayFromEdit(beforeUrl, 90_000);
-
-    const okCount = results.filter((r) => r.ok).length;
-    log(`bulk done: ${okCount}/${items.length} published`);
-    return { ok: okCount > 0, results };
+    return { ok: true, validIds: valid.map((v) => v.item.id) };
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
-    log(`✗ bulk aborted: ${msg}`);
-    for (const v of valid) {
-      if (!results.find((r) => r.id === v.item.id)) {
-        fireItemStatus(v.item.id, "failed", undefined, msg);
-        results.push({ id: v.item.id, ok: false, error: msg });
-      }
-    }
-    return { ok: false, error: msg, results };
+    log(`✗ bulk dispatch failed: ${msg}`);
+    for (const v of valid) fireItemStatus(v.item.id, "failed", undefined, msg);
+    return { ok: false, error: msg, validIds: [] };
   }
 }
 
-/** Displayed artwork's src — used to detect the in-place "Next Design"
- *  transition (the preview image changes; the URL never does in the bulk editor). */
-function currentArtworkSrc(): string {
-  const imgs = Array.from(document.querySelectorAll<HTMLImageElement>("img"))
-    .filter((im) => { const r = im.getBoundingClientRect(); return r.width >= 120 && r.height >= 120; })
-    .sort((a, b) => b.getBoundingClientRect().width - a.getBoundingClientRect().width);
-  return imgs[0]?.currentSrc || imgs[0]?.src || "";
+/** Click GET STARTED (navigates to design 1's /designs/<id>/edit page). */
+async function clickGetStarted(): Promise<void> {
+  try {
+    const btn = await findClickable([...BULK.getStarted], 10_000);
+    await fullClick(btn);
+    log(`clicked GET STARTED`);
+  } catch (e) {
+    log(`GET STARTED click failed: ${(e as Error).message}`);
+  }
 }
 
-/** Wait for the in-place editor to advance: title field resets to empty OR the
- *  artwork preview changes. */
-async function waitForNextDesign(prevArtworkSrc: string, timeoutMs: number): Promise<void> {
-  const deadline = Date.now() + timeoutMs;
-  while (Date.now() < deadline) {
-    const t = document.querySelector<HTMLInputElement>('input[name="title"], input[placeholder="Title"], input[placeholder*="title" i]');
-    const titleEmpty = !!t && t.value.trim() === "";
-    const src = currentArtworkSrc();
-    if (titleEmpty || (src && src !== prevArtworkSrc)) { await sleep(500); return; }
-    await sleep(300);
+/** On a /designs/<id>/edit bulk page: fill listing + colors then publish (which
+ *  auto-advances TeePublic to the next design's /edit page). Reuses runUpload's
+ *  fill/colors/BLOCKING via skipUpload+skipPublish, then terms + publish. */
+async function fillAndPublishDraft(item: QueueItem): Promise<{ ok: boolean; error?: string }> {
+  lastFiredItemId = null; // per-design isolation (runUpload makes its own filled set)
+  log(`── bulk design: ${item.metadata.filename} (${location.pathname}) ──`);
+
+  // If TeePublic rejected this draft (no form), skip & cancel and move on.
+  const state = await waitForDesignFormOrError(45_000);
+  if (state === "rejected") {
+    log(`bulk: TeePublic rejected this design — Skip & Cancel`);
+    fireItemStatus(item.id, "failed", undefined, "rejected by TeePublic (size/format)");
+    await clickFirst([...BULK.skipDesign]);
+    return { ok: false, error: "rejected by TeePublic" };
   }
+
+  let fill: { ok: boolean; error?: string };
+  try {
+    fill = await runUpload(item, "", true, true); // skipUpload + skipPublish → fill + colors only
+  } catch (e) {
+    fill = { ok: false, error: e instanceof Error ? e.message : String(e) };
+  }
+  if (!fill.ok) {
+    log(`bulk: ${item.metadata.filename} fill FAILED: ${fill.error} — Skip & Cancel`);
+    fireItemStatus(item.id, "failed", undefined, fill.error);
+    await clickFirst([...BULK.skipDesign]);
+    return { ok: false, error: fill.error };
+  }
+  log(`bulk: ${item.metadata.filename} filled, colors ok`);
+
+  await acceptBulkTerms();
+  await sleep(300);
+  // Mark succeeded BEFORE clicking publish — publishing navigates to the next
+  // design's /edit page and destroys this content script.
+  fireItemStatus(item.id, "succeeded");
+  try {
+    const publish = await findClickable([...TP.publishButton, ...BULK.publishAll], 15_000);
+    await fullClick(publish);
+    log(`bulk: published ${item.metadata.filename}`);
+  } catch (e) {
+    log(`bulk: publish click failed: ${(e as Error).message}`);
+    return { ok: false, error: `publish click failed: ${(e as Error).message}` };
+  }
+  return { ok: true };
 }
 
 /** Tick the Terms & Conditions checkbox once before Publish All. */
@@ -809,7 +779,7 @@ async function waitForDesignFormOrError(timeoutMs: number): Promise<"ready" | "r
     const body = (document.body.textContent ?? "").toLowerCase();
     if (/upload failed/i.test(body) && !body.includes("change artwork")) return "rejected";
     const titleInput = document.querySelector<HTMLInputElement>(
-      'input[name="title"], input[placeholder="Title"], input[placeholder*="title" i]'
+      'input[name="design[design_title]"], input[name="title"], input[placeholder="Title"], input[placeholder*="title" i]'
     );
     if (body.includes("change artwork") && titleInput) return "ready";
     await sleep(400);
@@ -981,7 +951,7 @@ async function waitForFormReady(): Promise<void> {
     const bodyText = (document.body.textContent ?? "").toLowerCase();
     const hasChangeArtwork = bodyText.includes("change artwork");
     const titleInput = document.querySelector<HTMLInputElement>(
-      'input[name="title"], input[placeholder="Title"], input[placeholder*="title" i]'
+      'input[name="design[design_title]"], input[name="title"], input[placeholder="Title"], input[placeholder*="title" i]'
     );
     const ready = hasChangeArtwork && titleInput !== null;
 

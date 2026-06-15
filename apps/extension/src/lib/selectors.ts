@@ -17,6 +17,8 @@ export const TP = {
   ],
 
   titleInput: [
+    'input[name="design[design_title]"]',   // confirmed on /designs/<id>/edit
+    'input[id="design_design_title"]',
     'input[name="title"]',
     'input[name="design_title"]',
     'input[placeholder="Title"]',
@@ -25,6 +27,7 @@ export const TP = {
   ],
 
   mainTagInput: [
+    'input[name="design[primary_tag]"]',     // confirmed on /designs/<id>/edit
     'input[name="main_tag"]',
     'input[name="mainTag"]',
     'input[name="primary_tag"]',
@@ -34,6 +37,7 @@ export const TP = {
   ],
 
   descriptionInput: [
+    'textarea[name="design[design_description]"]', // confirmed on /designs/<id>/edit
     'textarea[name="description"]',
     'textarea[placeholder*="describe" i]',
     'textarea[placeholder*="description" i]',

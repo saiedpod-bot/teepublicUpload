@@ -80,10 +80,13 @@ class AutomationEngine {
     }
   }
 
-  /** BULK: open /designs/bulk_uploader, hand the whole selection + images to the
-   *  content script, which runs TeePublic's in-place bulk flow (dispatch all →
-   *  GET STARTED → fill each in upload order → Publish All) and reports each
-   *  design's status via ITEM_STATUS. */
+  /** BULK: TeePublic opens each design on its OWN /designs/<id>/edit page and
+   *  auto-advances after each publish. So the engine drives the navigation:
+   *    1. bulk_uploader → dispatch all files + GET STARTED (content script)
+   *    2. wait for design 1's /designs/<id>/edit page
+   *    3. fill + publish each design in upload order; publishing navigates to
+   *       the next /edit page — wait for the URL to change, then repeat.
+   *  The content script reports each design's status via ITEM_STATUS. */
   private async runBulk(items: QueueItem[]) {
     for (const it of items) {
       await QueueStore.setItemStatus(it.id, "running", { attempts: it.attempts + 1, lastError: undefined });
@@ -94,20 +97,47 @@ class AutomationEngine {
       const imageDataUrls: string[] = [];
       for (const it of items) imageDataUrls.push(await imageDataUrlFor(it));
       await ensureContentScriptReady(tabId);
-      try {
-        await sendToTab(tabId, { type: "AUTOMATION_BULK", items, imageDataUrls });
-      } catch {
-        // The Publish All navigation can drop the message response — the content
-        // script already reported each design's status via ITEM_STATUS.
+
+      // 1. Dispatch + GET STARTED. The content script replies with the valid ids
+      //    (in upload order), then clicks GET STARTED (which navigates away).
+      const disp = await sendToTab<{ ok: boolean; validIds?: string[]; error?: string }>(
+        tabId, { type: "AUTOMATION_BULK_DISPATCH", items, imageDataUrls });
+      const validIds = disp?.validIds ?? [];
+      if (validIds.length === 0) {
+        // Every design was too small / rejected — statuses already fired.
+        await this.reconcileBulk(items);
+        return;
       }
-      // Let ITEM_STATUS messages settle, then reconcile + free images.
-      await new Promise((r) => setTimeout(r, 3_000));
-      const b = await QueueStore.get();
-      for (const it of items) {
-        const cur = b?.items.find((i) => i.id === it.id);
-        if (cur?.status === "succeeded") { await ImageStore.remove(it.id); }
-        else if (cur?.status === "running") { await QueueStore.setItemStatus(it.id, "failed", { lastError: "bulk: no result reported" }); }
+      const ordered = validIds.map((id) => items.find((i) => i.id === id)!).filter(Boolean);
+
+      // 2. Wait for design 1's edit page.
+      if (!(await waitForTabUrl(tabId, /\/designs\/\d+\/edit/, 90_000))) {
+        throw new Error("GET STARTED did not open a /designs/<id>/edit page");
       }
+
+      // 3. Fill + publish each design; publishing auto-advances to the next /edit.
+      for (let k = 0; k < ordered.length; k++) {
+        const item = ordered[k];
+        await ensureContentScriptReady(tabId);
+        const beforeUrl = (await chrome.tabs.get(tabId).catch(() => null))?.url ?? "";
+        try {
+          await sendToTab(tabId, { type: "AUTOMATION_FILL_PUBLISH_DRAFT", item });
+        } catch {
+          // Publishing navigates to the next /edit and can drop the response —
+          // the content script already fired ITEM_STATUS.
+        }
+        // Wait for TeePublic to advance (URL changes off this edit page), unless
+        // this was the last design.
+        if (k < ordered.length - 1) {
+          await waitForTabUrlChange(tabId, beforeUrl, 90_000);
+        } else {
+          await new Promise((r) => setTimeout(r, 4_000));
+        }
+        await humanDelay(800, 1_500);
+      }
+
+      await new Promise((r) => setTimeout(r, 2_000));
+      await this.reconcileBulk(items);
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       for (const it of items) {
@@ -115,6 +145,17 @@ class AutomationEngine {
         if (b?.items.find((i) => i.id === it.id)?.status === "succeeded") continue;
         await QueueStore.setItemStatus(it.id, "failed", { lastError: message });
       }
+    }
+  }
+
+  /** After a bulk run: free images for succeeded designs; mark any still-running
+   *  (no ITEM_STATUS arrived) as failed. */
+  private async reconcileBulk(items: QueueItem[]) {
+    const b = await QueueStore.get();
+    for (const it of items) {
+      const cur = b?.items.find((i) => i.id === it.id);
+      if (cur?.status === "succeeded") { await ImageStore.remove(it.id); }
+      else if (cur?.status === "running") { await QueueStore.setItemStatus(it.id, "failed", { lastError: "bulk: no result reported" }); }
     }
   }
 
@@ -226,6 +267,28 @@ function sendToTab<T>(tabId: number, message: unknown): Promise<T> {
       resolve(response as T);
     });
   });
+}
+
+/** Poll a tab's URL until it matches `rx`. Returns false on timeout. */
+async function waitForTabUrl(tabId: number, rx: RegExp, timeoutMs: number): Promise<boolean> {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    const url = (await chrome.tabs.get(tabId).catch(() => null))?.url ?? "";
+    if (rx.test(url)) return true;
+    await new Promise((r) => setTimeout(r, 400));
+  }
+  return false;
+}
+
+/** Poll a tab's URL until it differs from `beforeUrl`. Returns false on timeout. */
+async function waitForTabUrlChange(tabId: number, beforeUrl: string, timeoutMs: number): Promise<boolean> {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    const url = (await chrome.tabs.get(tabId).catch(() => null))?.url ?? "";
+    if (url && url !== beforeUrl) return true;
+    await new Promise((r) => setTimeout(r, 400));
+  }
+  return false;
 }
 
 async function navigateAndWait(tabId: number, url: string): Promise<void> {
