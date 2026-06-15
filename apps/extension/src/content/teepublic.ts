@@ -167,6 +167,15 @@ async function runUpload(
     // ── 1. Upload the design file (ONE attempt — TeePublic caps ~50/day, so we
     //       never re-dispatch and burn extra daily slots). ──────────────────
     if (!skipUpload) {
+      // Pre-validate size — TeePublic rejects artwork below 1500×1995, which
+      // otherwise wastes a daily upload slot. Skip too-small files up front.
+      const dim = await imageDimensions(imageDataUrl);
+      if (dim && isBelowMinSize(dim)) {
+        const err = `skipped ${m.filename}: ${dim.w}×${dim.h} below TeePublic minimum ${MIN_SHORT_SIDE}×${MIN_LONG_SIDE}`;
+        log(err);
+        fireItemStatus(item.id, "failed", undefined, err);
+        return { ok: false, error: err };
+      }
       const file = dataUrlToFile(imageDataUrl, m.filename || "design.png", item.imageMime || "image/png");
       const fileInput = await firstMatching<HTMLInputElement>([...TP.fileInput]);
       await setFileInput(fileInput, file);
@@ -530,48 +539,86 @@ async function runBulkInPlace(
   items: QueueItem[],
   imageDataUrls: string[],
 ): Promise<{ ok: boolean; error?: string; results: { id: string; ok: boolean; error?: string }[] }> {
-  const N = items.length;
-  const results = items.map((it) => ({ id: it.id, ok: false } as { id: string; ok: boolean; error?: string }));
-  log(`──── BULK: ${N} design(s) on ${location.pathname} ────`);
+  const results: { id: string; ok: boolean; error?: string }[] = [];
+  log(`──── BULK: ${items.length} design(s) on ${location.pathname} ────`);
+
+  // 0. Pre-validate sizes — skip too-small files BEFORE dispatch so they don't
+  //    cascade into "GET STARTED never appears" / "form not ready forever".
+  const valid: { item: QueueItem; dataUrl: string }[] = [];
+  for (let i = 0; i < items.length; i++) {
+    const it = items[i];
+    const dim = await imageDimensions(imageDataUrls[i]);
+    if (dim && isBelowMinSize(dim)) {
+      const err = `skipped ${it.metadata.filename}: ${dim.w}×${dim.h} below TeePublic minimum ${MIN_SHORT_SIDE}×${MIN_LONG_SIDE}`;
+      log(err);
+      fireItemStatus(it.id, "failed", undefined, err);
+      results.push({ id: it.id, ok: false, error: err });
+      continue;
+    }
+    valid.push({ item: it, dataUrl: imageDataUrls[i] });
+  }
+  const N = valid.length;
+  if (N === 0) {
+    log(`bulk aborted: no designs passed TeePublic's size check`);
+    return { ok: false, error: "no designs passed TeePublic's size check", results };
+  }
 
   try {
-    // 1. Dispatch ALL files at once (TeePublic's bulk uploader processes them
-    //    into tiles).
+    // 1. Dispatch ONLY the valid files.
     const input = await firstMatching<HTMLInputElement>([...BULK.multiFileInput], 15_000);
-    const files = items.map((it, i) =>
-      dataUrlToFile(imageDataUrls[i], it.metadata.filename || `design_${i + 1}.png`, it.imageMime || "image/png"));
+    const files = valid.map((v, i) =>
+      dataUrlToFile(v.dataUrl, v.item.metadata.filename || `design_${i + 1}.png`, v.item.imageMime || "image/png"));
     await setFileInputMultiple(input, files);
     log(`dispatched ${files.length} files — waiting for tiles to process…`);
 
-    // 2. GET STARTED.
-    const getStarted = await findClickable([...BULK.getStarted], 90_000);
+    // 2. GET STARTED — only appears after tiles process. Poll, then clean-abort
+    //    (no raw selector error) if it never shows.
+    let getStarted: HTMLElement;
+    try {
+      getStarted = await findClickable([...BULK.getStarted], 60_000);
+    } catch {
+      const err = "no designs passed TeePublic's size check (GET STARTED never appeared)";
+      log(`bulk aborted: ${err}`);
+      for (const v of valid) { fireItemStatus(v.item.id, "failed", undefined, err); results.push({ id: v.item.id, ok: false, error: err }); }
+      return { ok: false, error: err, results };
+    }
     await fullClick(getStarted);
     log(`clicked GET STARTED`);
 
-    // 3. Fill each design IN PLACE, in upload order.
+    // 3. Fill each VALID design IN PLACE, in upload order.
     for (let i = 0; i < N; i++) {
-      const item = items[i];
+      const item = valid[i].item;
       lastFiredItemId = null; // per-design isolation (the filled set is per runUpload call)
       log(`── bulk ${i + 1}/${N} (upload order): ${item.metadata.filename} ──`);
-
-      await waitForFormReady();
-      try { await waitForArtworkProcessingDone(); } catch { /* may already be ready */ }
       const prevSrc = currentArtworkSrc();
 
+      // Wait for this design's form, OR detect TeePublic rejected it (no form).
+      // Bounded so a rejected design never loops "form not ready" forever.
+      const state = await waitForDesignFormOrError(45_000);
+      if (state === "rejected") {
+        log(`bulk ${i + 1}/${N}: TeePublic rejected the artwork — Skip & Cancel`);
+        fireItemStatus(item.id, "failed", undefined, "rejected by TeePublic (size/format)");
+        results.push({ id: item.id, ok: false, error: "rejected by TeePublic" });
+        if (!(await clickFirst([...BULK.skipDesign])) && i < N - 1) await clickFirst([...BULK.nextDesign]);
+        await waitForNextDesign(prevSrc, 10_000);
+        continue;
+      }
+
+      try { await waitForArtworkProcessingDone(); } catch { /* may already be ready */ }
       let fill: { ok: boolean; error?: string };
       try {
         fill = await runUpload(item, "", true, true); // skipUpload + skipPublish → in-place fill only
       } catch (e) {
         fill = { ok: false, error: e instanceof Error ? e.message : String(e) };
       }
-      results[i] = { id: item.id, ok: fill.ok, error: fill.ok ? undefined : fill.error };
+      results.push({ id: item.id, ok: fill.ok, error: fill.ok ? undefined : fill.error });
 
       if (!fill.ok) {
         // Don't abort the batch — Skip & Cancel this one and continue.
         log(`bulk ${i + 1}/${N} FAILED: ${fill.error} — Skip & Cancel This Design`);
         fireItemStatus(item.id, "failed", undefined, fill.error);
         if (await clickFirst([...BULK.skipDesign])) {
-          await waitForNextDesign(prevSrc, 10_000); // Skip advances to the next design
+          await waitForNextDesign(prevSrc, 10_000);
           continue;
         }
         // No Skip control found — fall through to Next Design so we still advance.
@@ -602,12 +649,17 @@ async function runBulkInPlace(
     await waitForUrlChangeAwayFromEdit(beforeUrl, 90_000);
 
     const okCount = results.filter((r) => r.ok).length;
-    log(`bulk done: ${okCount}/${N} published`);
+    log(`bulk done: ${okCount}/${items.length} published`);
     return { ok: okCount > 0, results };
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
     log(`✗ bulk aborted: ${msg}`);
-    for (const r of results) if (!r.ok) fireItemStatus(r.id, "failed", undefined, msg);
+    for (const v of valid) {
+      if (!results.find((r) => r.id === v.item.id)) {
+        fireItemStatus(v.item.id, "failed", undefined, msg);
+        results.push({ id: v.item.id, ok: false, error: msg });
+      }
+    }
     return { ok: false, error: msg, results };
   }
 }
@@ -726,6 +778,43 @@ function pageShowsText(rx: RegExp): boolean {
     if (rx.test(t)) return true;
   }
   return false;
+}
+
+// TeePublic rejects artwork below this; pre-checking avoids the failed-upload
+// cascade. Orientation-agnostic so a valid landscape design isn't false-skipped.
+const MIN_SHORT_SIDE = 1500;
+const MIN_LONG_SIDE = 1995;
+
+/** Read an image's pixel dimensions from a data/URL. Null if it can't load. */
+function imageDimensions(src: string): Promise<{ w: number; h: number } | null> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => resolve({ w: img.naturalWidth, h: img.naturalHeight });
+    img.onerror = () => resolve(null);
+    img.src = src;
+  });
+}
+
+function isBelowMinSize(d: { w: number; h: number }): boolean {
+  return Math.min(d.w, d.h) < MIN_SHORT_SIDE || Math.max(d.w, d.h) < MIN_LONG_SIDE;
+}
+
+/** Wait for the current design's edit form to be ready, OR detect that
+ *  TeePublic rejected the artwork ("UPLOAD FAILED"). Bounded so a rejected
+ *  design never loops "form not ready" forever. */
+async function waitForDesignFormOrError(timeoutMs: number): Promise<"ready" | "rejected" | "timeout"> {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    if (isPublishedListingUrl(location.href)) return "ready";
+    const body = (document.body.textContent ?? "").toLowerCase();
+    if (/upload failed/i.test(body) && !body.includes("change artwork")) return "rejected";
+    const titleInput = document.querySelector<HTMLInputElement>(
+      'input[name="title"], input[placeholder="Title"], input[placeholder*="title" i]'
+    );
+    if (body.includes("change artwork") && titleInput) return "ready";
+    await sleep(400);
+  }
+  return "timeout";
 }
 
 // Watches for either TeePublic's "you must choose…" validation modal or the
