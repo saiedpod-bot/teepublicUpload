@@ -4,11 +4,12 @@
 // (queue, retries, delays-between-items) lives in the AutomationEngine.
 
 import type { QueueItem } from "@teepublic/shared";
-import { TP } from "../lib/selectors";
+import { TP, BULK } from "../lib/selectors";
 import { BulkLogStore } from "../services/queueStore";
 import {
   firstMatching,
   setFileInput,
+  setFileInputMultiple,
   typeInto,
   waitForSelector,
   findFieldByLabel,
@@ -81,13 +82,11 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
       const result = await runUpload(message.item, message.imageDataUrl);
       return sendResponse(result);
     }
-    if (message?.type === "AUTOMATION_UPLOAD_ONLY") {
-      const result = await runUploadOnly(message.item, message.imageDataUrl);
-      return sendResponse(result);
-    }
-    if (message?.type === "AUTOMATION_FILL_PUBLISH") {
-      // Already on the draft's /designs/<id>/edit page — fill + publish, no upload.
-      const result = await runUpload(message.item, "", true);
+    if (message?.type === "AUTOMATION_BULK") {
+      // TeePublic's official bulk flow, all on one page (no URL navigation):
+      // dispatch all files → GET STARTED → fill each in upload order → Next
+      // Design → Publish All. No image matching — order is deterministic.
+      const result = await runBulkInPlace(message.items, message.imageDataUrls);
       return sendResponse(result);
     }
     return sendResponse({ ok: false, error: "unknown message" });
@@ -125,7 +124,8 @@ function isPublishedListingUrl(url: string = location.href): boolean {
 async function runUpload(
   item: QueueItem,
   imageDataUrl: string,
-  skipUpload = false, // Phase-2 bulk: the draft already has the file; just fill+publish
+  skipUpload = false,  // bulk in-place: artwork already dispatched in the batch
+  skipPublish = false, // bulk in-place: don't tick terms/publish per design (Publish All does it once)
 ): Promise<{ ok: boolean; error?: string; publishedUrl?: string }> {
   // Reset the duplicate-fire guard for this new item.
   if (item.id !== lastFiredItemId) lastFiredItemId = null;
@@ -424,29 +424,32 @@ async function runUpload(
       log(`product-colors palette click failed — continuing: ${(e as Error).message}`);
     }
 
-    // ── 7. Terms & Conditions checkbox ──────────────────────────────────
-    try {
-      let terms: HTMLInputElement | null = null;
-      try { terms = await firstMatching<HTMLInputElement>([...TP.termsCheckbox], 4_000); }
-      catch {
-        // Fallback: any checkbox that lives near "agree" / "Terms" text.
-        const cbs = Array.from(document.querySelectorAll<HTMLInputElement>('input[type="checkbox"]'));
-        terms = cbs.find((cb) => /agree|terms|conditions/i.test((cb.closest("label, div, p")?.textContent ?? ""))) ?? null;
+    // ── 7. Terms & Conditions checkbox (single flow only — bulk ticks it once
+    //       at "Publish All", so per-design fills skip it). ──────────────────
+    if (!skipPublish) {
+      try {
+        let terms: HTMLInputElement | null = null;
+        try { terms = await firstMatching<HTMLInputElement>([...TP.termsCheckbox], 4_000); }
+        catch {
+          // Fallback: any checkbox that lives near "agree" / "Terms" text.
+          const cbs = Array.from(document.querySelectorAll<HTMLInputElement>('input[type="checkbox"]'));
+          terms = cbs.find((cb) => /agree|terms|conditions/i.test((cb.closest("label, div, p")?.textContent ?? ""))) ?? null;
+        }
+        if (terms && !terms.checked) {
+          const wrap = terms.closest("label");
+          if (wrap) await fullClick(wrap as HTMLElement);
+          else      await fullClick(terms);
+          if (!terms.checked) terms.checked = true;
+          terms.dispatchEvent(new Event("input",  { bubbles: true }));
+          terms.dispatchEvent(new Event("change", { bubbles: true }));
+          log("terms checked");
+          await humanDelay(200, 500);
+        } else if (!terms) {
+          log("terms checkbox not found — Publish may be blocked");
+        }
+      } catch (e) {
+        log(`terms checkbox handling failed: ${(e as Error).message}`);
       }
-      if (terms && !terms.checked) {
-        const wrap = terms.closest("label");
-        if (wrap) await fullClick(wrap as HTMLElement);
-        else      await fullClick(terms);
-        if (!terms.checked) terms.checked = true;
-        terms.dispatchEvent(new Event("input",  { bubbles: true }));
-        terms.dispatchEvent(new Event("change", { bubbles: true }));
-        log("terms checked");
-        await humanDelay(200, 500);
-      } else if (!terms) {
-        log("terms checkbox not found — Publish may be blocked");
-      }
-    } catch (e) {
-      log(`terms checkbox handling failed: ${(e as Error).message}`);
     }
 
     // ── 7.5. Pre-publish guard — any product still ENABLED but with an empty
@@ -458,6 +461,13 @@ async function runUpload(
       const err = `enabled products with no color (would block publish): ${blocking.join(", ")}`;
       log(`✗ aborting before publish — ${err}`);
       return { ok: false, error: err };
+    }
+
+    // Bulk in-place: the design is fully filled + colors set; the bulk loop will
+    // click "Next Design"/"Publish All". Stop here without publishing this one.
+    if (skipPublish) {
+      log("bulk: design filled in place (no per-design publish)");
+      return { ok: true };
     }
 
     // ── 8. Publish — success is detected by URL change to /t-shirt/<id>-<slug>
@@ -508,6 +518,145 @@ async function runUpload(
     fireItemStatus(item.id, "failed", undefined, msg);
     return { ok: false, error: msg };
   }
+}
+
+// ─── BULK upload — TeePublic's official in-place flow ───────────────────────
+// On /designs/bulk_uploader: dispatch ALL files → GET STARTED → fill each design
+// IN PLACE in upload order (the page does NOT navigate between designs, so
+// identity is purely positional — no image/phash matching) → "Next Design"
+// between designs → "Publish All" at the end. Reuses runUpload(skipUpload,
+// skipPublish) so the single-flow fill/color/products/BLOCKING logic is shared.
+async function runBulkInPlace(
+  items: QueueItem[],
+  imageDataUrls: string[],
+): Promise<{ ok: boolean; error?: string; results: { id: string; ok: boolean; error?: string }[] }> {
+  const N = items.length;
+  const results = items.map((it) => ({ id: it.id, ok: false } as { id: string; ok: boolean; error?: string }));
+  log(`──── BULK: ${N} design(s) on ${location.pathname} ────`);
+
+  try {
+    // 1. Dispatch ALL files at once (TeePublic's bulk uploader processes them
+    //    into tiles).
+    const input = await firstMatching<HTMLInputElement>([...BULK.multiFileInput], 15_000);
+    const files = items.map((it, i) =>
+      dataUrlToFile(imageDataUrls[i], it.metadata.filename || `design_${i + 1}.png`, it.imageMime || "image/png"));
+    await setFileInputMultiple(input, files);
+    log(`dispatched ${files.length} files — waiting for tiles to process…`);
+
+    // 2. GET STARTED.
+    const getStarted = await findClickable([...BULK.getStarted], 90_000);
+    await fullClick(getStarted);
+    log(`clicked GET STARTED`);
+
+    // 3. Fill each design IN PLACE, in upload order.
+    for (let i = 0; i < N; i++) {
+      const item = items[i];
+      lastFiredItemId = null; // per-design isolation (the filled set is per runUpload call)
+      log(`── bulk ${i + 1}/${N} (upload order): ${item.metadata.filename} ──`);
+
+      await waitForFormReady();
+      try { await waitForArtworkProcessingDone(); } catch { /* may already be ready */ }
+      const prevSrc = currentArtworkSrc();
+
+      let fill: { ok: boolean; error?: string };
+      try {
+        fill = await runUpload(item, "", true, true); // skipUpload + skipPublish → in-place fill only
+      } catch (e) {
+        fill = { ok: false, error: e instanceof Error ? e.message : String(e) };
+      }
+      results[i] = { id: item.id, ok: fill.ok, error: fill.ok ? undefined : fill.error };
+
+      if (!fill.ok) {
+        // Don't abort the batch — Skip & Cancel this one and continue.
+        log(`bulk ${i + 1}/${N} FAILED: ${fill.error} — Skip & Cancel This Design`);
+        fireItemStatus(item.id, "failed", undefined, fill.error);
+        if (await clickFirst([...BULK.skipDesign])) {
+          await waitForNextDesign(prevSrc, 10_000); // Skip advances to the next design
+          continue;
+        }
+        // No Skip control found — fall through to Next Design so we still advance.
+      } else {
+        log(`bulk ${i + 1}/${N}: filled, colors ok`);
+      }
+
+      if (i < N - 1) {
+        const next = await findClickable([...BULK.nextDesign], 15_000);
+        await fullClick(next);
+        log(`clicked Next Design`);
+        await waitForNextDesign(prevSrc, 10_000);
+      }
+    }
+
+    // 4. Terms (once), then report each design's status BEFORE Publish All — the
+    //    Publish All navigation can destroy this content script — then publish.
+    await acceptBulkTerms();
+    await sleep(400);
+    for (const r of results) {
+      if (r.ok) fireItemStatus(r.id, "succeeded");
+      else fireItemStatus(r.id, "failed", undefined, r.error ?? "not filled");
+    }
+    const beforeUrl = location.href;
+    const publishAll = await findClickable([...BULK.publishAll, ...TP.publishButton], 15_000);
+    await fullClick(publishAll);
+    log(`clicked Publish All`);
+    await waitForUrlChangeAwayFromEdit(beforeUrl, 90_000);
+
+    const okCount = results.filter((r) => r.ok).length;
+    log(`bulk done: ${okCount}/${N} published`);
+    return { ok: okCount > 0, results };
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    log(`✗ bulk aborted: ${msg}`);
+    for (const r of results) if (!r.ok) fireItemStatus(r.id, "failed", undefined, msg);
+    return { ok: false, error: msg, results };
+  }
+}
+
+/** Displayed artwork's src — used to detect the in-place "Next Design"
+ *  transition (the preview image changes; the URL never does in the bulk editor). */
+function currentArtworkSrc(): string {
+  const imgs = Array.from(document.querySelectorAll<HTMLImageElement>("img"))
+    .filter((im) => { const r = im.getBoundingClientRect(); return r.width >= 120 && r.height >= 120; })
+    .sort((a, b) => b.getBoundingClientRect().width - a.getBoundingClientRect().width);
+  return imgs[0]?.currentSrc || imgs[0]?.src || "";
+}
+
+/** Wait for the in-place editor to advance: title field resets to empty OR the
+ *  artwork preview changes. */
+async function waitForNextDesign(prevArtworkSrc: string, timeoutMs: number): Promise<void> {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    const t = document.querySelector<HTMLInputElement>('input[name="title"], input[placeholder="Title"], input[placeholder*="title" i]');
+    const titleEmpty = !!t && t.value.trim() === "";
+    const src = currentArtworkSrc();
+    if (titleEmpty || (src && src !== prevArtworkSrc)) { await sleep(500); return; }
+    await sleep(300);
+  }
+}
+
+/** Tick the Terms & Conditions checkbox once before Publish All. */
+async function acceptBulkTerms(): Promise<void> {
+  try {
+    let terms: HTMLInputElement | null = null;
+    try { terms = await firstMatching<HTMLInputElement>([...TP.termsCheckbox], 4_000); }
+    catch {
+      const cbs = Array.from(document.querySelectorAll<HTMLInputElement>('input[type="checkbox"]'));
+      terms = cbs.find((cb) => /agree|terms|conditions/i.test((cb.closest("label, div, p")?.textContent ?? ""))) ?? null;
+    }
+    if (terms && !terms.checked) {
+      const wrap = terms.closest("label");
+      if (wrap) await fullClick(wrap as HTMLElement); else await fullClick(terms);
+      if (!terms.checked) terms.checked = true;
+      terms.dispatchEvent(new Event("input", { bubbles: true }));
+      terms.dispatchEvent(new Event("change", { bubbles: true }));
+      log("terms & conditions checked (bulk)");
+    }
+  } catch (e) { log(`bulk terms handling failed: ${(e as Error).message}`); }
+}
+
+/** Click the first matching control if present; returns whether it clicked. */
+async function clickFirst(candidates: string[]): Promise<boolean> {
+  try { await fullClick(await findClickable(candidates, 4_000)); return true; } catch { return false; }
 }
 
 // ─── BULK Phase 1: upload ONLY (no listing, no publish) ─────────────────────
