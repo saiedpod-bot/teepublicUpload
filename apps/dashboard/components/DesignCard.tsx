@@ -6,6 +6,7 @@ import type { DesignMetadata } from "@teepublic/shared";
 import type { ParsedRow } from "@/lib/parser";
 import type { MatchedImage } from "@/lib/queue";
 import { ColorsEditor } from "./ColorsEditor";
+import { DesignPreview, DesignColorSwatches } from "./DesignPreview";
 import type { ColorPreset } from "@/lib/colorPresets";
 import type { CustomBasicColor } from "@/lib/batchConfig";
 
@@ -42,25 +43,17 @@ export function DesignCard({
   totalDesigns, onApplyColorsToAll, onApplyProductsToAll,
 }: Props) {
   const [tab, setTab] = useState<Tab>("info");
-  const [editing, setEditing] = useState(false);
-  const [draft, setDraft] = useState<DesignMetadata>(row.metadata);
   // Preset tracking is UI-only (not part of DesignMetadata) — defaults to
   // "all" so no toggle button shows as active until the user clicks one.
   const [preset, setPreset] = useState<ColorPreset>("all");
 
-  const m = editing ? draft : row.metadata;
+  const m = row.metadata;
 
-  function save() {
-    onChange(row.rowNumber, draft);
-    setEditing(false);
-  }
-  function cancel() {
-    setDraft(row.metadata);
-    setEditing(false);
-  }
-  function startEdit() {
-    setDraft(row.metadata);
-    setEditing(true);
+  // Always-editable, immediate-write — matches the "Generate with AI" flow.
+  // Every field change is committed to the row store right away; there is no
+  // Edit/Save/Cancel step.
+  function update(patch: Partial<DesignMetadata>) {
+    onChange(row.rowNumber, { ...row.metadata, ...patch });
   }
 
   return (
@@ -70,47 +63,27 @@ export function DesignCard({
           <h3 className="font-semibold tracking-tight">Design Configuration</h3>
           <span className="chip-mute font-mono">{row.metadata.filename}</span>
         </div>
-        <div className="flex gap-2">
-          {!editing && (
-            <>
-              <button className="btn-ghost text-xs" onClick={startEdit}>✎ Edit</button>
-              {onRemove && <button className="btn-ghost text-xs" onClick={onRemove} title="Remove">✕</button>}
-            </>
-          )}
-          {editing && (
-            <>
-              <button className="btn-ghost text-xs" onClick={cancel}>Cancel</button>
-              <button className="btn-primary text-xs" onClick={save}>Save</button>
-            </>
-          )}
-        </div>
+        {onRemove && (
+          <button className="btn-ghost text-xs" onClick={onRemove} title="Remove">✕</button>
+        )}
       </div>
 
-      {/* Split pane — section rail on the left, detail panel on the right. */}
-      <div className="grid grid-cols-1 md:grid-cols-[168px_1fr] border-t border-zinc-700/60 pt-4">
-        <nav className="flex md:flex-col gap-1 md:gap-0.5 md:border-r md:border-zinc-700/60 md:pr-2 mb-4 md:mb-0">
-          <RailItem active={tab === "info"}     label="info"     count={m.tags.length}                          onClick={() => setTab("info")} />
-          <RailItem active={tab === "colors"}   label="colors"   count={Object.keys(m.productColors ?? {}).length} onClick={() => setTab("colors")} />
-          <RailItem active={tab === "products"} label="products" count={(m.enabledProducts ?? []).length}        onClick={() => setTab("products")} />
-        </nav>
+      {/* Large tinted preview on the left, horizontal tabs on the right —
+          mirrors the "Generate with AI" Design Configuration layout. */}
+      <div className="grid grid-cols-1 lg:grid-cols-[260px_1fr] gap-6">
+        <div className="relative">
+          <DesignPreview src={image?.url} alt={m.title} productColors={m.productColors ?? {}} />
+          <div className="mt-2 truncate text-xs text-zinc-500 dark:text-zinc-400" title={row.metadata.filename}>
+            {row.metadata.filename}
+          </div>
+          <DesignColorSwatches productColors={m.productColors ?? {}} />
+        </div>
 
-        <div className="min-w-0 md:pl-5">
+        <div className="min-w-0 space-y-4">
+          <Tabs value={tab} onChange={setTab} />
+
           {tab === "info" && (
-            <div className="flex flex-col sm:flex-row gap-5">
-              <div className="flex-shrink-0 w-28">
-                <div className="aspect-square rounded-sm overflow-hidden bg-ink-800 border border-zinc-700 grid place-items-center">
-                  {image ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={image.url} alt={m.title} className="w-full h-full object-contain" />
-                  ) : (
-                    <span className="text-zinc-500 text-xs">no image</span>
-                  )}
-                </div>
-              </div>
-              <div className="flex-1 min-w-0">
-                <InfoTab metadata={m} editing={editing} onChange={(p) => setDraft({ ...draft, ...p })} />
-              </div>
-            </div>
+            <InfoTab metadata={m} onChange={update} />
           )}
           {tab === "colors"   && (
             <ColorsEditor
@@ -119,35 +92,21 @@ export function DesignCard({
               preset={preset}
               onChange={({ productColors, preset: nextPreset }) => {
                 setPreset(nextPreset);
-                setDraft({ ...draft, productColors });
+                update({ productColors });
               }}
-              readOnly={!editing}
               customBasicColors={customBasicColors}
               onAddCustomBasicColor={onAddCustomBasicColor}
               onRemoveCustomBasicColor={onRemoveCustomBasicColor}
               applyToAllCount={totalDesigns}
-              // Apply-to-all writes to the parent row store directly, not to
-              // the draft — saves a Save click and matches the AI flow's
-              // immediate-write behavior. Only enabled in edit mode so it's
-              // discoverable next to the rest of the editing controls.
-              onApplyToAll={editing && onApplyColorsToAll ? () => {
-                // Push the local draft into the source row first so the
-                // copy includes any unsaved tweaks.
-                onChange(row.rowNumber, draft);
-                onApplyColorsToAll();
-              } : undefined}
+              onApplyToAll={onApplyColorsToAll}
             />
           )}
           {tab === "products" && (
             <ProductsTab
               metadata={m}
-              editing={editing}
-              onChange={(enabledProducts) => setDraft({ ...draft, enabledProducts })}
+              onChange={(enabledProducts) => update({ enabledProducts })}
               totalDesigns={totalDesigns}
-              onApplyToAll={editing && onApplyProductsToAll ? () => {
-                onChange(row.rowNumber, draft);
-                onApplyProductsToAll();
-              } : undefined}
+              onApplyToAll={onApplyProductsToAll}
             />
           )}
         </div>
@@ -156,84 +115,69 @@ export function DesignCard({
   );
 }
 
-// Section-rail entry — vertical nav item with a left accent bar and a count.
-function RailItem({ active, label, count, onClick }: { active: boolean; label: string; count?: number; onClick: () => void }) {
+// Horizontal segmented tabs — mirrors the AI flow's Design Configuration tabs.
+function Tabs({ value, onChange }: { value: Tab; onChange: (v: Tab) => void }) {
+  const items: { id: Tab; label: string }[] = [
+    { id: "info",     label: "Info" },
+    { id: "colors",   label: "Colors" },
+    { id: "products", label: "Products" },
+  ];
   return (
-    <button
-      onClick={onClick}
-      className={clsx(
-        "group flex items-center justify-between gap-2 px-3 py-2.5 text-sm transition border-l-2 text-left",
-        active
-          ? "border-accent-500 text-accent-500 bg-ink-800/60"
-          : "border-transparent text-zinc-400 hover:text-zinc-700 dark:hover:text-zinc-200 hover:bg-ink-800/40"
-      )}
-    >
-      <span>{label}</span>
-      {count != null && (
-        <span className={clsx("text-xs font-mono tabular-nums", active ? "text-accent-700" : "text-zinc-500")}>
-          {count}
-        </span>
-      )}
-    </button>
+    <div className="grid grid-cols-3 gap-2 p-1 rounded-xl bg-zinc-100 dark:bg-ink-800">
+      {items.map((it) => {
+        const active = value === it.id;
+        return (
+          <button
+            key={it.id}
+            type="button"
+            onClick={() => onChange(it.id)}
+            className={clsx(
+              "py-2.5 rounded-lg text-sm font-medium transition",
+              active
+                ? "bg-white text-zinc-900 ring-1 ring-success-500/60 shadow-sm dark:bg-ink-900 dark:text-white"
+                : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white"
+            )}
+          >
+            {it.label}
+          </button>
+        );
+      })}
+    </div>
   );
 }
 
 // ── Info tab ────────────────────────────────────────────────────────────────
-function InfoTab({ metadata, editing, onChange }: { metadata: DesignMetadata; editing: boolean; onChange: (p: Partial<DesignMetadata>) => void }) {
+// Always-editable inputs — every change writes straight through to the row
+// store (no Edit/Save step), matching the AI flow.
+function InfoTab({ metadata, onChange }: { metadata: DesignMetadata; onChange: (p: Partial<DesignMetadata>) => void }) {
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       <Field label="Design Title">
-        {editing ? (
-          <input className="input" value={metadata.title} onChange={(e) => onChange({ title: e.target.value })} />
-        ) : (
-          <Readout text={metadata.title} />
-        )}
+        <input className="input" value={metadata.title} onChange={(e) => onChange({ title: e.target.value })} />
       </Field>
 
       <Field label="Primary Tag">
-        {editing ? (
-          <input className="input" value={metadata.primaryTag ?? ""} onChange={(e) => onChange({ primaryTag: e.target.value || undefined })} />
-        ) : (
-          <Readout text={metadata.primaryTag ?? "—"} />
-        )}
+        <input className="input" value={metadata.primaryTag ?? ""} onChange={(e) => onChange({ primaryTag: e.target.value || undefined })} />
       </Field>
 
       <Field label="Description" full>
-        {editing ? (
-          <textarea className="input min-h-[80px]" value={metadata.description} onChange={(e) => onChange({ description: e.target.value })} />
-        ) : (
-          <Readout text={metadata.description || "—"} multiline />
-        )}
+        <textarea className="input min-h-[80px]" value={metadata.description} onChange={(e) => onChange({ description: e.target.value })} />
       </Field>
 
       <Field label="Supporting Tags" full>
-        {editing ? (
-          <textarea
-            className="input min-h-[80px]"
-            value={metadata.tags.join(", ")}
-            onChange={(e) => onChange({ tags: e.target.value.split(",").map((t) => t.trim()).filter(Boolean) })}
-            placeholder="comma-separated tags"
-          />
-        ) : (
-          <div className="flex flex-wrap gap-1.5">
-            {metadata.tags.length > 0
-              ? metadata.tags.map((t) => <span key={t} className="chip-mute">{t}</span>)
-              : <span className="text-zinc-500 text-sm">—</span>}
-          </div>
-        )}
+        <textarea
+          className="input min-h-[80px]"
+          value={metadata.tags.join(", ")}
+          onChange={(e) => onChange({ tags: e.target.value.split(",").map((t) => t.trim()).filter(Boolean) })}
+          placeholder="comma-separated tags"
+        />
       </Field>
 
       <Field label="Adult Content">
-        {editing ? (
-          <div className="flex gap-3">
-            <RadioOption checked={!metadata.matureContent} label="No"  onClick={() => onChange({ matureContent: false })} />
-            <RadioOption checked={metadata.matureContent}  label="Yes" onClick={() => onChange({ matureContent: true })} />
-          </div>
-        ) : (
-          metadata.matureContent
-            ? <span className="chip-warn">Yes</span>
-            : <span className="chip-ok">No</span>
-        )}
+        <div className="flex gap-3">
+          <RadioOption checked={!metadata.matureContent} label="No"  onClick={() => onChange({ matureContent: false })} />
+          <RadioOption checked={metadata.matureContent}  label="Yes" onClick={() => onChange({ matureContent: true })} />
+        </div>
       </Field>
     </div>
   );
@@ -241,10 +185,9 @@ function InfoTab({ metadata, editing, onChange }: { metadata: DesignMetadata; ed
 
 // ── Products tab ────────────────────────────────────────────────────────────
 function ProductsTab({
-  metadata, editing, onChange, totalDesigns, onApplyToAll,
+  metadata, onChange, totalDesigns, onApplyToAll,
 }: {
   metadata: DesignMetadata;
-  editing: boolean;
   onChange: (next: string[]) => void;
   totalDesigns?: number;
   onApplyToAll?: () => void;
@@ -285,11 +228,9 @@ function ProductsTab({
           return (
             <button
               key={name}
-              onClick={() => editing && toggle(name)}
-              disabled={!editing}
+              onClick={() => toggle(name)}
               className={clsx(
-                "group flex items-center gap-2.5 px-2 py-1.5 text-sm text-left rounded-sm transition",
-                editing ? "cursor-pointer hover:bg-ink-800" : "cursor-default",
+                "group flex items-center gap-2.5 px-2 py-1.5 text-sm text-left rounded-sm transition cursor-pointer hover:bg-ink-800",
                 on ? "text-zinc-900 dark:text-zinc-100" : "text-zinc-500"
               )}
             >
@@ -311,14 +252,6 @@ function Field({ label, children, full = false }: { label: string; children: Rea
     <div className={clsx(full && "md:col-span-2")}>
       <div className="text-xs font-semibold text-zinc-300 mb-1">{label}</div>
       {children}
-    </div>
-  );
-}
-
-function Readout({ text, multiline = false }: { text: string; multiline?: boolean }) {
-  return (
-    <div className={clsx("surface-soft px-3 py-2 text-sm text-zinc-700 dark:text-zinc-200", multiline && "whitespace-pre-wrap")}>
-      {text}
     </div>
   );
 }
