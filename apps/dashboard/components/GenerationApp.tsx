@@ -1,4 +1,5 @@
 "use client";
+// © SaiedPod — All Rights Reserved. Proprietary — unauthorized use prohibited.
 
 import { useEffect, useRef, useState } from "react";
 import { nanoid } from "nanoid";
@@ -598,6 +599,11 @@ export function GenerationApp({ sessionId }: { sessionId: string }) {
       )}
 
       {error && <div className="surface p-4 text-danger-600 dark:text-danger-500">{error}</div>}
+
+      {/* Copyright watermark */}
+      <div className="text-center text-[10px] text-zinc-600 dark:text-zinc-700 pt-2 pb-1 select-none">
+        © SaiedPod — All Rights Reserved
+      </div>
 
       {/* Send to extension */}
       <div className="surface p-5 flex items-center justify-between gap-6">

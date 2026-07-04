@@ -136,4 +136,6 @@
   <rect x="850" y="660" width="130" height="40" rx="8" fill="#0d1117" stroke="#333" stroke-width="1"/>
   <text x="915" y="680" text-anchor="middle" fill="#6b7280" font-size="10">~8-18s per design</text>
   <text x="915" y="695" text-anchor="middle" fill="#6b7280" font-size="10">~15 min for 50 designs</text>
+  <!-- Watermark -->
+  <text x="980" y="740" text-anchor="end" fill="#ffffff" fill-opacity="0.06" font-size="11" font-weight="bold">© SaiedPod</text>
 </svg>

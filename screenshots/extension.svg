@@ -73,4 +73,6 @@
   <!-- Version / status bar -->
   <rect x="15" y="545" width="390" height="25" rx="6" fill="#0d1117"/>
   <text x="210" y="562" text-anchor="middle" fill="#6b7280" font-size="10">Extension v0.1.0  •  Queue saved in chrome.storage.local</text>
+  <!-- Watermark -->
+  <text x="400" y="570" text-anchor="end" fill="#ffffff" fill-opacity="0.06" font-size="9" font-weight="bold">© SaiedPod</text>
 </svg>

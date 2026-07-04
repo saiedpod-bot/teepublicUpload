@@ -106,4 +106,6 @@
   <!-- User → Dashboard arrow -->
   <path d="M 60 390 Q 30 390 40 250 Q 50 180 60 160" fill="none" stroke="#a78bfa" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arrowBlue)"/>
   <text x="20" y="280" fill="#a78bfa" font-size="10" transform="rotate(-90, 20, 280)">Drop files + config</text>
+  <!-- Watermark -->
+  <text x="880" y="490" text-anchor="end" fill="#ffffff" fill-opacity="0.08" font-size="10" font-weight="bold">© SaiedPod</text>
 </svg>

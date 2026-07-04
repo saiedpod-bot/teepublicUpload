@@ -213,4 +213,10 @@ Edit in `apps/extension/src/services/queueStore.ts`.
 
 ## 📄 License | الترخيص
 
-MIT — Free to use, modify, and distribute.
+**All Rights Reserved** — Copyright © 2026 **SaiedPod**
+
+This software and all associated files are proprietary. No permission is granted
+to copy, modify, distribute, or create derivative works without prior written
+consent. Unauthorized use is strictly prohibited.
+
+To obtain a license, contact: [https://github.com/saiedpod-bot](https://github.com/saiedpod-bot)
