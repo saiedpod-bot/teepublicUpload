@@ -1,0 +1,54 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 9
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build extension
+        run: pnpm build:extension
+
+      - name: Create release archive
+        run: |
+          cd apps/extension/dist
+          zip -r ../../../teepublic-extension-${{ github.ref_name }}.zip .
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          name: TeePublic Uploader ${{ github.ref_name }}
+          body: |
+            ## TeePublic Uploader ${{ github.ref_name }}
+
+            ### 📦 Downloads
+            - **Chrome Extension**: `teepublic-extension-${{ github.ref_name }}.zip`
+              - Unzip and load at `chrome://extensions` (Developer mode → Load unpacked)
+
+            ### 🔧 Setup
+            1. Start the dashboard: `pnpm dev:dashboard`
+            2. Or use standalone mode: `node standalone/server.js`
+            3. Paste your Gemini API key in the dashboard
+            4. Drop your design images and generate listings
+
+            ### ⚠️ License
+            All Rights Reserved — Copyright © SaiedPod
+          files: teepublic-extension-*.zip
+          draft: false
+          prerelease: false

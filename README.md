@@ -3,6 +3,9 @@
 **رفع وتحميل جماعي لتصاميم TeePublic مع الذكاء الاصطناعي**  
 AI-powered batch upload manager for [TeePublic](https://www.teepublic.com) — from images to published listings automatically.
 
+[![Build Extension](https://github.com/saiedpod-bot/teepublicUpload/actions/workflows/build-extension.yml/badge.svg)](https://github.com/saiedpod-bot/teepublicUpload/actions/workflows/build-extension.yml)
+[![Release](https://github.com/saiedpod-bot/teepublicUpload/actions/workflows/release.yml/badge.svg)](https://github.com/saiedpod-bot/teepublicUpload/actions/workflows/release.yml)
+
 ![Architecture](screenshots/architecture.svg)
 
 ---
