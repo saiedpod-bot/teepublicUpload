@@ -82,6 +82,7 @@ export function GenerationApp({ sessionId }: { sessionId: string }) {
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [tab, setTab] = useState<DesignTab>("info");
+  const autoGenRef = useRef(false);
 
   // Custom basic colors — extend the swatch row, persisted across sessions.
   const [customBasicColors, setCustomBasicColors] = useState<CustomBasicColor[]>([]);
@@ -155,6 +156,15 @@ export function GenerationApp({ sessionId }: { sessionId: string }) {
       }
     })();
   }, []);
+
+  // Auto-generate when new images are added
+  useEffect(() => {
+    if (autoGenRef.current && images.length > 0 && apiKey) {
+      autoGenRef.current = false;
+      generateAll();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [images.length]);
 
   // Keep `designs` in lockstep with `images`. New images become idle designs
   // with the default config; removed images drop their design row entirely.
@@ -230,6 +240,7 @@ export function GenerationApp({ sessionId }: { sessionId: string }) {
       }
     }
     setImages((prev) => [...prev, ...next]);
+    if (next.length > 0) autoGenRef.current = true;
   }
 
   function removeImage(id: string) {
@@ -250,7 +261,7 @@ export function GenerationApp({ sessionId }: { sessionId: string }) {
     setError(null);
     if (!apiKey) { setError("Save your Gemini API key first."); return; }
     if (images.length === 0) { setError("Add at least one design image."); return; }
-    if (!prompt.trim()) { setError("Add a prompt describing the theme."); return; }
+    const effectivePrompt = prompt.trim() || "Create a TeePublic listing for the design in the attached image. Derive the theme, style, and target audience entirely from the image content.";
 
     abortRef.current?.abort();
     const ac = new AbortController();
@@ -269,7 +280,7 @@ export function GenerationApp({ sessionId }: { sessionId: string }) {
         const base64 = await ensureBase64(img);
         const listing = await generateListing({
           apiKey,
-          prompt,
+          prompt: effectivePrompt,
           imageBase64: base64,
           imageMime: img.mime,
           model,
@@ -339,10 +350,8 @@ export function GenerationApp({ sessionId }: { sessionId: string }) {
   async function retryDesign(id: string) {
     const target = designs.find((d) => d.image.id === id);
     if (!target) return;
-    if (!apiKey || !prompt.trim()) {
-      setError("Need a saved API key and a prompt to retry.");
-      return;
-    }
+    if (!apiKey) { setError("Save your Gemini API key first."); return; }
+    const effectivePrompt = prompt.trim() || "Create a TeePublic listing for the design in the attached image. Derive the theme, style, and target audience entirely from the image content.";
     setError(null);
     setDesigns((prev) => prev.map((d) =>
       d.image.id === id ? { ...d, status: "generating", error: undefined } : d
@@ -351,7 +360,7 @@ export function GenerationApp({ sessionId }: { sessionId: string }) {
       const base64 = await ensureBase64(target.image);
       const listing = await generateListing({
         apiKey,
-        prompt,
+        prompt: effectivePrompt,
         imageBase64: base64,
         imageMime: target.image.mime,
         model,
@@ -499,20 +508,20 @@ export function GenerationApp({ sessionId }: { sessionId: string }) {
       <section className="surface p-5 space-y-3">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h3 className="text-sm font-semibold">Prompt</h3>
+            <h3 className="text-sm font-semibold">Prompt <span className="text-xs text-zinc-500 font-normal">(optional)</span></h3>
             <p className="text-xs text-zinc-500 dark:text-zinc-400">
-              Describe the theme. Gemini sees each image and your prompt to craft a unique listing per design. Saved in this browser&apos;s localStorage.
+              Optional theme direction. Leave empty to auto-derive from each image.
             </p>
           </div>
           {savedPrompt
             ? (prompt.trim() === savedPrompt
                 ? <span className="chip-ok">Saved</span>
                 : <span className="chip-warn">Unsaved changes</span>)
-            : <span className="chip-mute">Not saved</span>}
+            : <span className="chip-mute">Not set</span>}
         </div>
         <textarea
           className="input min-h-[88px] resize-y"
-          placeholder="e.g. Hawaii men&apos;s volleyball national champions — bold sporty tropical t-shirts, fan pride, game-day apparel"
+          placeholder="Leave empty to auto-derive from image. Or describe the theme (e.g. Hawaii volleyball champions — sporty tropical)"
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
         />
@@ -545,9 +554,9 @@ export function GenerationApp({ sessionId }: { sessionId: string }) {
               type="button"
               className="btn-primary"
               onClick={generateAll}
-              disabled={images.length === 0 || !apiKey || !prompt.trim()}
+              disabled={images.length === 0 || !apiKey}
             >
-              {readyCount > 0 ? "Re-generate all" : `Generate ${images.length || ""} listings`}
+              {busy ? "Generating…" : readyCount > 0 ? "Re-generate all" : `Generate ${images.length || ""} listings`}
             </button>
           )}
           <span className="text-xs text-zinc-500 dark:text-zinc-400">
@@ -555,7 +564,7 @@ export function GenerationApp({ sessionId }: { sessionId: string }) {
               ? "Calling Gemini per image…"
               : readyCount > 0
                 ? `${readyCount} of ${designs.length} ready`
-                : "Ready when you are."}
+                : "Auto-generates when you drop images"}
           </span>
         </div>
       </section>

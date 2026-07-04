@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 580" font-family="'Segoe UI', Arial, sans-serif">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0f0f0f"/>
+      <stop offset="100%" stop-color="#1a1a1a"/>
+    </linearGradient>
+  </defs>
+  <rect width="420" height="580" fill="url(#bg)" rx="12"/>
+
+  <!-- Header -->
+  <rect x="0" y="0" width="420" height="50" rx="12" fill="#1e1e1e"/>
+  <rect x="0" y="30" width="420" height="20" fill="#1e1e1e"/>
+  <text x="210" y="30" text-anchor="middle" fill="#4ade80" font-size="14" font-weight="bold">🧩 TeePublic Uploader</text>
+
+  <!-- Queue stats -->
+  <rect x="15" y="60" width="390" height="45" rx="8" fill="#1a1a2e" stroke="#333" stroke-width="1"/>
+  <text x="30" y="80" fill="#94a3b8" font-size="11">Queue status</text>
+  <text x="30" y="97" fill="#4ade80" font-size="18" font-weight="bold">49</text>
+  <text x="65" y="97" fill="#6b7280" font-size="12">/ 51 designs</text>
+  <circle cx="370" cy="82" r="6" fill="#22c55e"/>
+  <text x="355" y="80" text-anchor="end" fill="#22c55e" font-size="10">Running</text>
+
+  <!-- Progress bar -->
+  <rect x="15" y="110" width="390" height="20" rx="10" fill="#0d1117" stroke="#333" stroke-width="1"/>
+  <rect x="15" y="110" width="290" height="20" rx="10" fill="#4ade80" opacity="0.8"/>
+  <text x="210" y="124" text-anchor="middle" fill="#000" font-size="10" font-weight="bold">49 / 51 (96%)</text>
+
+  <!-- Design list header -->
+  <rect x="15" y="140" width="390" height="30" rx="6" fill="#16213e"/>
+  <text x="25" y="159" fill="#60a5fa" font-size="11" font-weight="bold">Designs</text>
+  <text x="200" y="159" fill="#60a5fa" font-size="11" font-weight="bold">Status</text>
+  <text x="340" y="159" fill="#60a5fa" font-size="11" font-weight="bold">Retry</text>
+
+  <!-- Design items -->
+  <rect x="15" y="175" width="390" height="35" rx="4" fill="#0d1117"/>
+  <text x="25" y="196" fill="#cbd5e1" font-size="11">hawaii_volleyball_champs.png</text>
+  <text x="180" y="196" fill="#4ade80" font-size="11">✅ Published</text>
+
+  <rect x="15" y="215" width="390" height="35" rx="4" fill="#0d1117"/>
+  <text x="25" y="236" fill="#cbd5e1" font-size="11">tropical_sunset_design.png</text>
+  <text x="180" y="236" fill="#4ade80" font-size="11">✅ Published</text>
+
+  <rect x="15" y="255" width="390" height="35" rx="4" fill="#0d1117"/>
+  <text x="25" y="276" fill="#cbd5e1" font-size="11">mountain_adventure.png</text>
+  <text x="180" y="276" fill="#eab308" font-size="11">⏳ Uploading...</text>
+
+  <rect x="15" y="295" width="390" height="35" rx="4" fill="#0d1117"/>
+  <text x="25" y="316" fill="#cbd5e1" font-size="11">ocean_waves_design.png</text>
+  <text x="180" y="316" fill="#4ade80" font-size="11">✅ Published</text>
+
+  <rect x="15" y="335" width="390" height="35" rx="4" fill="#0d1117"/>
+  <text x="25" y="356" fill="#cbd5e1" font-size="11">urban_sketch_art.png</text>
+  <text x="180" y="356" fill="#ef4444" font-size="11">❌ Failed</text>
+  <rect x="330" y="342" width="55" height="22" rx="4" fill="#3b82f6"/>
+  <text x="357" y="357" text-anchor="middle" fill="#fff" font-size="10">Retry</text>
+
+  <!-- Bottom controls -->
+  <rect x="15" y="385" width="390" height="50" rx="8" fill="#1a1a2e" stroke="#333" stroke-width="1"/>
+  <rect x="30" y="395" width="110" height="28" rx="6" fill="#ef4444"/>
+  <text x="85" y="414" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">⏹ Pause</text>
+  <rect x="155" y="395" width="110" height="28" rx="6" fill="#3b82f6"/>
+  <text x="210" y="414" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold">↻ Resume</text>
+  <rect x="280" y="395" width="110" height="28" rx="6" fill="#eab308"/>
+  <text x="335" y="414" text-anchor="middle" fill="#000" font-size="11" font-weight="bold">Skip</text>
+
+  <!-- Settings -->
+  <rect x="15" y="445" width="390" height="90" rx="8" fill="#1a1a2e" stroke="#333" stroke-width="1"/>
+  <text x="25" y="465" fill="#94a3b8" font-size="11" font-weight="bold">Settings</text>
+  <text x="25" y="485" fill="#6b7280" font-size="10">Delay between uploads: 8s – 18s (randomized)</text>
+  <text x="25" y="500" fill="#6b7280" font-size="10">Max retries per design: 2</text>
+  <text x="25" y="515" fill="#6b7280" font-size="10">Auto-publish: ✅ Yes</text>
+
+  <!-- Version / status bar -->
+  <rect x="15" y="545" width="390" height="25" rx="6" fill="#0d1117"/>
+  <text x="210" y="562" text-anchor="middle" fill="#6b7280" font-size="10">Extension v0.1.0  •  Queue saved in chrome.storage.local</text>
+</svg>

@@ -12,7 +12,7 @@
   "dependencies": {
     "@supabase/ssr": "^0.10.3",
     "@supabase/supabase-js": "^2.107.0",
-    "@teepublic/shared": "*",
+    "@teepublic/shared": "file:../../packages/shared",
     "clsx": "2.1.1",
     "fflate": "^0.8.2",
     "nanoid": "5.0.7",

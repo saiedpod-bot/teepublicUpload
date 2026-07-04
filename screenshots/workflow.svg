@@ -1,0 +1,139 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 750" font-family="'Segoe UI', Arial, sans-serif">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0f0f0f"/>
+      <stop offset="100%" stop-color="#1a1a1a"/>
+    </linearGradient>
+    <linearGradient id="step1" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1e3a5f"/>
+      <stop offset="100%" stop-color="#0d2137"/>
+    </linearGradient>
+    <linearGradient id="step2" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1a3a2a"/>
+      <stop offset="100%" stop-color="#0a1f15"/>
+    </linearGradient>
+    <linearGradient id="step3" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#3a1a2a"/>
+      <stop offset="100%" stop-color="#1f0a15"/>
+    </linearGradient>
+    <linearGradient id="step4" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#2a1a3a"/>
+      <stop offset="100%" stop-color="#150a1f"/>
+    </linearGradient>
+    <linearGradient id="step5" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#3a2a1a"/>
+      <stop offset="100%" stop-color="#1f150a"/>
+    </linearGradient>
+    <linearGradient id="step6" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1a2a3a"/>
+      <stop offset="100%" stop-color="#0a1520"/>
+    </linearGradient>
+    <marker id="arrow" markerWidth="12" markerHeight="8" refX="12" refY="4" orient="auto">
+      <polygon points="0 0, 12 4, 0 8" fill="#4ade80"/>
+    </marker>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect width="1000" height="750" fill="url(#bg)" rx="16"/>
+
+  <!-- Title -->
+  <text x="500" y="40" text-anchor="middle" fill="#4ade80" font-size="20" font-weight="bold">📋  Step-by-Step Workflow</text>
+  <text x="500" y="62" text-anchor="middle" fill="#94a3b8" font-size="12">From images to published TeePublic listings — fully automated</text>
+
+  <!-- ===== STEP 1 ===== -->
+  <rect x="60" y="85" width="410" height="130" rx="12" fill="url(#step1)" stroke="#3b82f6" stroke-width="1.5"/>
+  <circle cx="85" cy="108" r="14" fill="#3b82f6"/>
+  <text x="85" y="113" text-anchor="middle" fill="#fff" font-size="14" font-weight="bold">1</text>
+  <text x="112" y="113" fill="#60a5fa" font-size="15" font-weight="bold">Prepare Your Images</text>
+  <line x1="80" y1="125" x2="450" y2="125" stroke="#1e3a5f" stroke-width="1"/>
+  <text x="85" y="147" fill="#cbd5e1" font-size="12">• 51 unique designs in folders</text>
+  <text x="85" y="167" fill="#cbd5e1" font-size="12">• Located at: EPS+PNG OLD/</text>
+  <text x="85" y="187" fill="#cbd5e1" font-size="12">• Each folder contains a .png file</text>
+  <text x="85" y="207" fill="#6b7280" font-size="11">📁  E:\POD\MY WORKE POD\EPS+PNG OLD\</text>
+
+  <!-- Arrow 1→2 -->
+  <line x1="470" y1="150" x2="530" y2="150" stroke="#4ade80" stroke-width="2.5" marker-end="url(#arrow)"/>
+
+  <!-- ===== STEP 2 ===== -->
+  <rect x="540" y="85" width="410" height="130" rx="12" fill="url(#step2)" stroke="#22c55e" stroke-width="1.5"/>
+  <circle cx="565" cy="108" r="14" fill="#22c55e"/>
+  <text x="565" y="113" text-anchor="middle" fill="#000" font-size="14" font-weight="bold">2</text>
+  <text x="592" y="113" fill="#4ade80" font-size="15" font-weight="bold">Start Dashboard &amp; Extension</text>
+  <line x1="560" y1="125" x2="930" y2="125" stroke="#1a3a2a" stroke-width="1"/>
+  <text x="565" y="147" fill="#cbd5e1" font-size="12">• Run: pnpm dev:dashboard</text>
+  <text x="565" y="167" fill="#cbd5e1" font-size="12">• Open http://localhost:3030</text>
+  <text x="565" y="187" fill="#cbd5e1" font-size="12">• Load extension in chrome://extensions</text>
+  <text x="565" y="207" fill="#6b7280" font-size="11">🧩  apps/extension/dist/  →  Load unpacked</text>
+
+  <!-- Arrow 2→3 -->
+  <line x1="500" y1="215" x2="500" y2="275" stroke="#4ade80" stroke-width="2.5" marker-end="url(#arrow)"/>
+
+  <!-- ===== STEP 3 ===== -->
+  <rect x="60" y="280" width="410" height="130" rx="12" fill="url(#step3)" stroke="#ef4444" stroke-width="1.5"/>
+  <circle cx="85" cy="303" r="14" fill="#ef4444"/>
+  <text x="85" y="308" text-anchor="middle" fill="#fff" font-size="14" font-weight="bold">3</text>
+  <text x="112" y="308" fill="#f87171" font-size="15" font-weight="bold">Drop Images + Set API Key</text>
+  <line x1="80" y1="320" x2="450" y2="320" stroke="#3a1a2a" stroke-width="1"/>
+  <text x="85" y="342" fill="#cbd5e1" font-size="12">• Paste Gemini API key from AI Studio</text>
+  <text x="85" y="362" fill="#cbd5e1" font-size="12">• Drag &amp; drop all PNG files</text>
+  <text x="85" y="382" fill="#cbd5e1" font-size="12">• Or upload designs_metadata.csv</text>
+  <text x="85" y="402" fill="#6b7280" font-size="11">🔑  aistudio.google.com/apikey</text>
+
+  <!-- Arrow 3→4 -->
+  <line x1="470" y1="345" x2="530" y2="345" stroke="#4ade80" stroke-width="2.5" marker-end="url(#arrow)"/>
+
+  <!-- ===== STEP 4 ===== -->
+  <rect x="540" y="280" width="410" height="130" rx="12" fill="url(#step4)" stroke="#a855f7" stroke-width="1.5"/>
+  <circle cx="565" cy="303" r="14" fill="#a855f7"/>
+  <text x="565" y="308" text-anchor="middle" fill="#fff" font-size="14" font-weight="bold">4</text>
+  <text x="592" y="308" fill="#c084fc" font-size="15" font-weight="bold">AI Generates Listings</text>
+  <line x1="560" y1="320" x2="930" y2="320" stroke="#2a1a3a" stroke-width="1"/>
+  <text x="565" y="342" fill="#cbd5e1" font-size="12">• Gemini analyzes each image</text>
+  <text x="565" y="362" fill="#cbd5e1" font-size="12">• Generates: Title, Description, Tags</text>
+  <text x="565" y="382" fill="#cbd5e1" font-size="12">• Processed automatically one-by-one</text>
+  <text x="565" y="402" fill="#6b7280" font-size="11">🤖  gemini-2.5-flash-lite  •  0.8 temperature</text>
+
+  <!-- Arrow 4→5 -->
+  <line x1="500" y1="410" x2="500" y2="470" stroke="#4ade80" stroke-width="2.5" marker-end="url(#arrow)"/>
+
+  <!-- ===== STEP 5 ===== -->
+  <rect x="60" y="475" width="410" height="130" rx="12" fill="url(#step5)" stroke="#eab308" stroke-width="1.5"/>
+  <circle cx="85" cy="498" r="14" fill="#eab308"/>
+  <text x="85" y="503" text-anchor="middle" fill="#000" font-size="14" font-weight="bold">5</text>
+  <text x="112" y="503" fill="#facc15" font-size="15" font-weight="bold">Review &amp; Send to Extension</text>
+  <line x1="80" y1="515" x2="450" y2="515" stroke="#3a2a1a" stroke-width="1"/>
+  <text x="85" y="537" fill="#cbd5e1" font-size="12">• Review AI-generated metadata</text>
+  <text x="85" y="557" fill="#cbd5e1" font-size="12">• Edit colors &amp; products per design</text>
+  <text x="85" y="577" fill="#cbd5e1" font-size="12">• Click "Send to extension"</text>
+  <text x="85" y="597" fill="#6b7280" font-size="11">📤  Queue sent via chrome.runtime.sendMessage</text>
+
+  <!-- Arrow 5→6 -->
+  <line x1="470" y1="540" x2="530" y2="540" stroke="#4ade80" stroke-width="2.5" marker-end="url(#arrow)"/>
+
+  <!-- ===== STEP 6 ===== -->
+  <rect x="540" y="475" width="410" height="130" rx="12" fill="url(#step6)" stroke="#06b6d4" stroke-width="1.5"/>
+  <circle cx="565" cy="498" r="14" fill="#06b6d4"/>
+  <text x="565" y="503" text-anchor="middle" fill="#fff" font-size="14" font-weight="bold">6</text>
+  <text x="592" y="503" fill="#22d3ee" font-size="15" font-weight="bold">Auto-Publish on TeePublic</text>
+  <line x1="560" y1="515" x2="930" y2="515" stroke="#1a2a3a" stroke-width="1"/>
+  <text x="565" y="537" fill="#cbd5e1" font-size="12">• Extension opens teepublic.com</text>
+  <text x="565" y="557" fill="#cbd5e1" font-size="12">• Uploads artwork to bulk uploader</text>
+  <text x="565" y="577" fill="#cbd5e1" font-size="12">• Fills metadata, clicks Publish</text>
+  <text x="565" y="597" fill="#6b7280" font-size="11">✅  Random 8-18s delay between uploads</text>
+
+  <!-- ===== Final Result ===== -->
+  <rect x="300" y="645" width="400" height="60" rx="30" fill="#064e3b" stroke="#4ade80" stroke-width="2"/>
+  <text x="500" y="672" text-anchor="middle" fill="#4ade80" font-size="16" font-weight="bold">🎉  Designs Published on TeePublic!</text>
+  <text x="500" y="692" text-anchor="middle" fill="#94a3b8" font-size="11">49 designs • 50 accounts • Fully automated</text>
+
+  <!-- Arrow 6 → Result -->
+  <line x1="745" y1="605" x2="650" y2="645" stroke="#4ade80" stroke-width="2" marker-end="url(#arrow)"/>
+  <line x1="255" y1="605" x2="350" y2="645" stroke="#4ade80" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- Timer/speed note -->
+  <rect x="850" y="660" width="130" height="40" rx="8" fill="#0d1117" stroke="#333" stroke-width="1"/>
+  <text x="915" y="680" text-anchor="middle" fill="#6b7280" font-size="10">~8-18s per design</text>
+  <text x="915" y="695" text-anchor="middle" fill="#6b7280" font-size="10">~15 min for 50 designs</text>
+</svg>

@@ -9,7 +9,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@teepublic/shared": "*"
+    "@teepublic/shared": "file:../../packages/shared"
   },
   "devDependencies": {
     "@types/chrome": "0.0.270",
