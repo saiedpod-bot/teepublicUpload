@@ -252,6 +252,13 @@ export function UploaderApp() {
         ok={extensionOk}
       />
 
+      {/* License / Subscribe link */}
+      <div className="flex items-center justify-end gap-3">
+        <a href="/subscribe" className="btn-ghost text-xs px-3 py-1.5">
+          🔑 Get License
+        </a>
+      </div>
+
       {/* Mode switcher — pick the input flow. */}
       <div className="surface px-2 py-2 inline-flex items-center gap-1">
         <button
