@@ -82,6 +82,58 @@ pnpm dev:dashboard
 
 ---
 
+## 🔑 Keys, Permissions & Requirements | المفاتيح والصلاحيات المطلوبة
+
+### Required
+
+| Item | Type | Where to Get | Permissions Needed |
+|------|------|-------------|-------------------|
+| **Gemini API Key** | 🔑 API key | [aistudio.google.com/apikey](https://aistudio.google.com/apikey) | **AI Studio key** (NOT Google Cloud Console) — works immediately with free tier |
+| **TeePublic Account** | 👤 Login | [teepublic.com](https://www.teepublic.com) | Must be **logged in** in Chrome profile where extension runs |
+| **Chrome Browser** | 🌐 Browser | [google.com/chrome](https://www.google.com/chrome/) | MV3 extension support required |
+| **Node.js 20+** | ⚙️ Runtime | [nodejs.org](https://nodejs.org/) | For dashboard + extension build |
+| **pnpm 9+** | 📦 Package manager | `npm i -g pnpm` | For monorepo dependency management |
+
+### Chrome Extension Permissions (auto-granted when loaded)
+
+| Permission | Reason |
+|-----------|--------|
+| `storage` | Save queue progress locally |
+| `unlimitedStorage` | Store large design images |
+| `tabs` | Open/manage TeePublic tabs |
+| `scripting` | Inject content scripts into teepublic.com |
+| `host_permissions: *.teepublic.com` | Access TeePublic upload pages |
+| `host_permissions: localhost:3030` | Receive queue from dashboard |
+
+### File System Access
+
+| Path | Purpose |
+|------|---------|
+| `E:\POD\MY WORKE POD\EPS+PNG OLD\` | Source PNG design files (51 designs) |
+| `designs_metadata.csv` | Metadata file (filename, title, tags) |
+| `apps/extension/dist/` | Built extension (load unpacked from here) |
+
+### Network Access (Firewall / Proxy)
+
+| Destination | Port | Purpose |
+|------------|------|---------|
+| `generativelanguage.googleapis.com` | 443 | Gemini AI API calls |
+| `teepublic.com` | 443 | Upload & publish designs |
+| `localhost` | 3030 / 3031 | Dashboard / standalone server |
+| `registry.npmjs.org` | 443 | Package installation (one-time) |
+
+### ⚠️ Common Pitfalls
+
+| Problem | Solution |
+|---------|----------|
+| **Gemini 403 error** | Use AI Studio key, NOT Google Cloud Console key |
+| **Supabase missing env** | Use standalone server (`node standalone/server.js`) instead of dashboard |
+| **Port 3030 in use** | Kill old process: `taskkill /PID (Get-NetTCPConnection -LocalPort 3030).OwningProcess /F` |
+| **pnpm build fails** | Run `pnpm approve-builds` first for esbuild + sharp |
+| **Extension not connecting** | Paste correct Extension ID in dashboard from `chrome://extensions` |
+
+---
+
 ## 📁 Project Structure | هيكل المشروع
 
 ```
