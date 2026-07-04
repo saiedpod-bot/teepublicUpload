@@ -17,6 +17,7 @@ import { allEnabledProducts, applyPreset, type ColorPreset } from "@/lib/colorPr
 import { loadCustomBasicColors, saveCustomBasicColors, type CustomBasicColor } from "@/lib/batchConfig";
 import { ColorsEditor } from "./ColorsEditor";
 import { DesignPreview, DesignColorSwatches } from "./DesignPreview";
+import { verifyLicense, checkFeatureAccess, type LicenseStatus } from "@/lib/license";
 
 interface StagedImage {
   id: string;
@@ -87,10 +88,28 @@ export function GenerationApp({ sessionId }: { sessionId: string }) {
 
   // Custom basic colors — extend the swatch row, persisted across sessions.
   const [customBasicColors, setCustomBasicColors] = useState<CustomBasicColor[]>([]);
+  const [licenseStatus, setLicenseStatus] = useState<LicenseStatus | null>(null);
 
   // Becomes true once we've loaded the user's saved designs from the server,
   // so the autosave effect doesn't overwrite them with the empty initial state.
   const [hydrated, setHydrated] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch("/license.json?t=" + Date.now());
+        if (res.ok) {
+          const text = await res.text();
+          const status = await verifyLicense(text);
+          setLicenseStatus(status);
+        } else {
+          setLicenseStatus({ valid: false, reason: "License file not found. Contact SaiedPod." });
+        }
+      } catch {
+        setLicenseStatus({ valid: false, reason: "License check failed. Contact SaiedPod." });
+      }
+    })();
+  }, []);
 
   useEffect(() => {
     setKey(getGeminiKey());
@@ -442,6 +461,49 @@ export function GenerationApp({ sessionId }: { sessionId: string }) {
       setError((e as Error).message);
       setStage("idle");
     }
+  }
+
+  // License block screen
+  if (licenseStatus && !licenseStatus.valid) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="surface p-8 max-w-lg text-center space-y-4">
+          <div className="text-5xl">🔒</div>
+          <h2 className="text-xl font-bold text-danger-600 dark:text-danger-500">License Required</h2>
+          <p className="text-zinc-500 dark:text-zinc-400">{licenseStatus.reason}</p>
+          {licenseStatus.info && (
+            <p className="text-xs text-zinc-600 dark:text-zinc-500">
+              Subscriber: {licenseStatus.info.subscriber}
+            </p>
+          )}
+          <div className="pt-2">
+            <a
+              href="https://github.com/saiedpod-bot"
+              target="_blank"
+              rel="noreferrer"
+              className="btn-primary inline-block px-6 py-2"
+            >
+              Contact SaiedPod
+            </a>
+          </div>
+          <p className="text-[10px] text-zinc-700 dark:text-zinc-700 select-none">
+            © SaiedPod — All Rights Reserved
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // Loading state while checking license
+  if (licenseStatus === null) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="text-center space-y-3">
+          <div className="text-4xl animate-pulse">🔑</div>
+          <p className="text-zinc-500 dark:text-zinc-400">Verifying license...</p>
+        </div>
+      </div>
+    );
   }
 
   return (

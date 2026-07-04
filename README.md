@@ -189,6 +189,56 @@ Then open `http://localhost:3031` — upload CSV + PNGs, the page bridges direct
 
 ---
 
+## 🔐 License System
+
+This software uses an RSA-signed license file (`license.json`) to control access.
+
+### How it works
+
+1. **License file**: A signed JSON file containing subscriber name, expiry date, and feature permissions.
+2. **RSA signature**: The file is signed with a private key (kept by SaiedPod). The app verifies using the embedded public key.
+3. **Expiry check**: On every startup, the app checks the license validity and expiry.
+4. **Block on expiry**: If the license is invalid, tampered, or expired, the app shows a blocking screen.
+
+### For subscribers
+
+Place the `license.json` file you receive from SaiedPod in:
+
+- **Dashboard**: `apps/dashboard/public/license.json`
+- **Standalone mode**: `standalone/license.json`
+- **Extension root**: `license.json`
+
+### License types
+
+| Type | Duration | Features |
+|------|----------|----------|
+| Trial | 7 days | dashboard, standalone |
+| Monthly | 30 days | dashboard, extension, standalone |
+| Quarterly | 90 days | dashboard, extension, standalone |
+| Yearly | 365 days | dashboard, extension, standalone |
+| Perpetual | Unlimited | Everything |
+
+### For license generation (admin only)
+
+```bash
+cd license-gen
+npm install   # no deps needed, just node
+
+# 1. Generate RSA key pair (one-time)
+node generate-keys.js
+
+# 2. Generate a license
+node generate-license.js \
+  --subscriber "client-name" \
+  --duration 30 \
+  --features "dashboard,extension,standalone" \
+  --out ../apps/dashboard/public/license.json
+```
+
+> **Keep `keys/private.pem` secret.** Anyone with access to the private key can forge licenses.
+
+---
+
 ## ⚙️ Configuration | الإعدادات
 
 | Setting | Default | Description |

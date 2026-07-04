@@ -13,3 +13,8 @@ apps/dashboard/out
 apps/dashboard/uploads
 apps/dashboard/.auth
 *.tsbuildinfo
+
+# License files (per-subscriber, not public)
+license.json
+standalone/license.json
+license-gen/keys/private.pem
