@@ -1,0 +1,379 @@
+
+## Animals
+  Macro: Cats
+    Micro: Black Cat → [Micro]
+    Micro: Cat Dad → [Micro]
+    Micro: Cat Lover → [Micro]
+    Micro: Cat Mom → [Micro]
+    Micro: Cat Sleeping → [Nano]
+    Micro: Cute Kitten → [Nano]
+    Micro: Funny Cat → [Nano]
+    Micro: Grumpy Cat Style → [Nano]
+    Micro: Kitten Love → [Nano]
+    Micro: Lazy Cat → [Nano]
+  Macro: Dogs
+    Micro: Beagle → [Micro]
+    Micro: Bulldog → [Micro]
+    Micro: Dachshund → [Micro]
+    Micro: Dog Dad → [Micro]
+    Micro: Dog Groomer → [Micro]
+    Micro: Dog Lover → [Micro]
+    Micro: Dog Mom → [Micro]
+    Micro: French Bulldog → [Micro]
+    Micro: Golden Retriever → [Micro]
+    Micro: Husky → [Micro]
+  Macro: Wildlife
+    Micro: Bears → [Micro]
+    Micro: Eagle → [Micro]
+    Micro: Elephant → [Micro]
+    Micro: Fox → [Micro]
+    Micro: Lions → [Micro]
+    Micro: Owl → [Micro]
+    Micro: Panda → [Micro]
+    Micro: Tiger → [Micro]
+    Micro: Wolves → [Micro]
+
+## Anime
+  Macro: Action Anime
+    Micro: Battle Scene → [Micro]
+    Micro: Naruto Style → [Micro]
+    Micro: Ninja Theme → [Micro]
+    Micro: Samurai Theme → [Micro]
+    Micro: Sword Fighter → [Micro]
+    Micro: Warrior Anime → [Micro]
+  Macro: Comedy Anime
+    Micro: Chibi Style → [Micro]
+    Micro: Funny Anime → [Micro]
+    Micro: Funny Face → [Micro]
+  Macro: Fantasy Anime
+    Micro: Dragon Theme → [Micro]
+    Micro: Magic Girl → [Micro]
+    Micro: Magic Theme → [Micro]
+  Macro: Romance Anime
+    Micro: Anime Couple → [Micro]
+    Micro: Couple Anime → [Micro]
+  Macro: Sci-Fi Anime
+    Micro: Cyberpunk Anime → [Micro]
+    Micro: Mecha → [Micro]
+    Micro: Robot Theme → [Micro]
+
+## Art
+  Macro: Design
+    Micro: Abstract Art → [Micro]
+    Micro: Geometric Art → [Micro]
+    Micro: Minimalist Art → [Micro]
+    Micro: Modern Art → [Micro]
+    Micro: Street Art → [Micro]
+    Micro: Typography Art → [Micro]
+  Macro: Illustration
+    Micro: Doodle Art → [Micro]
+    Micro: Ink Drawing → [Micro]
+    Micro: Line Art → [Micro]
+    Micro: Sketch Art → [Micro]
+    Micro: Vector Art → [Micro]
+
+## Family
+  Macro: Relationships
+    Micro: Baby Love → [Micro]
+    Micro: Best Friends → [Micro]
+    Micro: Couples Love → [Micro]
+    Micro: Dad Joke → [Micro]
+    Micro: Dad Life → [Micro]
+    Micro: Family Love → [Micro]
+    Micro: Grandma Love → [Micro]
+    Micro: Love Quotes → [Nano]
+    Micro: Mom Humor → [Micro]
+    Micro: Mom Life → [Micro]
+
+## Food
+  Macro: Coffee
+    Micro: Barista → [Micro]
+    Micro: Coffee Addict → [Nano]
+    Micro: Coffee Break → [Nano]
+    Micro: Coffee First → [Nano]
+    Micro: Coffee Lover → [Micro]
+    Micro: Coffee Quote → [Nano]
+    Micro: Espresso Lover → [Micro]
+    Micro: Morning Coffee → [Micro]
+  Macro: Desserts
+    Micro: Bakery Lover → [Micro]
+    Micro: Chocolate Lover → [Micro]
+    Micro: Cookies → [Micro]
+    Micro: Cupcakes → [Micro]
+    Micro: Donuts → [Micro]
+    Micro: Ice Cream → [Micro]
+    Micro: Pastries → [Micro]
+  Macro: Drinks
+    Micro: Beer Lover → [Micro]
+    Micro: Cocktails → [Micro]
+    Micro: Juice → [Micro]
+    Micro: Smoothies → [Micro]
+    Micro: Tea Lover → [Micro]
+    Micro: Whiskey Lover → [Micro]
+    Micro: Wine Lover → [Micro]
+  Macro: Fast Food
+    Micro: Burger Lover → [Micro]
+    Micro: Fast Food Lover → [Micro]
+  Macro: Pizza
+    Micro: Pizza First → [Nano]
+    Micro: Pizza Humor → [Nano]
+    Micro: Pizza Lover → [Micro]
+    Micro: Pizza Slice Art → [Nano]
+
+## Gaming
+  Macro: Esports
+    Micro: Competitive Gaming → [Micro]
+    Micro: Gaming Squad → [Micro]
+  Macro: FPS Games
+    Micro: Battle Royale → [Micro]
+    Micro: Shooter Games → [Micro]
+    Micro: Sniper Theme → [Micro]
+  Macro: RPG Games
+    Micro: Fantasy Quest → [Micro]
+    Micro: Fantasy RPG → [Micro]
+    Micro: Medieval RPG → [Micro]
+    Micro: Open World RPG → [Micro]
+  Macro: Retro Games
+    Micro: 8bit Style → [Micro]
+    Micro: Arcade Style → [Micro]
+    Micro: Gameboy Style → [Micro]
+    Micro: Pixel Art → [Micro]
+
+## Humor
+  Macro: Dark Humor
+    Micro: Dead Inside Humor → [Micro]
+    Micro: Existential Humor → [Micro]
+    Micro: Nihilism Humor → [Micro]
+    Micro: Offensive Jokes → [Micro]
+  Macro: Geek Humor
+    Micro: Coding Humor → [Micro]
+    Micro: Gamer Humor → [Micro]
+    Micro: Math Humor → [Micro]
+    Micro: Programmer Joke → [Micro]
+    Micro: Tech Joke → [Micro]
+  Macro: Memes
+    Micro: Cat Meme → [Micro]
+    Micro: Dog Meme → [Micro]
+    Micro: Doge Meme → [Micro]
+    Micro: Internet Meme → [Micro]
+    Micro: Office Meme → [Micro]
+    Micro: Reaction Meme → [Micro]
+    Micro: Relatable Meme → [Micro]
+    Micro: Trending Meme → [Micro]
+  Macro: Sarcasm
+    Micro: Anti Social Humor → [Micro]
+    Micro: Introvert Humor → [Micro]
+    Micro: Ironic Humor → [Micro]
+    Micro: Monday Humor → [Micro]
+    Micro: No Sleep Humor → [Micro]
+    Micro: Office Humor → [Micro]
+    Micro: Overthinking Humor → [Micro]
+    Micro: Work Sucks Humor → [Micro]
+
+## Lifestyle
+  Macro: Fitness
+    Micro: Bodybuilding → [Micro]
+    Micro: Crossfit → [Micro]
+    Micro: Gym Lover → [Micro]
+    Micro: Pilates → [Micro]
+    Micro: Running → [Micro]
+    Micro: Workout Quote → [Micro]
+    Micro: Yoga → [Micro]
+    Micro: Zumba → [Micro]
+  Macro: Gaming
+    Micro: Console Gaming → [Micro]
+    Micro: Gamer → [Micro]
+    Micro: Hardcore Gamer → [Micro]
+    Micro: Mobile Gamer → [Micro]
+    Micro: PC Gaming → [Micro]
+    Micro: Retro Gamer → [Micro]
+  Macro: Outdoor
+    Micro: Camping → [Micro]
+    Micro: Cycling → [Micro]
+    Micro: Fishing Life → [Micro]
+    Micro: Hiking → [Micro]
+    Micro: Road Trip → [Micro]
+    Micro: Survival → [Micro]
+
+## Music
+  Macro: Genres
+    Micro: Blues → [Micro]
+    Micro: Country Music → [Micro]
+    Micro: EDM → [Micro]
+    Micro: Hip Hop → [Micro]
+    Micro: Indie Music → [Micro]
+    Micro: Jazz → [Micro]
+    Micro: Metal → [Micro]
+    Micro: Pop Music → [Micro]
+    Micro: Rock Music → [Micro]
+  Macro: Instruments
+    Micro: Bass Guitar → [Micro]
+    Micro: Drums → [Micro]
+    Micro: Guitar → [Micro]
+    Micro: Harmonica → [Micro]
+    Micro: Keyboard → [Micro]
+    Micro: Piano → [Micro]
+    Micro: Saxophone → [Micro]
+    Micro: Ukulele → [Micro]
+    Micro: Violin → [Micro]
+
+## Nature
+  Macro: Environment
+    Micro: Forest → [Micro]
+    Micro: Mountainscape → [Micro]
+    Micro: Ocean → [Micro]
+    Micro: Rain → [Micro]
+    Micro: River → [Micro]
+    Micro: Storm → [Micro]
+    Micro: Sunset → [Micro]
+    Micro: Trees → [Micro]
+    Micro: Waterfall → [Micro]
+
+## Pets
+  Macro: Birds
+    Micro: Canary → [Micro]
+    Micro: Owls → [Micro]
+    Micro: Parrot Lover → [Micro]
+    Micro: Parrots → [Micro]
+  Macro: Reptiles
+    Micro: Gecko → [Micro]
+    Micro: Lizards → [Micro]
+    Micro: Snakes → [Micro]
+    Micro: Turtle → [Micro]
+  Macro: Small Animals
+    Micro: Guinea Pig → [Micro]
+    Micro: Hamsters → [Micro]
+    Micro: Rabbits → [Micro]
+
+## Pop Culture
+  Macro: Movies
+    Micro: Action Movies → [Category]
+    Micro: Adventure Movies → [Micro]
+    Micro: Classic Movies → [Micro]
+    Micro: Fantasy Movies → [Micro]
+    Micro: Horror Movies → [Category]
+    Micro: Sci-Fi Movies → [Category]
+    Micro: Space Theme → [Micro]
+    Micro: Superhero Style → [Micro]
+  Macro: TV Shows
+    Micro: Action Series → [Micro]
+    Micro: Anime → [Category]
+    Micro: Cartoons → [Category]
+    Micro: Drama Series → [Micro]
+    Micro: Fantasy Series → [Micro]
+    Micro: Reality TV → [Micro]
+    Micro: Sitcoms → [Category]
+
+## Professions
+  Macro: Creative
+    Micro: Graphic Designer → [Micro]
+    Micro: Photographer → [Micro]
+  Macro: Education
+    Micro: History Teacher → [Micro]
+    Micro: Math Teacher → [Micro]
+    Micro: Science Teacher → [Micro]
+    Micro: Teacher → [Micro]
+  Macro: Engineering
+    Micro: Civil Engineer → [Micro]
+    Micro: Electrical Engineer → [Micro]
+    Micro: Mechanical Engineer → [Micro]
+    Micro: Software Engineer → [Micro]
+  Macro: Healthcare
+    Micro: Dentist → [Micro]
+    Micro: Doctor → [Micro]
+    Micro: Nurse → [Micro]
+    Micro: Pharmacist → [Micro]
+    Micro: Surgeon → [Micro]
+    Micro: Therapist → [Micro]
+    Micro: Veterinarian → [Micro]
+  Macro: Trades
+    Micro: Carpenter → [Micro]
+    Micro: Electrician → [Micro]
+    Micro: Mechanic → [Micro]
+    Micro: Painter → [Micro]
+    Micro: Plumber → [Micro]
+    Micro: Welder → [Micro]
+
+## Seasonal
+  Macro: Events
+    Micro: Anniversary → [Micro]
+    Micro: Birthday → [Category]
+    Micro: Graduation → [Micro]
+    Micro: Wedding → [Micro]
+  Macro: Holidays
+    Micro: Christmas → [Category]
+    Micro: Easter → [Micro]
+    Micro: Fathers Day → [Micro]
+    Micro: Halloween → [Category]
+    Micro: Mothers Day → [Micro]
+    Micro: New Year → [Micro]
+    Micro: New Years Eve → [Micro]
+    Micro: Thanksgiving → [Micro]
+    Micro: Valentines Day → [Category]
+
+## Spiritual
+  Macro: Astrology
+    Micro: Aries Zodiac → [Micro]
+    Micro: Gemini Zodiac → [Micro]
+    Micro: Horoscope → [Micro]
+    Micro: Leo Zodiac → [Micro]
+    Micro: Scorpio Zodiac → [Micro]
+    Micro: Virgo Zodiac → [Micro]
+    Micro: Zodiac Signs → [Micro]
+  Macro: Religion
+    Micro: Buddhist → [Micro]
+    Micro: Christian → [Micro]
+    Micro: Faith Over Fear → [Nano]
+    Micro: Hindu → [Micro]
+    Micro: Islamic → [Micro]
+    Micro: Spiritual Quotes → [Nano]
+
+## Sports
+  Macro: Basketball
+    Micro: NBA Fans → [Micro]
+    Micro: Street Basketball → [Micro]
+  Macro: Football
+    Micro: Football Dad → [Micro]
+    Micro: Football Fanatic → [Micro]
+    Micro: Soccer Fans → [Micro]
+    Micro: World Cup → [Micro]
+  Macro: Gym
+    Micro: Bodybuilder Quote → [Micro]
+    Micro: Fitness Life → [Micro]
+    Micro: Fitness Motivation → [Micro]
+    Micro: Weightlifting → [Micro]
+  Macro: Outdoor
+    Micro: Climbing → [Micro]
+    Micro: Fishing → [Micro]
+    Micro: Hunting → [Micro]
+
+## Travel
+  Macro: Destinations
+    Micro: Backpacking → [Micro]
+    Micro: Beach Life → [Micro]
+    Micro: Camping Life → [Micro]
+    Micro: City Life → [Micro]
+    Micro: Desert → [Micro]
+    Micro: Island Life → [Micro]
+    Micro: Jungle → [Micro]
+    Micro: Mountains → [Micro]
+    Micro: Travel Quotes → [Nano]
+
+## Vintage
+  Macro: 70s
+    Micro: Disco Style → [Micro]
+    Micro: Hippie Style → [Micro]
+    Micro: Retro Colors → [Micro]
+  Macro: 80s
+    Micro: Cassette Tape → [Micro]
+    Micro: Retro Neon → [Micro]
+    Micro: Retro Sunset → [Micro]
+  Macro: 90s
+    Micro: Grunge Style → [Micro]
+    Micro: Retro Typography → [Micro]
+    Micro: Retro Wave → [Micro]
+    Micro: VHS Aesthetic → [Micro]
+  Macro: Y2K
+    Micro: Early Internet Style → [Micro]
+    Micro: Glitch Art → [Micro]
+    Micro: Tech Retro → [Micro]

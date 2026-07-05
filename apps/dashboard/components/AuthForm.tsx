@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import clsx from "clsx";
+import { isBypassValid, setBypassCode } from "@/lib/bypassAuth";
 
 type Mode = "login" | "register";
 
@@ -17,8 +18,19 @@ export function AuthForm() {
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [bypassCode, setBypassCode_] = useState("");
+  const [bypassError, setBypassError] = useState<string | null>(null);
 
   const isRegister = mode === "register";
+
+  function handleBypass() {
+    if (isBypassValid(bypassCode)) {
+      setBypassCode(bypassCode);
+      window.location.assign(next);
+    } else {
+      setBypassError("Invalid code. Try again.");
+    }
+  }
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -139,6 +151,31 @@ export function AuthForm() {
               Create one
             </button>
           </>
+        )}
+      </div>
+
+      <hr className="my-6 border-zinc-700/50" />
+
+      <div className="space-y-3">
+        <h3 className="text-sm font-semibold text-zinc-300">Quick Access</h3>
+        <p className="text-xs text-zinc-500">
+          Enter bypass code for direct access (no account required).
+        </p>
+        <div className="flex items-center gap-2">
+          <input
+            type="password"
+            className="input font-mono flex-1"
+            placeholder="Enter code"
+            value={bypassCode}
+            onChange={(e) => { setBypassCode_(e.target.value); setBypassError(null); }}
+            autoComplete="off"
+          />
+          <button type="button" className="btn-primary" onClick={handleBypass}>
+            Access
+          </button>
+        </div>
+        {bypassError && (
+          <div className="chip-err w-full justify-center py-2">{bypassError}</div>
         )}
       </div>
     </div>

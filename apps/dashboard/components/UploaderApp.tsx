@@ -12,6 +12,8 @@ import { DesignCard } from "./DesignCard";
 import { ValidationPanel } from "./ValidationPanel";
 import { ExtensionStatus } from "./ExtensionStatus";
 import { GenerationApp } from "./GenerationApp";
+import { DesignGenerator } from "./DesignGenerator";
+import { AccountManager } from "./AccountManager";
 import type { DesignMetadata } from "@teepublic/shared";
 import { loadCustomBasicColors, saveCustomBasicColors, type CustomBasicColor } from "@/lib/batchConfig";
 import { loadSpreadsheet, saveSpreadsheet } from "@/lib/spreadsheetStore";
@@ -19,7 +21,7 @@ import { uploadDesignImage } from "@/lib/uploadImage";
 import { expandDroppedFiles, isZip } from "@/lib/zip";
 
 type Stage = "idle" | "validated" | "sending" | "sent";
-type Mode  = "spreadsheet" | "generate";
+type Mode  = "spreadsheet" | "generate" | "designgen" | "accounts";
 
 export function UploaderApp() {
   const [sessionId] = useState(() => nanoid(10));
@@ -275,9 +277,25 @@ export function UploaderApp() {
         >
           Generate with AI
         </button>
+        <button
+          type="button"
+          onClick={() => setMode("designgen")}
+          className={`tab ${mode === "designgen" ? "tab-active" : ""}`}
+        >
+          Design Generator
+        </button>
+        <button
+          type="button"
+          onClick={() => setMode("accounts")}
+          className={`tab ${mode === "accounts" ? "tab-active" : ""}`}
+        >
+          Accounts
+        </button>
       </div>
 
       {mode === "generate" && <GenerationApp sessionId={sessionId} />}
+      {mode === "designgen" && <DesignGenerator />}
+      {mode === "accounts" && <AccountManager />}
 
       {mode === "spreadsheet" && (<>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

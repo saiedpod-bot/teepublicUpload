@@ -1,0 +1,10 @@
+.env
+qdrant_storage/
+images/
+images_v2/
+__pycache__/
+*.pyc
+.DS_Store
+Thumbs.db
+server.log
+venv/

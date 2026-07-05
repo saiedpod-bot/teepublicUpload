@@ -1,0 +1,1044 @@
+{
+  "Animals": {
+    "Dogs": {
+      "Golden Retriever": [
+        "Micro"
+      ],
+      "French Bulldog": [
+        "Micro"
+      ],
+      "Dog Groomer": [
+        "Micro"
+      ],
+      "Dog Mom": [
+        "Micro"
+      ],
+      "Dog Dad": [
+        "Micro"
+      ],
+      "Puppy Love": [
+        "Nano"
+      ],
+      "Rescue Dogs": [
+        "Micro"
+      ],
+      "Husky": [
+        "Micro"
+      ],
+      "Pitbull": [
+        "Micro"
+      ],
+      "Dachshund": [
+        "Micro"
+      ],
+      "Pug": [
+        "Micro"
+      ],
+      "Dog Lover": [
+        "Micro"
+      ],
+      "Bulldog": [
+        "Micro"
+      ],
+      "Beagle": [
+        "Micro"
+      ],
+      "Rottweiler": [
+        "Micro"
+      ],
+      "Shiba Inu": [
+        "Micro"
+      ]
+    },
+    "Cats": {
+      "Black Cat": [
+        "Micro"
+      ],
+      "Cat Mom": [
+        "Micro"
+      ],
+      "Cat Dad": [
+        "Micro"
+      ],
+      "Funny Cat": [
+        "Nano"
+      ],
+      "Lazy Cat": [
+        "Nano"
+      ],
+      "Siamese Cat": [
+        "Micro"
+      ],
+      "Grumpy Cat Style": [
+        "Nano"
+      ],
+      "Kitten Love": [
+        "Nano"
+      ],
+      "Cat Lover": [
+        "Micro"
+      ],
+      "Persian Cat": [
+        "Micro"
+      ],
+      "Cute Kitten": [
+        "Nano"
+      ],
+      "Sleepy Cat": [
+        "Nano"
+      ],
+      "Cat Sleeping": [
+        "Nano"
+      ]
+    },
+    "Wildlife": {
+      "Wolves": [
+        "Micro"
+      ],
+      "Bears": [
+        "Micro"
+      ],
+      "Lions": [
+        "Micro"
+      ],
+      "Fox": [
+        "Micro"
+      ],
+      "Owl": [
+        "Micro"
+      ],
+      "Eagle": [
+        "Micro"
+      ],
+      "Tiger": [
+        "Micro"
+      ],
+      "Elephant": [
+        "Micro"
+      ],
+      "Panda": [
+        "Micro"
+      ]
+    }
+  },
+  "Food": {
+    "Coffee": {
+      "Coffee Lover": [
+        "Micro"
+      ],
+      "Coffee Addict": [
+        "Nano"
+      ],
+      "Barista": [
+        "Micro"
+      ],
+      "Morning Coffee": [
+        "Micro"
+      ],
+      "Coffee Quote": [
+        "Nano"
+      ],
+      "Coffee First": [
+        "Nano"
+      ],
+      "Espresso Lover": [
+        "Micro"
+      ],
+      "Coffee Break": [
+        "Nano"
+      ]
+    },
+    "Pizza": {
+      "Pizza Lover": [
+        "Micro"
+      ],
+      "Pizza Humor": [
+        "Nano"
+      ],
+      "Pizza Slice Art": [
+        "Nano"
+      ],
+      "Pizza First": [
+        "Nano"
+      ]
+    },
+    "Fast Food": {
+      "Burger Lover": [
+        "Micro"
+      ],
+      "Fast Food Lover": [
+        "Micro"
+      ]
+    },
+    "Desserts": {
+      "Donuts": [
+        "Micro"
+      ],
+      "Ice Cream": [
+        "Micro"
+      ],
+      "Cupcakes": [
+        "Micro"
+      ],
+      "Bakery Lover": [
+        "Micro"
+      ],
+      "Chocolate Lover": [
+        "Micro"
+      ],
+      "Pastries": [
+        "Micro"
+      ],
+      "Cookies": [
+        "Micro"
+      ]
+    },
+    "Drinks": {
+      "Wine Lover": [
+        "Micro"
+      ],
+      "Beer Lover": [
+        "Micro"
+      ],
+      "Whiskey Lover": [
+        "Micro"
+      ],
+      "Cocktails": [
+        "Micro"
+      ],
+      "Tea Lover": [
+        "Micro"
+      ],
+      "Smoothies": [
+        "Micro"
+      ],
+      "Juice": [
+        "Micro"
+      ]
+    }
+  },
+  "Professions": {
+    "Healthcare": {
+      "Nurse": [
+        "Micro"
+      ],
+      "Doctor": [
+        "Micro"
+      ],
+      "Veterinarian": [
+        "Micro"
+      ],
+      "Pharmacist": [
+        "Micro"
+      ],
+      "Surgeon": [
+        "Micro"
+      ],
+      "Therapist": [
+        "Micro"
+      ],
+      "Dentist": [
+        "Micro"
+      ]
+    },
+    "Education": {
+      "Teacher": [
+        "Micro"
+      ],
+      "Math Teacher": [
+        "Micro"
+      ],
+      "Science Teacher": [
+        "Micro"
+      ],
+      "History Teacher": [
+        "Micro"
+      ]
+    },
+    "Engineering": {
+      "Mechanical Engineer": [
+        "Micro"
+      ],
+      "Software Engineer": [
+        "Micro"
+      ],
+      "Civil Engineer": [
+        "Micro"
+      ],
+      "Electrical Engineer": [
+        "Micro"
+      ]
+    },
+    "Trades": {
+      "Electrician": [
+        "Micro"
+      ],
+      "Plumber": [
+        "Micro"
+      ],
+      "Welder": [
+        "Micro"
+      ],
+      "Mechanic": [
+        "Micro"
+      ],
+      "Carpenter": [
+        "Micro"
+      ],
+      "Painter": [
+        "Micro"
+      ]
+    },
+    "Creative": {
+      "Graphic Designer": [
+        "Micro"
+      ],
+      "Photographer": [
+        "Micro"
+      ]
+    }
+  },
+  "Lifestyle": {
+    "Fitness": {
+      "Gym Lover": [
+        "Micro"
+      ],
+      "Bodybuilding": [
+        "Micro"
+      ],
+      "Running": [
+        "Micro"
+      ],
+      "Yoga": [
+        "Micro"
+      ],
+      "Crossfit": [
+        "Micro"
+      ],
+      "Zumba": [
+        "Micro"
+      ],
+      "Pilates": [
+        "Micro"
+      ],
+      "Workout Quote": [
+        "Micro"
+      ]
+    },
+    "Outdoor": {
+      "Camping": [
+        "Micro"
+      ],
+      "Hiking": [
+        "Micro"
+      ],
+      "Survival": [
+        "Micro"
+      ],
+      "Road Trip": [
+        "Micro"
+      ],
+      "Cycling": [
+        "Micro"
+      ],
+      "Fishing Life": [
+        "Micro"
+      ]
+    },
+    "Gaming": {
+      "Gamer": [
+        "Micro"
+      ],
+      "Console Gaming": [
+        "Micro"
+      ],
+      "PC Gaming": [
+        "Micro"
+      ],
+      "Retro Gamer": [
+        "Micro"
+      ],
+      "Mobile Gamer": [
+        "Micro"
+      ],
+      "Hardcore Gamer": [
+        "Micro"
+      ]
+    }
+  },
+  "Spiritual": {
+    "Astrology": {
+      "Zodiac Signs": [
+        "Micro"
+      ],
+      "Horoscope": [
+        "Micro"
+      ],
+      "Leo Zodiac": [
+        "Micro"
+      ],
+      "Scorpio Zodiac": [
+        "Micro"
+      ],
+      "Aries Zodiac": [
+        "Micro"
+      ],
+      "Gemini Zodiac": [
+        "Micro"
+      ],
+      "Virgo Zodiac": [
+        "Micro"
+      ]
+    },
+    "Religion": {
+      "Christian": [
+        "Micro"
+      ],
+      "Islamic": [
+        "Micro"
+      ],
+      "Buddhist": [
+        "Micro"
+      ],
+      "Hindu": [
+        "Micro"
+      ],
+      "Spiritual Quotes": [
+        "Nano"
+      ],
+      "Faith Over Fear": [
+        "Nano"
+      ]
+    }
+  },
+  "Seasonal": {
+    "Holidays": {
+      "Christmas": [
+        "Category"
+      ],
+      "Halloween": [
+        "Category"
+      ],
+      "Valentines Day": [
+        "Category"
+      ],
+      "New Year": [
+        "Micro"
+      ],
+      "Easter": [
+        "Micro"
+      ],
+      "Thanksgiving": [
+        "Micro"
+      ],
+      "Mothers Day": [
+        "Micro"
+      ],
+      "Fathers Day": [
+        "Micro"
+      ],
+      "New Years Eve": [
+        "Micro"
+      ]
+    },
+    "Events": {
+      "Birthday": [
+        "Category"
+      ],
+      "Graduation": [
+        "Micro"
+      ],
+      "Anniversary": [
+        "Micro"
+      ],
+      "Wedding": [
+        "Micro"
+      ]
+    }
+  },
+  "Humor": {
+    "Sarcasm": {
+      "Introvert Humor": [
+        "Micro"
+      ],
+      "Anti Social Humor": [
+        "Micro"
+      ],
+      "Work Sucks Humor": [
+        "Micro"
+      ],
+      "Office Humor": [
+        "Micro"
+      ],
+      "Monday Humor": [
+        "Micro"
+      ],
+      "No Sleep Humor": [
+        "Micro"
+      ],
+      "Ironic Humor": [
+        "Micro"
+      ],
+      "Overthinking Humor": [
+        "Micro"
+      ]
+    },
+    "Memes": {
+      "Internet Meme": [
+        "Micro"
+      ],
+      "Cat Meme": [
+        "Micro"
+      ],
+      "Dog Meme": [
+        "Micro"
+      ],
+      "Doge Meme": [
+        "Micro"
+      ],
+      "Relatable Meme": [
+        "Micro"
+      ],
+      "Office Meme": [
+        "Micro"
+      ],
+      "Reaction Meme": [
+        "Micro"
+      ],
+      "Trending Meme": [
+        "Micro"
+      ]
+    },
+    "Dark Humor": {
+      "Offensive Jokes": [
+        "Micro"
+      ],
+      "Existential Humor": [
+        "Micro"
+      ],
+      "Dead Inside Humor": [
+        "Micro"
+      ],
+      "Nihilism Humor": [
+        "Micro"
+      ]
+    },
+    "Geek Humor": {
+      "Coding Humor": [
+        "Micro"
+      ],
+      "Math Humor": [
+        "Micro"
+      ],
+      "Programmer Joke": [
+        "Micro"
+      ],
+      "Gamer Humor": [
+        "Micro"
+      ],
+      "Tech Joke": [
+        "Micro"
+      ]
+    }
+  },
+  "Pop Culture": {
+    "Movies": {
+      "Sci-Fi Movies": [
+        "Category"
+      ],
+      "Action Movies": [
+        "Category"
+      ],
+      "Horror Movies": [
+        "Category"
+      ],
+      "Fantasy Movies": [
+        "Micro"
+      ],
+      "Classic Movies": [
+        "Micro"
+      ],
+      "Superhero Style": [
+        "Micro"
+      ],
+      "Space Theme": [
+        "Micro"
+      ],
+      "Adventure Movies": [
+        "Micro"
+      ]
+    },
+    "TV Shows": {
+      "Sitcoms": [
+        "Category"
+      ],
+      "Anime": [
+        "Category"
+      ],
+      "Cartoons": [
+        "Category"
+      ],
+      "Drama Series": [
+        "Micro"
+      ],
+      "Reality TV": [
+        "Micro"
+      ],
+      "Fantasy Series": [
+        "Micro"
+      ],
+      "Action Series": [
+        "Micro"
+      ]
+    }
+  },
+  "Anime": {
+    "Action Anime": {
+      "Naruto Style": [
+        "Micro"
+      ],
+      "Samurai Theme": [
+        "Micro"
+      ],
+      "Ninja Theme": [
+        "Micro"
+      ],
+      "Warrior Anime": [
+        "Micro"
+      ],
+      "Sword Fighter": [
+        "Micro"
+      ],
+      "Battle Scene": [
+        "Micro"
+      ]
+    },
+    "Fantasy Anime": {
+      "Magic Theme": [
+        "Micro"
+      ],
+      "Dragon Theme": [
+        "Micro"
+      ],
+      "Magic Girl": [
+        "Micro"
+      ]
+    },
+    "Sci-Fi Anime": {
+      "Mecha": [
+        "Micro"
+      ],
+      "Cyberpunk Anime": [
+        "Micro"
+      ],
+      "Robot Theme": [
+        "Micro"
+      ]
+    },
+    "Romance Anime": {
+      "Couple Anime": [
+        "Micro"
+      ],
+      "Anime Couple": [
+        "Micro"
+      ]
+    },
+    "Comedy Anime": {
+      "Funny Anime": [
+        "Micro"
+      ],
+      "Chibi Style": [
+        "Micro"
+      ],
+      "Funny Face": [
+        "Micro"
+      ]
+    }
+  },
+  "Vintage": {
+    "80s": {
+      "Retro Sunset": [
+        "Micro"
+      ],
+      "Retro Neon": [
+        "Micro"
+      ],
+      "Cassette Tape": [
+        "Micro"
+      ]
+    },
+    "90s": {
+      "Retro Typography": [
+        "Micro"
+      ],
+      "Grunge Style": [
+        "Micro"
+      ],
+      "VHS Aesthetic": [
+        "Micro"
+      ],
+      "Retro Wave": [
+        "Micro"
+      ]
+    },
+    "70s": {
+      "Retro Colors": [
+        "Micro"
+      ],
+      "Hippie Style": [
+        "Micro"
+      ],
+      "Disco Style": [
+        "Micro"
+      ]
+    },
+    "Y2K": {
+      "Early Internet Style": [
+        "Micro"
+      ],
+      "Glitch Art": [
+        "Micro"
+      ],
+      "Tech Retro": [
+        "Micro"
+      ]
+    }
+  },
+  "Gaming": {
+    "FPS Games": {
+      "Shooter Games": [
+        "Micro"
+      ],
+      "Sniper Theme": [
+        "Micro"
+      ],
+      "Battle Royale": [
+        "Micro"
+      ]
+    },
+    "RPG Games": {
+      "Fantasy RPG": [
+        "Micro"
+      ],
+      "Medieval RPG": [
+        "Micro"
+      ],
+      "Open World RPG": [
+        "Micro"
+      ],
+      "Fantasy Quest": [
+        "Micro"
+      ]
+    },
+    "Retro Games": {
+      "Pixel Art": [
+        "Micro"
+      ],
+      "Arcade Style": [
+        "Micro"
+      ],
+      "Gameboy Style": [
+        "Micro"
+      ],
+      "8bit Style": [
+        "Micro"
+      ]
+    },
+    "Esports": {
+      "Competitive Gaming": [
+        "Micro"
+      ],
+      "Gaming Squad": [
+        "Micro"
+      ]
+    }
+  },
+  "Sports": {
+    "Football": {
+      "Soccer Fans": [
+        "Micro"
+      ],
+      "Football Dad": [
+        "Micro"
+      ],
+      "Football Fanatic": [
+        "Micro"
+      ],
+      "World Cup": [
+        "Micro"
+      ]
+    },
+    "Basketball": {
+      "NBA Fans": [
+        "Micro"
+      ],
+      "Street Basketball": [
+        "Micro"
+      ]
+    },
+    "Gym": {
+      "Weightlifting": [
+        "Micro"
+      ],
+      "Fitness Motivation": [
+        "Micro"
+      ],
+      "Bodybuilder Quote": [
+        "Micro"
+      ],
+      "Fitness Life": [
+        "Micro"
+      ]
+    },
+    "Outdoor": {
+      "Fishing": [
+        "Micro"
+      ],
+      "Hunting": [
+        "Micro"
+      ],
+      "Climbing": [
+        "Micro"
+      ]
+    }
+  },
+  "Family": {
+    "Relationships": {
+      "Mom Life": [
+        "Micro"
+      ],
+      "Dad Life": [
+        "Micro"
+      ],
+      "Couples Love": [
+        "Micro"
+      ],
+      "Mom Humor": [
+        "Micro"
+      ],
+      "Dad Joke": [
+        "Micro"
+      ],
+      "Family Love": [
+        "Micro"
+      ],
+      "Sibling Love": [
+        "Micro"
+      ],
+      "Grandma Love": [
+        "Micro"
+      ],
+      "Baby Love": [
+        "Micro"
+      ],
+      "Best Friends": [
+        "Micro"
+      ],
+      "Love Quotes": [
+        "Nano"
+      ]
+    }
+  },
+  "Pets": {
+    "Small Animals": {
+      "Hamsters": [
+        "Micro"
+      ],
+      "Rabbits": [
+        "Micro"
+      ],
+      "Guinea Pig": [
+        "Micro"
+      ]
+    },
+    "Birds": {
+      "Parrots": [
+        "Micro"
+      ],
+      "Canary": [
+        "Micro"
+      ],
+      "Parrot Lover": [
+        "Micro"
+      ],
+      "Owls": [
+        "Micro"
+      ]
+    },
+    "Reptiles": {
+      "Snakes": [
+        "Micro"
+      ],
+      "Lizards": [
+        "Micro"
+      ],
+      "Gecko": [
+        "Micro"
+      ],
+      "Turtle": [
+        "Micro"
+      ]
+    }
+  },
+  "Art": {
+    "Design": {
+      "Minimalist Art": [
+        "Micro"
+      ],
+      "Abstract Art": [
+        "Micro"
+      ],
+      "Typography Art": [
+        "Micro"
+      ],
+      "Geometric Art": [
+        "Micro"
+      ],
+      "Modern Art": [
+        "Micro"
+      ],
+      "Street Art": [
+        "Micro"
+      ]
+    },
+    "Illustration": {
+      "Line Art": [
+        "Micro"
+      ],
+      "Doodle Art": [
+        "Micro"
+      ],
+      "Sketch Art": [
+        "Micro"
+      ],
+      "Vector Art": [
+        "Micro"
+      ],
+      "Ink Drawing": [
+        "Micro"
+      ]
+    }
+  },
+  "Travel": {
+    "Destinations": {
+      "Beach Life": [
+        "Micro"
+      ],
+      "Mountains": [
+        "Micro"
+      ],
+      "City Life": [
+        "Micro"
+      ],
+      "Desert": [
+        "Micro"
+      ],
+      "Island Life": [
+        "Micro"
+      ],
+      "Camping Life": [
+        "Micro"
+      ],
+      "Jungle": [
+        "Micro"
+      ],
+      "Backpacking": [
+        "Micro"
+      ],
+      "Travel Quotes": [
+        "Nano"
+      ]
+    }
+  },
+  "Nature": {
+    "Environment": {
+      "Trees": [
+        "Micro"
+      ],
+      "Ocean": [
+        "Micro"
+      ],
+      "Forest": [
+        "Micro"
+      ],
+      "Sunset": [
+        "Micro"
+      ],
+      "River": [
+        "Micro"
+      ],
+      "Rain": [
+        "Micro"
+      ],
+      "Storm": [
+        "Micro"
+      ],
+      "Mountainscape": [
+        "Micro"
+      ],
+      "Waterfall": [
+        "Micro"
+      ]
+    }
+  },
+  "Music": {
+    "Genres": {
+      "Rock Music": [
+        "Micro"
+      ],
+      "Hip Hop": [
+        "Micro"
+      ],
+      "Jazz": [
+        "Micro"
+      ],
+      "EDM": [
+        "Micro"
+      ],
+      "Country Music": [
+        "Micro"
+      ],
+      "Metal": [
+        "Micro"
+      ],
+      "Blues": [
+        "Micro"
+      ],
+      "Pop Music": [
+        "Micro"
+      ],
+      "Indie Music": [
+        "Micro"
+      ]
+    },
+    "Instruments": {
+      "Guitar": [
+        "Micro"
+      ],
+      "Piano": [
+        "Micro"
+      ],
+      "Drums": [
+        "Micro"
+      ],
+      "Violin": [
+        "Micro"
+      ],
+      "Saxophone": [
+        "Micro"
+      ],
+      "Bass Guitar": [
+        "Micro"
+      ],
+      "Keyboard": [
+        "Micro"
+      ],
+      "Harmonica": [
+        "Micro"
+      ],
+      "Ukulele": [
+        "Micro"
+      ]
+    }
+  }
+}

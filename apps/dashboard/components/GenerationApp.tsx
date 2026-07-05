@@ -7,7 +7,7 @@ import type { DesignMetadata, QueueBatch, QueueItem } from "@teepublic/shared";
 import { SLUG_TO_PRODUCT_LABEL } from "@teepublic/shared";
 import { Dropzone } from "./Dropzone";
 import { sendQueueToExtension, getExtensionId } from "@/lib/bridge";
-import { fileToBase64, urlToBase64, generateListing, GEMINI_MODELS, DEFAULT_GEMINI_MODEL, type GeneratedListing } from "@/lib/gemini";
+import { fileToBase64, urlToBase64, generateListing, generateListingViaServer, GEMINI_MODELS, DEFAULT_GEMINI_MODEL, type GeneratedListing } from "@/lib/gemini";
 import { loadDesigns, saveDesigns, type PersistedDesign } from "@/lib/designsStore";
 import { uploadDesignImage } from "@/lib/uploadImage";
 import { expandDroppedFiles } from "@/lib/zip";
@@ -65,6 +65,7 @@ function defaultDesignConfig(): ColorProductConfigValue {
 }
 
 export function GenerationApp({ sessionId }: { sessionId: string }) {
+  const [useVertex, setUseVertex] = useState(true);
   const [apiKey, setKey]   = useState("");
   const [keyDraft, setKeyDraft] = useState("");
   const [showKey, setShowKey]   = useState(false);
@@ -279,7 +280,7 @@ export function GenerationApp({ sessionId }: { sessionId: string }) {
 
   async function generateAll() {
     setError(null);
-    if (!apiKey) { setError("Save your Gemini API key first."); return; }
+    if (!useVertex && !apiKey) { setError("Save your Gemini API key first."); return; }
     if (images.length === 0) { setError("Add at least one design image."); return; }
     const effectivePrompt = prompt.trim() || "Create a TeePublic listing for the design in the attached image. Derive the theme, style, and target audience entirely from the image content.";
 
@@ -289,8 +290,6 @@ export function GenerationApp({ sessionId }: { sessionId: string }) {
     setBusy(true);
     setCurrentIndex(0);
 
-    // Reset each design's listing + status, KEEP its config so user-set colors
-    // survive a re-generate.
     setDesigns((prev) => prev.map((d) => ({ ...d, listing: null, status: "generating" })));
 
     for (let i = 0; i < images.length; i++) {
@@ -298,14 +297,19 @@ export function GenerationApp({ sessionId }: { sessionId: string }) {
       const img = images[i];
       try {
         const base64 = await ensureBase64(img);
-        const listing = await generateListing({
-          apiKey,
-          prompt: effectivePrompt,
-          imageBase64: base64,
-          imageMime: img.mime,
-          model,
-          signal: ac.signal,
-        });
+        let listing;
+        if (useVertex) {
+          listing = await generateListingViaServer(base64, img.mime, effectivePrompt, model, ac.signal);
+        } else {
+          listing = await generateListing({
+            apiKey,
+            prompt: effectivePrompt,
+            imageBase64: base64,
+            imageMime: img.mime,
+            model,
+            signal: ac.signal,
+          });
+        }
         setDesigns((prev) => prev.map((d) =>
           d.image.id === img.id ? { ...d, listing, status: "ready" } : d
         ));
@@ -370,7 +374,7 @@ export function GenerationApp({ sessionId }: { sessionId: string }) {
   async function retryDesign(id: string) {
     const target = designs.find((d) => d.image.id === id);
     if (!target) return;
-    if (!apiKey) { setError("Save your Gemini API key first."); return; }
+    if (!useVertex && !apiKey) { setError("Save your Gemini API key first."); return; }
     const effectivePrompt = prompt.trim() || "Create a TeePublic listing for the design in the attached image. Derive the theme, style, and target audience entirely from the image content.";
     setError(null);
     setDesigns((prev) => prev.map((d) =>
@@ -378,13 +382,18 @@ export function GenerationApp({ sessionId }: { sessionId: string }) {
     ));
     try {
       const base64 = await ensureBase64(target.image);
-      const listing = await generateListing({
-        apiKey,
-        prompt: effectivePrompt,
-        imageBase64: base64,
-        imageMime: target.image.mime,
-        model,
-      });
+      let listing;
+      if (useVertex) {
+        listing = await generateListingViaServer(base64, target.image.mime, effectivePrompt, model);
+      } else {
+        listing = await generateListing({
+          apiKey,
+          prompt: effectivePrompt,
+          imageBase64: base64,
+          imageMime: target.image.mime,
+          model,
+        });
+      }
       setDesigns((prev) => prev.map((d) =>
         d.image.id === id ? { ...d, listing, status: "ready" } : d
       ));
@@ -508,37 +517,63 @@ export function GenerationApp({ sessionId }: { sessionId: string }) {
 
   return (
     <div className="space-y-6">
-      {/* Gemini API key */}
+      {/* Generation method */}
       <section className="surface p-5 space-y-3">
-        <div className="flex items-center justify-between gap-4">
-          <div>
-            <h3 className="text-sm font-semibold">Gemini API key</h3>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400">
-              Get a free key at{" "}
-              <a href="https://aistudio.google.com/apikey" target="_blank" rel="noreferrer" className="underline">
-                aistudio.google.com/apikey
-              </a>. Stored only in this browser&apos;s localStorage.
-            </p>
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            className={`tab ${useVertex ? "tab-active" : ""}`}
+            onClick={() => setUseVertex(true)}
+          >
+            Vertex AI (Server — $300 credit)
+          </button>
+          <button
+            type="button"
+            className={`tab ${!useVertex ? "tab-active" : ""}`}
+            onClick={() => setUseVertex(false)}
+          >
+            Gemini API Key (Browser)
+          </button>
+        </div>
+
+        {useVertex ? (
+          <div className="flex items-center gap-2 text-xs text-green-400 bg-green-900/10 border border-green-700/30 rounded p-3">
+            <span className="w-2 h-2 rounded-full bg-green-400" />
+            Authenticated via Google Cloud ADC (Service Account). No API key needed.
           </div>
-          {apiKey ? <span className="chip-ok">Saved</span> : <span className="chip-warn">Not set</span>}
-        </div>
-        <div className="flex items-center gap-2">
-          <input
-            type={showKey ? "text" : "password"}
-            className="input font-mono"
-            placeholder="AIza..."
-            value={keyDraft}
-            onChange={(e) => setKeyDraft(e.target.value)}
-            spellCheck={false}
-            autoComplete="off"
-          />
-          <button type="button" className="btn-ghost" onClick={() => setShowKey((v) => !v)}>
-            {showKey ? "Hide" : "Show"}
-          </button>
-          <button type="button" className="btn-primary" onClick={saveKey} disabled={keyDraft.trim() === apiKey}>
-            Save
-          </button>
-        </div>
+        ) : (
+          <>
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <h3 className="text-sm font-semibold">Gemini API key</h3>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400">
+                  Get a free key at{" "}
+                  <a href="https://aistudio.google.com/apikey" target="_blank" rel="noreferrer" className="underline">
+                    aistudio.google.com/apikey
+                  </a>. Stored only in this browser&apos;s localStorage.
+                </p>
+              </div>
+              {apiKey ? <span className="chip-ok">Saved</span> : <span className="chip-warn">Not set</span>}
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                type={showKey ? "text" : "password"}
+                className="input font-mono"
+                placeholder="AIza..."
+                value={keyDraft}
+                onChange={(e) => setKeyDraft(e.target.value)}
+                spellCheck={false}
+                autoComplete="off"
+              />
+              <button type="button" className="btn-ghost" onClick={() => setShowKey((v) => !v)}>
+                {showKey ? "Hide" : "Show"}
+              </button>
+              <button type="button" className="btn-primary" onClick={saveKey} disabled={keyDraft.trim() === apiKey}>
+                Save
+              </button>
+            </div>
+          </>
+        )}
 
         <div className="flex items-center gap-3 flex-wrap pt-1">
           <label className="text-xs text-zinc-500 dark:text-zinc-400">Model:</label>
@@ -552,7 +587,9 @@ export function GenerationApp({ sessionId }: { sessionId: string }) {
             ))}
           </select>
           <span className="text-[11px] text-zinc-500 dark:text-zinc-400">
-            If you hit a 429 quota error, switch to a different free-tier model here.
+            {useVertex
+              ? "Uses your Google Cloud $300 credit. No quota limits."
+              : "If you hit a 429 quota error, switch to a different free-tier model here."}
           </span>
         </div>
       </section>
@@ -617,18 +654,18 @@ export function GenerationApp({ sessionId }: { sessionId: string }) {
               type="button"
               className="btn-primary"
               onClick={generateAll}
-              disabled={images.length === 0 || !apiKey}
+              disabled={images.length === 0 || (!useVertex && !apiKey)}
             >
               {busy ? "Generating…" : readyCount > 0 ? "Re-generate all" : `Generate ${images.length || ""} listings`}
             </button>
           )}
-          <span className="text-xs text-zinc-500 dark:text-zinc-400">
-            {busy
-              ? "Calling Gemini per image…"
-              : readyCount > 0
-                ? `${readyCount} of ${designs.length} ready`
-                : "Auto-generates when you drop images"}
-          </span>
+            <span className="text-xs text-zinc-500 dark:text-zinc-400">
+              {busy
+                ? useVertex ? "Calling Vertex AI per image…" : "Calling Gemini per image…"
+                : readyCount > 0
+                  ? `${readyCount} of ${designs.length} ready`
+                  : "Auto-generates when you drop images"}
+            </span>
         </div>
       </section>
 
@@ -1048,7 +1085,7 @@ function PlaceholderTab({
   onRetry: () => void;
 }) {
   if (status === "generating") {
-    return <div className="surface-soft p-6 text-center text-sm text-zinc-500 dark:text-zinc-400">Generating with Gemini…</div>;
+    return <div className="surface-soft p-6 text-center text-sm text-zinc-500 dark:text-zinc-400">Generating listing…</div>;
   }
   if (status === "error") {
     return (
@@ -1056,7 +1093,7 @@ function PlaceholderTab({
         <p className="text-sm text-danger-600 dark:text-danger-500">{error ?? "Generation failed."}</p>
         <button type="button" className="btn-primary text-sm" onClick={onRetry}>Retry this design</button>
         <p className="text-[11px] text-zinc-500 dark:text-zinc-400">
-          Tip: change the model in the API key panel first if you hit a quota error.
+          Tip: switch to &quot;Vertex AI (Server)&quot; mode above if you hit quota limits.
         </p>
       </div>
     );

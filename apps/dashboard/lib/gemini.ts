@@ -147,6 +147,28 @@ export async function urlToBase64(url: string): Promise<string> {
   return bytesToBase64(new Uint8Array(await res.arrayBuffer()));
 }
 
+/** Generate listing via server-side Vertex AI (ADC). */
+export async function generateListingViaServer(
+  imageBase64: string,
+  imageMime: string,
+  prompt: string,
+  model?: string,
+  signal?: AbortSignal,
+): Promise<GeneratedListing> {
+  const res = await fetch("/api/generate-listing", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ imageBase64, imageMime, prompt, model }),
+    signal,
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error((data as any).error || `Server error ${res.status}`);
+  }
+  const data = await res.json();
+  return data.listing;
+}
+
 function bytesToBase64(bytes: Uint8Array): string {
   // btoa handles 8-bit strings only; build one chunk-wise to avoid stack blow-up.
   let binary = "";

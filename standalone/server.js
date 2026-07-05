@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 
-const PORT = 3030;
+const PORT = 3031;
 const HTML_PATH = path.join(__dirname, 'index.html');
 const LICENSE_PATH = path.join(__dirname, 'license.json');
 const PUBLIC_KEY = `-----BEGIN PUBLIC KEY-----

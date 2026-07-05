@@ -1,0 +1,26 @@
+filename,product_name,predicted_category,confidence,method,top1_category,top1_score,top2_category,top2_score,top3_category,top3_score
+toonces_driving_school_-_est_1989_t-shirt_1.jpg,Toonces Driving School - Est. 1989 T-Shirt,Vintage,0.5492,hybrid (image+text),Vintage,0.5492,Pets,0.3629,Animals,0.0306
+nwo_squads_war_t-shirt_2.jpg,nwo squads war T-Shirt,Pop Culture,0.4793,hybrid (image+text),Pop Culture,0.4793,Vintage,0.0995,Gaming,0.0660
+illinois_illini_final_four_2026_mens_march_madness_basketball_t-shirt_3.jpg,Illinois Illini Final four 2026 Men's March Madness Basketball T-Shirt,Sports,0.9623,hybrid (image+text),Sports,0.9623,Family,0.0099,Vintage,0.0088
+michigan_wolverines_2026_national_champions_basketball_t-shirt_4.jpg,Michigan Wolverines 2026 National Champions Basketball T-Shirt,Uncertain - needs review,0.2644,hybrid (image+text),Pop Culture,0.2644,Sports,0.2323,Vintage,0.1255
+graduation-2026_t-shirt_5.jpg,Graduation-2026 T-Shirt,Uncertain - needs review,0.2723,hybrid (image+text),Seasonal,0.2723,Family,0.2061,Nature,0.0750
+caucasians_t-shirt_7.jpg,Caucasians T-Shirt,Pop Culture,0.5826,hybrid (image+text),Pop Culture,0.5826,Sports,0.1204,Food,0.0616
+adhd_t-shirt_8.jpg,ADHD T-Shirt,Humor,0.4583,hybrid (image+text),Humor,0.4583,Gaming,0.1046,Pop Culture,0.0648
+hang_in_there_it_gets_worse_t-shirt_9.jpg,Hang In There It Gets Worse T-Shirt,Humor,0.4533,hybrid (image+text),Humor,0.4533,Lifestyle,0.0684,Anime,0.0552
+peaches_records_tapes_1975_t-shirt_10.jpg,Peaches Records & Tapes 1975 T-Shirt,Music,0.5112,hybrid (image+text),Music,0.5112,Vintage,0.3167,Seasonal,0.1408
+marshall_amplification_t-shirt_11.jpg,Marshall Amplification T-Shirt,Music,0.3748,hybrid (image+text),Music,0.3748,Vintage,0.1470,Animals,0.1470
+evil_empire_t-shirt_12.jpg,Evil Empire T-Shirt,Pop Culture,0.6867,hybrid (image+text),Pop Culture,0.6867,Vintage,0.1562,Sports,0.0540
+david_byrne_vintage_t-shirt_13.jpg,David Byrne Vintage T-Shirt,Vintage,0.3189,hybrid (image+text),Vintage,0.3189,Music,0.2827,Family,0.0763
+fearless_-_kobe_bryant_-_mamba_mentality_t-shirt_14.jpg,FEARLESS - Kobe Bryant - Mamba Mentality T-Shirt,Sports,0.8386,hybrid (image+text),Sports,0.8386,Vintage,0.0702,Art,0.0275
+peanuts_greatest_hits_t-shirt_15.jpg,Peanuts Greatest Hits T-Shirt,Pop Culture,0.3135,hybrid (image+text),Pop Culture,0.3135,Family,0.2291,Music,0.2155
+tiger_woods_just_dui_it_t-shirt_16.jpg,Tiger Woods JUST DUI IT T-Shirt,Humor,0.3327,hybrid (image+text),Humor,0.3327,Animals,0.2032,Sports,0.1109
+lee_ho_fooks_chinese_restaurant_t-shirt_17.jpg,Lee Ho Fooks Chinese Restaurant T-Shirt,Food,0.8353,hybrid (image+text),Food,0.8353,Humor,0.0836,Lifestyle,0.0194
+visit_arrakis_-_vintage_distressed_surf_-_dune_-_sci_fi_t-shirt_18.jpg,Visit Arrakis - Vintage Distressed Surf - Dune - Sci Fi T-Shirt,Uncertain - needs review,0.2565,hybrid (image+text),Vintage,0.2565,Pop Culture,0.2194,Animals,0.1465
+kermit_the_frog_t-shirt_19.jpg,Kermit The Frog T-Shirt,Pets,0.3520,hybrid (image+text),Pets,0.3520,Pop Culture,0.1652,Humor,0.1641
+the_great_dream_wave_shirt_t-shirt_21.jpg,The Great Dream Wave Shirt T-Shirt,Nature,0.6515,hybrid (image+text),Nature,0.6515,Anime,0.0769,Animals,0.0424
+binford_tools_t-shirt_23.jpg,Binford Tools T-Shirt,Lifestyle,0.5286,hybrid (image+text),Lifestyle,0.5286,Family,0.0730,Vintage,0.0709
+jordan_air_t-shirt_24.jpg,JORDAN AIR T-Shirt,Sports,0.9625,hybrid (image+text),Sports,0.9625,Vintage,0.0169,Pop Culture,0.0053
+heart_baseball_t-shirt_25.jpg,Heart Baseball T-Shirt,Sports,0.8249,hybrid (image+text),Sports,0.8249,Art,0.1349,Vintage,0.0233
+sanctuary_moon_t-shirt_28.jpg,Sanctuary Moon T-Shirt,Spiritual,0.3273,hybrid (image+text),Spiritual,0.3273,Nature,0.2159,Pop Culture,0.1646
+weyland_yutani_corp_t-shirt_29.jpg,Weyland Yutani Corp T-Shirt,Pop Culture,0.4195,hybrid (image+text),Pop Culture,0.4195,Gaming,0.3750,Professions,0.0355
+project-hail-mary_t-shirt_30.jpg,Project-Hail-Mary T-Shirt,Uncertain - needs review,0.1627,image only,Pop Culture,0.1627,Humor,0.1604,Sports,0.1355

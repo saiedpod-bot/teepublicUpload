@@ -1,0 +1,602 @@
+{
+  "toonces_driving_school_-_est_1989_t-shirt_1.jpg": {
+    "product_name": "Toonces Driving School - Est. 1989 T-Shirt",
+    "price": "24",
+    "product_url": "https://www.teepublic.com/t-shirt/76463312-toonces-driving-school-est-1989",
+    "image_url": "https://images.teepublic.com/derived/production/designs/76463312_0/1750239055/i_p:c_eae0c7,wmk,s_630,q_90.jpg",
+    "local_file": "./images\\toonces_driving_school_-_est_1989_t-shirt_1.jpg",
+    "predicted_category": "Vintage",
+    "category_scores_top3": [
+      {
+        "category": "Vintage",
+        "score": 0.5492
+      },
+      {
+        "category": "Pets",
+        "score": 0.3629
+      },
+      {
+        "category": "Animals",
+        "score": 0.0306
+      }
+    ],
+    "confidence": 0.5492,
+    "classification_method": "hybrid (image+text)"
+  },
+  "nwo_squads_war_t-shirt_2.jpg": {
+    "product_name": "nwo squads war T-Shirt",
+    "price": "24",
+    "product_url": "https://www.teepublic.com/t-shirt/68618277-nwo-squads-war",
+    "image_url": "https://images.teepublic.com/derived/production/designs/68618277_0/1732050747/i_p:c_191919,s_630,q_90.jpg",
+    "local_file": "./images\\nwo_squads_war_t-shirt_2.jpg",
+    "predicted_category": "Pop Culture",
+    "category_scores_top3": [
+      {
+        "category": "Pop Culture",
+        "score": 0.4793
+      },
+      {
+        "category": "Vintage",
+        "score": 0.0995
+      },
+      {
+        "category": "Gaming",
+        "score": 0.066
+      }
+    ],
+    "confidence": 0.4793,
+    "classification_method": "hybrid (image+text)"
+  },
+  "illinois_illini_final_four_2026_mens_march_madness_basketball_t-shirt_3.jpg": {
+    "product_name": "Illinois Illini Final four 2026 Men's March Madness Basketball T-Shirt",
+    "price": "24",
+    "product_url": "https://www.teepublic.com/t-shirt/89804723-illinois-illini-final-four-2026-mens-march-madness",
+    "image_url": "https://images.teepublic.com/derived/production/designs/89804723_0/1741371891/i_p:c_ffffff,s_630,q_90.jpg",
+    "local_file": "./images\\illinois_illini_final_four_2026_mens_march_madness_basketball_t-shirt_3.jpg",
+    "predicted_category": "Sports",
+    "category_scores_top3": [
+      {
+        "category": "Sports",
+        "score": 0.9623
+      },
+      {
+        "category": "Family",
+        "score": 0.0099
+      },
+      {
+        "category": "Vintage",
+        "score": 0.0088
+      }
+    ],
+    "confidence": 0.9623,
+    "classification_method": "hybrid (image+text)"
+  },
+  "michigan_wolverines_2026_national_champions_basketball_t-shirt_4.jpg": {
+    "product_name": "Michigan Wolverines 2026 National Champions Basketball T-Shirt",
+    "price": "24",
+    "product_url": "https://www.teepublic.com/t-shirt/88376743-michigan-wolverines-2026-national-champions-basket",
+    "image_url": "https://images.teepublic.com/derived/production/designs/88376743_0/1739815044/i_p:c_ffffff,s_630,q_90.jpg",
+    "local_file": "./images\\michigan_wolverines_2026_national_champions_basketball_t-shirt_4.jpg",
+    "predicted_category": "Uncertain - needs review",
+    "category_scores_top3": [
+      {
+        "category": "Pop Culture",
+        "score": 0.2644
+      },
+      {
+        "category": "Sports",
+        "score": 0.2323
+      },
+      {
+        "category": "Vintage",
+        "score": 0.1255
+      }
+    ],
+    "confidence": 0.2644,
+    "classification_method": "hybrid (image+text)"
+  },
+  "graduation-2026_t-shirt_5.jpg": {
+    "product_name": "Graduation-2026 T-Shirt",
+    "price": "24",
+    "product_url": "https://www.teepublic.com/t-shirt/67119572-graduation-2026",
+    "image_url": "https://images.teepublic.com/derived/production/designs/67119572_0/1730069990/i_p:c_ffffff,s_630,q_90.jpg",
+    "local_file": "./images\\graduation-2026_t-shirt_5.jpg",
+    "predicted_category": "Uncertain - needs review",
+    "category_scores_top3": [
+      {
+        "category": "Seasonal",
+        "score": 0.2723
+      },
+      {
+        "category": "Family",
+        "score": 0.2061
+      },
+      {
+        "category": "Nature",
+        "score": 0.075
+      }
+    ],
+    "confidence": 0.2723,
+    "classification_method": "hybrid (image+text)"
+  },
+  "caucasians_t-shirt_7.jpg": {
+    "product_name": "Caucasians T-Shirt",
+    "price": "24",
+    "product_url": "https://www.teepublic.com/t-shirt/12220945-caucasians",
+    "image_url": "https://images.teepublic.com/derived/production/designs/12220945_0/1748016039/i_p:c_c0392b,s_630,q_90.jpg",
+    "local_file": "./images\\caucasians_t-shirt_7.jpg",
+    "predicted_category": "Pop Culture",
+    "category_scores_top3": [
+      {
+        "category": "Pop Culture",
+        "score": 0.5826
+      },
+      {
+        "category": "Sports",
+        "score": 0.1204
+      },
+      {
+        "category": "Food",
+        "score": 0.0616
+      }
+    ],
+    "confidence": 0.5826,
+    "classification_method": "hybrid (image+text)"
+  },
+  "adhd_t-shirt_8.jpg": {
+    "product_name": "ADHD T-Shirt",
+    "price": "24",
+    "product_url": "https://www.teepublic.com/t-shirt/17638145-adhd",
+    "image_url": "https://images.teepublic.com/derived/production/designs/17638145_0/1748016039/i_p:c_2e2e2e,s_630,q_90.jpg",
+    "local_file": "./images\\adhd_t-shirt_8.jpg",
+    "predicted_category": "Humor",
+    "category_scores_top3": [
+      {
+        "category": "Humor",
+        "score": 0.4583
+      },
+      {
+        "category": "Gaming",
+        "score": 0.1046
+      },
+      {
+        "category": "Pop Culture",
+        "score": 0.0648
+      }
+    ],
+    "confidence": 0.4583,
+    "classification_method": "hybrid (image+text)"
+  },
+  "hang_in_there_it_gets_worse_t-shirt_9.jpg": {
+    "product_name": "Hang In There It Gets Worse T-Shirt",
+    "price": "24",
+    "product_url": "https://www.teepublic.com/t-shirt/61570501-hang-in-there-it-gets-worse",
+    "image_url": "https://images.teepublic.com/derived/production/designs/61570501_0/1748016039/i_p:c_ffffff,s_630,q_90.jpg",
+    "local_file": "./images\\hang_in_there_it_gets_worse_t-shirt_9.jpg",
+    "predicted_category": "Humor",
+    "category_scores_top3": [
+      {
+        "category": "Humor",
+        "score": 0.4533
+      },
+      {
+        "category": "Lifestyle",
+        "score": 0.0684
+      },
+      {
+        "category": "Anime",
+        "score": 0.0552
+      }
+    ],
+    "confidence": 0.4533,
+    "classification_method": "hybrid (image+text)"
+  },
+  "peaches_records_tapes_1975_t-shirt_10.jpg": {
+    "product_name": "Peaches Records & Tapes 1975 T-Shirt",
+    "price": "24",
+    "product_url": "https://www.teepublic.com/t-shirt/34946205-peaches-records-and-tapes-1975",
+    "image_url": "https://images.teepublic.com/derived/production/designs/34946205_0/1748016039/i_p:c_2e2e2e,s_630,q_90.jpg",
+    "local_file": "./images\\peaches_records_tapes_1975_t-shirt_10.jpg",
+    "predicted_category": "Music",
+    "category_scores_top3": [
+      {
+        "category": "Music",
+        "score": 0.5112
+      },
+      {
+        "category": "Vintage",
+        "score": 0.3167
+      },
+      {
+        "category": "Seasonal",
+        "score": 0.1408
+      }
+    ],
+    "confidence": 0.5112,
+    "classification_method": "hybrid (image+text)"
+  },
+  "marshall_amplification_t-shirt_11.jpg": {
+    "product_name": "Marshall Amplification T-Shirt",
+    "price": "24",
+    "product_url": "https://www.teepublic.com/t-shirt/86174334-marshall-amplification",
+    "image_url": "https://images.teepublic.com/derived/production/designs/86174334_0/1748016039/i_p:c_2e2e2e,s_630,q_90.jpg",
+    "local_file": "./images\\marshall_amplification_t-shirt_11.jpg",
+    "predicted_category": "Music",
+    "category_scores_top3": [
+      {
+        "category": "Music",
+        "score": 0.3748
+      },
+      {
+        "category": "Vintage",
+        "score": 0.147
+      },
+      {
+        "category": "Animals",
+        "score": 0.147
+      }
+    ],
+    "confidence": 0.3748,
+    "classification_method": "hybrid (image+text)"
+  },
+  "evil_empire_t-shirt_12.jpg": {
+    "product_name": "Evil Empire T-Shirt",
+    "price": "24",
+    "product_url": "https://www.teepublic.com/t-shirt/65597387-evil-empire",
+    "image_url": "https://images.teepublic.com/derived/production/designs/65597387_0/1748016039/i_p:c_2e2e2e,s_630,q_90.jpg",
+    "local_file": "./images\\evil_empire_t-shirt_12.jpg",
+    "predicted_category": "Pop Culture",
+    "category_scores_top3": [
+      {
+        "category": "Pop Culture",
+        "score": 0.6867
+      },
+      {
+        "category": "Vintage",
+        "score": 0.1562
+      },
+      {
+        "category": "Sports",
+        "score": 0.054
+      }
+    ],
+    "confidence": 0.6867,
+    "classification_method": "hybrid (image+text)"
+  },
+  "david_byrne_vintage_t-shirt_13.jpg": {
+    "product_name": "David Byrne Vintage T-Shirt",
+    "price": "24",
+    "product_url": "https://www.teepublic.com/t-shirt/81113319-david-byrne-vintage",
+    "image_url": "https://images.teepublic.com/derived/production/designs/81113319_0/1748016039/i_p:c_2e2e2e,s_630,q_90.jpg",
+    "local_file": "./images\\david_byrne_vintage_t-shirt_13.jpg",
+    "predicted_category": "Vintage",
+    "category_scores_top3": [
+      {
+        "category": "Vintage",
+        "score": 0.3189
+      },
+      {
+        "category": "Music",
+        "score": 0.2827
+      },
+      {
+        "category": "Family",
+        "score": 0.0763
+      }
+    ],
+    "confidence": 0.3189,
+    "classification_method": "hybrid (image+text)"
+  },
+  "fearless_-_kobe_bryant_-_mamba_mentality_t-shirt_14.jpg": {
+    "product_name": "FEARLESS - Kobe Bryant - Mamba Mentality T-Shirt",
+    "price": "24",
+    "product_url": "https://www.teepublic.com/t-shirt/88664030-fearless-kobe-bryant-mamba-mentality",
+    "image_url": "https://images.teepublic.com/derived/production/designs/88664030_0/1748016039/i_p:c_2e2e2e,s_630,q_90.jpg",
+    "local_file": "./images\\fearless_-_kobe_bryant_-_mamba_mentality_t-shirt_14.jpg",
+    "predicted_category": "Sports",
+    "category_scores_top3": [
+      {
+        "category": "Sports",
+        "score": 0.8386
+      },
+      {
+        "category": "Vintage",
+        "score": 0.0702
+      },
+      {
+        "category": "Art",
+        "score": 0.0275
+      }
+    ],
+    "confidence": 0.8386,
+    "classification_method": "hybrid (image+text)"
+  },
+  "peanuts_greatest_hits_t-shirt_15.jpg": {
+    "product_name": "Peanuts Greatest Hits T-Shirt",
+    "price": "24",
+    "product_url": "https://www.teepublic.com/t-shirt/82321511-peanuts-greatest-hits-rockin-out-to-linus-and-lucy",
+    "image_url": "https://images.teepublic.com/derived/production/designs/82321511_0/1748016039/i_p:c_2e2e2e,s_630,q_90.jpg",
+    "local_file": "./images\\peanuts_greatest_hits_t-shirt_15.jpg",
+    "predicted_category": "Pop Culture",
+    "category_scores_top3": [
+      {
+        "category": "Pop Culture",
+        "score": 0.3135
+      },
+      {
+        "category": "Family",
+        "score": 0.2291
+      },
+      {
+        "category": "Music",
+        "score": 0.2155
+      }
+    ],
+    "confidence": 0.3135,
+    "classification_method": "hybrid (image+text)"
+  },
+  "tiger_woods_just_dui_it_t-shirt_16.jpg": {
+    "product_name": "Tiger Woods JUST DUI IT T-Shirt",
+    "price": "24",
+    "product_url": "https://www.teepublic.com/t-shirt/89874662-tiger-woods-just-dui-it",
+    "image_url": "https://images.teepublic.com/derived/production/designs/89874662_0/1748016039/i_p:c_2e2e2e,s_630,q_90.jpg",
+    "local_file": "./images\\tiger_woods_just_dui_it_t-shirt_16.jpg",
+    "predicted_category": "Humor",
+    "category_scores_top3": [
+      {
+        "category": "Humor",
+        "score": 0.3327
+      },
+      {
+        "category": "Animals",
+        "score": 0.2032
+      },
+      {
+        "category": "Sports",
+        "score": 0.1109
+      }
+    ],
+    "confidence": 0.3327,
+    "classification_method": "hybrid (image+text)"
+  },
+  "lee_ho_fooks_chinese_restaurant_t-shirt_17.jpg": {
+    "product_name": "Lee Ho Fooks Chinese Restaurant T-Shirt",
+    "price": "24",
+    "product_url": "https://www.teepublic.com/t-shirt/33592838-lee-ho-fooks-chinese-restaurant",
+    "image_url": "https://images.teepublic.com/derived/production/designs/33592838_0/1748016039/i_p:c_2e2e2e,s_630,q_90.jpg",
+    "local_file": "./images\\lee_ho_fooks_chinese_restaurant_t-shirt_17.jpg",
+    "predicted_category": "Food",
+    "category_scores_top3": [
+      {
+        "category": "Food",
+        "score": 0.8353
+      },
+      {
+        "category": "Humor",
+        "score": 0.0836
+      },
+      {
+        "category": "Lifestyle",
+        "score": 0.0194
+      }
+    ],
+    "confidence": 0.8353,
+    "classification_method": "hybrid (image+text)"
+  },
+  "visit_arrakis_-_vintage_distressed_surf_-_dune_-_sci_fi_t-shirt_18.jpg": {
+    "product_name": "Visit Arrakis - Vintage Distressed Surf - Dune - Sci Fi T-Shirt",
+    "price": "24",
+    "product_url": "https://www.teepublic.com/t-shirt/4742645-visit-arrakis-vintage-distressed-surf-dune-sci-fi",
+    "image_url": "https://images.teepublic.com/derived/production/designs/4742645_0/1748016039/i_p:c_2e2e2e,s_630,q_90.jpg",
+    "local_file": "./images\\visit_arrakis_-_vintage_distressed_surf_-_dune_-_sci_fi_t-shirt_18.jpg",
+    "predicted_category": "Uncertain - needs review",
+    "category_scores_top3": [
+      {
+        "category": "Vintage",
+        "score": 0.2565
+      },
+      {
+        "category": "Pop Culture",
+        "score": 0.2194
+      },
+      {
+        "category": "Animals",
+        "score": 0.1465
+      }
+    ],
+    "confidence": 0.2565,
+    "classification_method": "hybrid (image+text)"
+  },
+  "kermit_the_frog_t-shirt_19.jpg": {
+    "product_name": "Kermit The Frog T-Shirt",
+    "price": "24",
+    "product_url": "https://www.teepublic.com/t-shirt/13396734-kermit-the-frog",
+    "image_url": "https://images.teepublic.com/derived/production/designs/13396734_0/1748016039/i_p:c_2e2e2e,s_630,q_90.jpg",
+    "local_file": "./images\\kermit_the_frog_t-shirt_19.jpg",
+    "predicted_category": "Pets",
+    "category_scores_top3": [
+      {
+        "category": "Pets",
+        "score": 0.352
+      },
+      {
+        "category": "Pop Culture",
+        "score": 0.1652
+      },
+      {
+        "category": "Humor",
+        "score": 0.1641
+      }
+    ],
+    "confidence": 0.352,
+    "classification_method": "hybrid (image+text)"
+  },
+  "the_great_dream_wave_shirt_t-shirt_21.jpg": {
+    "product_name": "The Great Dream Wave Shirt T-Shirt",
+    "price": "24",
+    "product_url": "https://www.teepublic.com/t-shirt/6579964-the-great-dream-wave-shirt",
+    "image_url": "https://images.teepublic.com/derived/production/designs/6579964_0/1748016039/i_p:c_2e2e2e,s_630,q_90.jpg",
+    "local_file": "./images\\the_great_dream_wave_shirt_t-shirt_21.jpg",
+    "predicted_category": "Nature",
+    "category_scores_top3": [
+      {
+        "category": "Nature",
+        "score": 0.6515
+      },
+      {
+        "category": "Anime",
+        "score": 0.0769
+      },
+      {
+        "category": "Animals",
+        "score": 0.0424
+      }
+    ],
+    "confidence": 0.6515,
+    "classification_method": "hybrid (image+text)"
+  },
+  "binford_tools_t-shirt_23.jpg": {
+    "product_name": "Binford Tools T-Shirt",
+    "price": "24",
+    "product_url": "https://www.teepublic.com/t-shirt/2833712-binford-tools",
+    "image_url": "https://images.teepublic.com/derived/production/designs/2833712_0/1748016039/i_p:c_2e2e2e,s_630,q_90.jpg",
+    "local_file": "./images\\binford_tools_t-shirt_23.jpg",
+    "predicted_category": "Lifestyle",
+    "category_scores_top3": [
+      {
+        "category": "Lifestyle",
+        "score": 0.5286
+      },
+      {
+        "category": "Family",
+        "score": 0.073
+      },
+      {
+        "category": "Vintage",
+        "score": 0.0709
+      }
+    ],
+    "confidence": 0.5286,
+    "classification_method": "hybrid (image+text)"
+  },
+  "jordan_air_t-shirt_24.jpg": {
+    "product_name": "JORDAN AIR T-Shirt",
+    "price": "24",
+    "product_url": "https://www.teepublic.com/t-shirt/76377399-jordan-air",
+    "image_url": "https://images.teepublic.com/derived/production/designs/76377399_0/1748016039/i_p:c_2e2e2e,s_630,q_90.jpg",
+    "local_file": "./images\\jordan_air_t-shirt_24.jpg",
+    "predicted_category": "Sports",
+    "category_scores_top3": [
+      {
+        "category": "Sports",
+        "score": 0.9625
+      },
+      {
+        "category": "Vintage",
+        "score": 0.0169
+      },
+      {
+        "category": "Pop Culture",
+        "score": 0.0053
+      }
+    ],
+    "confidence": 0.9625,
+    "classification_method": "hybrid (image+text)"
+  },
+  "heart_baseball_t-shirt_25.jpg": {
+    "product_name": "Heart Baseball T-Shirt",
+    "price": "24",
+    "product_url": "https://www.teepublic.com/t-shirt/3540483-heart-baseball",
+    "image_url": "https://images.teepublic.com/derived/production/designs/3540483_0/1748016039/i_p:c_2e2e2e,s_630,q_90.jpg",
+    "local_file": "./images\\heart_baseball_t-shirt_25.jpg",
+    "predicted_category": "Sports",
+    "category_scores_top3": [
+      {
+        "category": "Sports",
+        "score": 0.8249
+      },
+      {
+        "category": "Art",
+        "score": 0.1349
+      },
+      {
+        "category": "Vintage",
+        "score": 0.0233
+      }
+    ],
+    "confidence": 0.8249,
+    "classification_method": "hybrid (image+text)"
+  },
+  "sanctuary_moon_t-shirt_28.jpg": {
+    "product_name": "Sanctuary Moon T-Shirt",
+    "price": "24",
+    "product_url": "https://www.teepublic.com/t-shirt/52692212-sanctuary-moon",
+    "image_url": "https://images.teepublic.com/derived/production/designs/52692212_0/1748016039/i_p:c_2e2e2e,s_630,q_90.jpg",
+    "local_file": "./images\\sanctuary_moon_t-shirt_28.jpg",
+    "predicted_category": "Spiritual",
+    "category_scores_top3": [
+      {
+        "category": "Spiritual",
+        "score": 0.3273
+      },
+      {
+        "category": "Nature",
+        "score": 0.2159
+      },
+      {
+        "category": "Pop Culture",
+        "score": 0.1646
+      }
+    ],
+    "confidence": 0.3273,
+    "classification_method": "hybrid (image+text)"
+  },
+  "weyland_yutani_corp_t-shirt_29.jpg": {
+    "product_name": "Weyland Yutani Corp T-Shirt",
+    "price": "24",
+    "product_url": "https://www.teepublic.com/t-shirt/61172015-weyland-yutani-corp",
+    "image_url": "https://images.teepublic.com/derived/production/designs/61172015_0/1748016039/i_p:c_2e2e2e,s_630,q_90.jpg",
+    "local_file": "./images\\weyland_yutani_corp_t-shirt_29.jpg",
+    "predicted_category": "Pop Culture",
+    "category_scores_top3": [
+      {
+        "category": "Pop Culture",
+        "score": 0.4195
+      },
+      {
+        "category": "Gaming",
+        "score": 0.375
+      },
+      {
+        "category": "Professions",
+        "score": 0.0355
+      }
+    ],
+    "confidence": 0.4195,
+    "classification_method": "hybrid (image+text)"
+  },
+  "project-hail-mary_t-shirt_30.jpg": {
+    "product_name": "Project-Hail-Mary T-Shirt",
+    "price": "24",
+    "product_url": "https://www.teepublic.com/t-shirt/64147267-project-hail-mary",
+    "image_url": "https://images.teepublic.com/derived/production/designs/64147267_0/1748016039/i_p:c_2e2e2e,s_630,q_90.jpg",
+    "local_file": "./images\\project-hail-mary_t-shirt_30.jpg",
+    "predicted_category": "Uncertain - needs review",
+    "category_scores_top3": [
+      {
+        "category": "Pop Culture",
+        "score": 0.1627
+      },
+      {
+        "category": "Humor",
+        "score": 0.1604
+      },
+      {
+        "category": "Sports",
+        "score": 0.1355
+      }
+    ],
+    "confidence": 0.1627,
+    "classification_method": "image only"
+  }
+}
