@@ -1,6 +1,5 @@
-# 🧩 TeePublic Uploader
+# TeePublic Uploader
 
-**رفع وتحميل جماعي لتصاميم TeePublic مع الذكاء الاصطناعي**  
 AI-powered batch upload manager for [TeePublic](https://www.teepublic.com) — from images to published listings automatically.
 
 [![Build Extension](https://github.com/saiedpod-bot/teepublicUpload/actions/workflows/build-extension.yml/badge.svg)](https://github.com/saiedpod-bot/teepublicUpload/actions/workflows/build-extension.yml)
@@ -10,7 +9,7 @@ AI-powered batch upload manager for [TeePublic](https://www.teepublic.com) — f
 
 ---
 
-## 📋 Overview | نظرة عامة
+## Overview
 
 This project automates the entire workflow of uploading designs to TeePublic:
 
@@ -25,33 +24,33 @@ This project automates the entire workflow of uploading designs to TeePublic:
 
 ---
 
-## 📸 Screenshots | صور الواجهة
+## Screenshots
 
-### Dashboard Interface | واجهة التحكم
+### Dashboard Interface
 ![Dashboard](screenshots/dashboard.svg)
 *Main dashboard at localhost:3030 — drop images, AI generates, send to extension*
 
-### Extension Popup | نافذة الإضافة
-![Extension](screenshots/extension.svg)
-*Chrome extension showing queue progress, retries, and publish status*
-
-### Design Generator | توليد التصاميم
+### Design Generator
 ![Design Generator](screenshots/design-generator.svg)
 *Generate new designs from competitor reference — transparent background, no watermark*
 
-### Account Manager | إدارة الحسابات
+### Account Manager
 ![Account Manager](screenshots/accounts.svg)
 *Manage TeePublic accounts with status tracking and Excel export*
 
-### Workflow | سير العمل
+### Extension Popup
+![Extension](screenshots/extension.svg)
+*Chrome extension showing queue progress, retries, and publish status*
+
+### Workflow
 ![Workflow](screenshots/workflow.svg)
-*Complete 6-step automated workflow from images to published listings*
+*Complete automated workflow from images to published listings*
 
 ---
 
-## 🚀 Quick Start | البداية السريعة
+## Quick Start
 
-### Prerequisites | المتطلبات
+### Prerequisites
 
 - Node.js 20+
 - pnpm 9+
@@ -60,7 +59,7 @@ This project automates the entire workflow of uploading designs to TeePublic:
 - Gemini API key ([get free](https://aistudio.google.com/apikey)) — OR Google Cloud service account for Vertex AI
 - Python 3.10+ (optional — for Intelligence scraper app)
 
-### 1️⃣ Install & Run | التثبيت والتشغيل
+### 1. Install & Run
 
 ```bash
 # Install dependencies
@@ -73,14 +72,14 @@ pnpm build:extension
 pnpm dev:dashboard
 ```
 
-### 2️⃣ Load Extension in Chrome | تحميل الإضافة
+### 2. Load Extension in Chrome
 
 1. Open **chrome://extensions**
 2. Toggle **Developer mode** (top right)
 3. Click **Load unpacked** → select `apps/extension/dist`
 4. Copy the **Extension ID** shown on the card
 
-### 3️⃣ Use It | الاستخدام
+### 3. Use It
 
 ![Step-by-step](screenshots/workflow.svg)
 
@@ -98,18 +97,18 @@ pnpm dev:dashboard
 
 ---
 
-## 🔑 Keys, Permissions & Requirements | المفاتيح والصلاحيات المطلوبة
+## Keys, Permissions & Requirements
 
 ### Required
 
 | Item | Type | Where to Get | Permissions Needed |
 |------|------|-------------|-------------------|
-| **Gemini API Key** | 🔑 API key | [aistudio.google.com/apikey](https://aistudio.google.com/apikey) | **AI Studio key** (NOT Google Cloud Console) — works immediately with free tier |
-| **Google Cloud Service Account** | 🔑 JSON key | [console.cloud.google.com](https://console.cloud.google.com/apis/credentials) | Vertex AI (Imagen + Gemini) via ADC — set `GOOGLE_APPLICATION_CREDENTIALS` env var |
-| **TeePublic Account** | 👤 Login | [teepublic.com](https://www.teepublic.com) | Must be **logged in** in Chrome profile where extension runs |
-| **Chrome Browser** | 🌐 Browser | [google.com/chrome](https://www.google.com/chrome/) | MV3 extension support required |
-| **Node.js 20+** | ⚙️ Runtime | [nodejs.org](https://nodejs.org/) | For dashboard + extension build |
-| **pnpm 9+** | 📦 Package manager | `npm i -g pnpm` | For monorepo dependency management |
+| **Gemini API Key** | API key | [aistudio.google.com/apikey](https://aistudio.google.com/apikey) | AI Studio key (NOT Google Cloud Console) — works immediately with free tier |
+| **Google Cloud Service Account** | JSON key | [console.cloud.google.com](https://console.cloud.google.com/apis/credentials) | Vertex AI (Imagen + Gemini) via ADC — set `GOOGLE_APPLICATION_CREDENTIALS` env var |
+| **TeePublic Account** | Login | [teepublic.com](https://www.teepublic.com) | Must be logged in in Chrome profile where extension runs |
+| **Chrome Browser** | Browser | [google.com/chrome](https://www.google.com/chrome/) | MV3 extension support required |
+| **Node.js 20+** | Runtime | [nodejs.org](https://nodejs.org/) | For dashboard + extension build |
+| **pnpm 9+** | Package manager | `npm i -g pnpm` | For monorepo dependency management |
 
 ### Chrome Extension Permissions (auto-granted when loaded)
 
@@ -122,14 +121,6 @@ pnpm dev:dashboard
 | `host_permissions: *.teepublic.com` | Access TeePublic upload pages |
 | `host_permissions: localhost:3030` | Receive queue from dashboard |
 
-### File System Access
-
-| Path | Purpose |
-|------|---------|
-| `E:\POD\MY WORKE POD\EPS+PNG OLD\` | Source PNG design files (51 designs) |
-| `designs_metadata.csv` | Metadata file (filename, title, tags) |
-| `apps/extension/dist/` | Built extension (load unpacked from here) |
-
 ### Network Access (Firewall / Proxy)
 
 | Destination | Port | Purpose |
@@ -141,7 +132,7 @@ pnpm dev:dashboard
 | `localhost` | 3030 / 3031 | Dashboard / standalone server |
 | `registry.npmjs.org` | 443 | Package installation (one-time) |
 
-### ⚠️ Common Pitfalls
+### Common Pitfalls
 
 | Problem | Solution |
 |---------|----------|
@@ -155,15 +146,15 @@ pnpm dev:dashboard
 
 ---
 
-## 📁 Project Structure | هيكل المشروع
+## Project Structure
 
 ```
 teepublic-uploader/
 ├── apps/
 │   ├── dashboard/          Next.js 15 + React 19 + Tailwind — UI at localhost:3030
-│   │   ├── components/     GenerationApp, Dropzone, DesignConfigCard, ColorsEditor
+│   │   ├── components/     GenerationApp, DesignGenerator, AccountManager, Dropzone
 │   │   ├── lib/
-│   │   │   ├── gemini.ts       Gemini API client — image→listing generation
+│   │   │   ├── gemini.ts       Gemini API client — image listing generation
 │   │   │   ├── vertexClient.ts Vertex AI client — ADC auth via service account JWT
 │   │   │   ├── imageGen.ts     Image generation client (calls server API route)
 │   │   │   ├── removeBg.ts     Client-side canvas-based background removal
@@ -197,9 +188,9 @@ teepublic-uploader/
 
 ---
 
-## 🧠 AI Features | ميزات الذكاء الاصطناعي
+## AI Features
 
-### Listing Generation | توليد بيانات التصميم
+### Listing Generation
 
 The dashboard generates complete TeePublic listings from design images:
 
@@ -215,9 +206,9 @@ Toggle between methods in the "Generate with AI" tab. Output:
 - **Supporting Tags**: Exactly 8 tags, 1-3 words each
 - **Mature Content**: Auto-detected
 
-**Leave the prompt empty** — AI derives everything from the image automatically.
+Leave the prompt empty — AI derives everything from the image automatically.
 
-### Design Generation | توليد التصاميم بالذكاء الاصطناعي
+### Design Generation
 
 The **Design Generator** tab creates new t-shirt designs from a competitor reference:
 
@@ -230,7 +221,7 @@ The **Design Generator** tab creates new t-shirt designs from a competitor refer
 
 Prompt: `t-shirt design, no background, no watermark, flat vector style, high contrast, printable`
 
-### Account Manager | إدارة الحسابات
+### Account Manager
 
 The **Accounts** tab lets you store and manage all your TeePublic accounts:
 - Add/Edit/Delete accounts (email, password, store name, notes)
@@ -240,7 +231,7 @@ The **Accounts** tab lets you store and manage all your TeePublic accounts:
 
 ---
 
-## 🔧 Standalone Mode (No Dashboard) | وضع مستقل بدون لوحة التحكم
+## Standalone Mode (No Dashboard)
 
 If you don't want to run Next.js/Supabase:
 
@@ -252,7 +243,7 @@ Then open `http://localhost:3031` — upload CSV + PNGs, the page bridges direct
 
 ---
 
-## 🔐 License System
+## License System
 
 This software uses an RSA-signed license file (`license.json`) to control access.
 
@@ -302,7 +293,7 @@ node generate-license.js \
 
 ---
 
-## ⚙️ Configuration | الإعدادات
+## Configuration
 
 | Setting | Default | Description |
 |---------|---------|-------------|
@@ -314,9 +305,9 @@ Edit in `apps/extension/src/services/queueStore.ts`.
 
 ---
 
-## 📝 Notes | ملاحظات
+## Notes
 
-- **Use AI Studio API keys** for Gemini, OR **Google Cloud Service Account** (ADC) for Vertex AI
+- Use **AI Studio API keys** for Gemini, OR **Google Cloud Service Account** (ADC) for Vertex AI
 - Login bypass code **`1992`** on the auth screen — no Gmail account needed for local access
 - Generated images have backgrounds **automatically removed** via canvas-based color detection
 - Each design is uploaded to a **separate TeePublic account**
@@ -326,9 +317,9 @@ Edit in `apps/extension/src/services/queueStore.ts`.
 
 ---
 
-## 📄 License | الترخيص
+## License
 
-**All Rights Reserved** — Copyright © 2026 **SaiedPod**
+**All Rights Reserved** — Copyright 2026 **SaiedPod**
 
 This software and all associated files are proprietary. No permission is granted
 to copy, modify, distribute, or create derivative works without prior written

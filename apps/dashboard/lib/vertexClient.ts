@@ -201,12 +201,12 @@ export async function generateWithVertex(
   const body = {
     instances: [
       {
-        prompt: `t-shirt design, no background, no watermark, flat vector style, high contrast, printable: ${prompt}`,
+        prompt: `standalone printable graphic, NO t-shirt or clothing mockup, flat vector illustration style, high contrast, edges fill the canvas, transparent background, professional print-ready design: ${prompt}`,
       },
     ],
     parameters: {
       sampleCount: Math.min(count, 8),
-      aspectRatio: "1:1",
+      aspectRatio: "3:4", // portrait orientation matches TeePublic's ~1500×1995
     },
   };
 

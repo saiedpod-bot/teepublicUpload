@@ -19,6 +19,7 @@ import {
 } from "../lib/dom";
 import { humanDelay, sleep } from "../lib/delays";
 import { configureProductTable, configureOtherProducts, configureNonApparelColors, applyEnabledProducts, applyProductColorPalette, findBlockingEmptyColors, fullClick } from "./colors";
+import { runPlacement } from "./placement";
 
 console.info("[teepublic-cs] ready on", location.href);
 
@@ -194,7 +195,7 @@ async function runUpload(
       const outcome = await waitForUploadOutcome(30_000);
       if (outcome === "failed") {
         // Don't fill the listing onto a design with no artwork, and don't retry.
-        const err = "artwork upload failed (TeePublic rejected the file — needs a transparent PNG ≥ 1500×1995px)";
+        const err = "artwork upload failed (TeePublic rejected the file — needs a transparent PNG ≥ 4500×5400px)";
         log(`✗ ${err} — skipping (no retry)`);
         fireItemStatus(item.id, "failed", undefined, err);
         return { ok: false, error: err };
@@ -442,6 +443,21 @@ async function runUpload(
       await humanDelay(300, 600);
     } catch (e) {
       log(`product-colors palette click failed — continuing: ${(e as Error).message}`);
+    }
+
+    // ── 6.7. Auto placement — scale + center each enabled product ─────────
+    try {
+      const previewImg = document.querySelector<HTMLImageElement>("img.mutable-preview");
+      if (previewImg?.naturalWidth && previewImg?.naturalHeight) {
+        const ar = previewImg.naturalWidth / previewImg.naturalHeight;
+        const pl = await runPlacement(ar);
+        if (pl.wallArtDisabled) log("placement: Wall Art auto-disabled (design would overflow safe zone)");
+        if (!pl.ok) log(`placement: some products had issues — ${pl.error ?? "unknown"}`);
+      } else {
+        log("placement: skipped (preview image not available)");
+      }
+    } catch (e) {
+      log(`placement controller failed — continuing: ${(e as Error).message}`);
     }
 
     // ── 7. Terms & Conditions checkbox (single flow only — bulk ticks it once
@@ -752,8 +768,8 @@ function pageShowsText(rx: RegExp): boolean {
 
 // TeePublic rejects artwork below this; pre-checking avoids the failed-upload
 // cascade. Orientation-agnostic so a valid landscape design isn't false-skipped.
-const MIN_SHORT_SIDE = 1500;
-const MIN_LONG_SIDE = 1995;
+const MIN_SHORT_SIDE = 4500;
+const MIN_LONG_SIDE = 5400;
 
 /** Read an image's pixel dimensions from a data/URL. Null if it can't load. */
 function imageDimensions(src: string): Promise<{ w: number; h: number } | null> {

@@ -1,0 +1,98 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 750 520" font-family="'Segoe UI', Arial, sans-serif">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0f0f1a"/>
+      <stop offset="100%" stop-color="#1a1a2e"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="2" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+  <rect width="750" height="520" fill="url(#bg)" rx="12"/>
+
+  <!-- Title Bar -->
+  <rect x="0" y="0" width="750" height="45" rx="12" fill="#1e293b"/>
+  <rect x="0" y="22" width="750" height="23" fill="#1e293b"/>
+  <text x="20" y="28" fill="#ffffff" font-size="16" font-weight="bold">Design Generator</text>
+  <text x="530" y="28" fill="#94a3b8" font-size="11">Vertex AI Imagen 3.0</text>
+  <circle cx="700" cy="15" r="5" fill="#4ade80" filter="url(#glow)"/>
+  <circle cx="720" cy="15" r="5" fill="#eab308"/>
+  <circle cx="740" cy="15" r="5" fill="#ef4444"/>
+
+  <!-- Left Panel: Input -->
+  <rect x="20" y="60" width="340" height="440" rx="10" fill="#111827" stroke="#a78bfa" stroke-width="1"/>
+  <text x="190" y="85" text-anchor="middle" fill="#a78bfa" font-size="13" font-weight="bold">Input</text>
+
+  <!-- Competitor Image Upload -->
+  <rect x="35" y="100" width="310" height="140" rx="8" fill="#1a1a2e" stroke="#64748b" stroke-width="1.5" stroke-dasharray="6,3"/>
+  <text x="190" y="150" text-anchor="middle" fill="#64748b" font-size="12">Upload Competitor Image</text>
+  <text x="190" y="170" text-anchor="middle" fill="#64748b" font-size="10">(optional — drag & drop PNG)</text>
+  <rect x="140" y="190" width="100" height="28" rx="6" fill="#1e3a5f" stroke="#3b82f6" stroke-width="1"/>
+  <text x="190" y="210" text-anchor="middle" fill="#60a5fa" font-size="11">Choose File</text>
+
+  <!-- Title Input -->
+  <text x="40" y="270" fill="#cbd5e1" font-size="11">Design Title / Theme</text>
+  <rect x="35" y="280" width="310" height="36" rx="6" fill="#1a1a2e" stroke="#333" stroke-width="1"/>
+  <text x="45" y="303" fill="#94a3b8" font-size="11">Retro video game controller pixel art</text>
+
+  <!-- Number of Designs -->
+  <text x="40" y="340" fill="#cbd5e1" font-size="11">Number of Designs</text>
+  <rect x="35" y="350" width="310" height="36" rx="6" fill="#1a1a2e" stroke="#333" stroke-width="1"/>
+  <text x="45" y="373" fill="#e2e8f0" font-size="11">4</text>
+  <rect x="290" y="355" width="20" height="20" rx="4" fill="#3b82f6"/>
+  <text x="300" y="370" fill="#fff" font-size="10">▼</text>
+
+  <!-- Prompt -->
+  <text x="40" y="410" fill="#cbd5e1" font-size="11">System Prompt (override)</text>
+  <rect x="35" y="420" width="310" height="50" rx="6" fill="#1a1a2e" stroke="#333" stroke-width="1"/>
+  <text x="45" y="440" fill="#94a3b8" font-size="10">t-shirt design, no background, no</text>
+  <text x="45" y="458" fill="#94a3b8" font-size="10">watermark, flat vector style, ...</text>
+
+  <!-- Generate Button -->
+  <rect x="120" y="480" width="140" height="30" rx="6" fill="#7c3aed"/>
+  <text x="190" y="500" text-anchor="middle" fill="#fff" font-size="12" font-weight="bold">Generate Designs</text>
+
+  <!-- Right Panel: Results -->
+  <rect x="380" y="60" width="350" height="440" rx="10" fill="#111827" stroke="#22c55e" stroke-width="1"/>
+  <text x="555" y="85" text-anchor="middle" fill="#4ade80" font-size="13" font-weight="bold">Generated Results</text>
+
+  <!-- Result 1 -->
+  <rect x="395" y="100" width="155" height="160" rx="8" fill="#1a1a2e" stroke="#64748b" stroke-width="1"/>
+  <rect x="405" y="110" width="135" height="100" rx="4" fill="#2a1a3a"/>
+  <text x="472" y="160" text-anchor="middle" fill="#a78bfa" font-size="10">🎮 Retro Controller</text>
+  <rect x="425" y="235" width="95" height="20" rx="4" fill="#166534"/>
+  <text x="472" y="250" text-anchor="middle" fill="#4ade80" font-size="10">Background Removed</text>
+
+  <!-- Result 2 -->
+  <rect x="560" y="100" width="155" height="160" rx="8" fill="#1a1a2e" stroke="#64748b" stroke-width="1"/>
+  <rect x="570" y="110" width="135" height="100" rx="4" fill="#1a2e1a"/>
+  <text x="637" y="160" text-anchor="middle" fill="#22c55e" font-size="10">🕹 Pixel Joystick</text>
+  <rect x="590" y="235" width="95" height="20" rx="4" fill="#166534"/>
+  <text x="637" y="250" text-anchor="middle" fill="#4ade80" font-size="10">Background Removed</text>
+
+  <!-- Result 3 -->
+  <rect x="395" y="275" width="155" height="160" rx="8" fill="#1a1a2e" stroke="#64748b" stroke-width="1"/>
+  <rect x="405" y="285" width="135" height="100" rx="4" fill="#1a1a3a"/>
+  <text x="472" y="335" text-anchor="middle" fill="#3b82f6" font-size="10">👾 Space Invader</text>
+  <rect x="425" y="410" width="95" height="20" rx="4" fill="#166534"/>
+  <text x="472" y="425" text-anchor="middle" fill="#4ade80" font-size="10">Background Removed</text>
+
+  <!-- Result 4 -->
+  <rect x="560" y="275" width="155" height="160" rx="8" fill="#1a1a2e" stroke="#64748b" stroke-width="1"/>
+  <rect x="570" y="285" width="135" height="100" rx="4" fill="#1a2a1a"/>
+  <text x="637" y="335" text-anchor="middle" fill="#eab308" font-size="10">🏆 Arcade Champ</text>
+  <rect x="590" y="410" width="95" height="20" rx="4" fill="#166534"/>
+  <text x="637" y="425" text-anchor="middle" fill="#4ade80" font-size="10">Background Removed</text>
+
+  <!-- Download All Button -->
+  <rect x="540" y="460" width="175" height="30" rx="6" fill="#059669"/>
+  <text x="627" y="480" text-anchor="middle" fill="#fff" font-size="12" font-weight="bold">Download All (4)</text>
+
+  <!-- Status -->
+  <text x="395" y="485" fill="#94a3b8" font-size="10">✓ All generated</text>
+  <text x="395" y="495" fill="#94a3b8" font-size="10">Bkg removed ✓</text>
+
+  <!-- Watermark -->
+  <text x="740" y="515" text-anchor="end" fill="#ffffff" fill-opacity="0.06" font-size="9" font-weight="bold">© SaiedPod</text>
+</svg>

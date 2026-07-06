@@ -28,15 +28,15 @@ async function checkStatus() {
     const d = await r.json();
     if (d.qdrant === "ok") {
       pill.className = "status ok";
-      pill.textContent = `🟢 متصل · ${d.points} تصميم`;
+      pill.textContent = `🟢 Connected · ${d.points} designs`;
       $("stat-total").textContent = d.points;
     } else {
       pill.className = "status error";
-      pill.textContent = "🔴 Qdrant غير متصل";
+      pill.textContent = "🔴 Qdrant not connected";
     }
   } catch (e) {
     pill.className = "status error";
-    pill.textContent = "🔴 خطأ في الاتصال";
+    pill.textContent = "🔴 Connection error";
   }
 }
 
@@ -85,7 +85,7 @@ async function doTextSearch() {
     const d = await r.json();
     renderResults(grid, d.results, d.mode === "text" ? q : null, d.error);
   } catch (e) {
-    grid.innerHTML = `<div class="empty">❌ خطأ: ${e.message}</div>`;
+    grid.innerHTML = `<div class="empty">❌ Error: ${e.message}</div>`;
   } finally {
     $("search-loading").hidden = true;
   }
@@ -116,9 +116,9 @@ async function doLiveSearch() {
   const grid = $("search-results");
   const btn = $("btn-live-search");
   btn.disabled = true;
-  btn.textContent = "⏳ جارٍ الجلب...";
+  btn.textContent = "⏳ Fetching...";
   grid.innerHTML = "";
-  showLiveStatus(`🌐 جارٍ جلب تصاميم "<strong>${escapeHtml(q)}</strong>" من TeePublic... هذا قد يستغرق 30-60 ثانية.`);
+  showLiveStatus(`🌐 Fetching designs for "<strong>${escapeHtml(q)}</strong>" from TeePublic... This may take 30-60 seconds.`);
 
   try {
     const url = `/api/live-search?q=${encodeURIComponent(q)}&max=15`;
@@ -126,39 +126,39 @@ async function doLiveSearch() {
     const d = await r.json();
 
     if (d.error) {
-      showLiveStatus(`❌ خطأ: ${d.error}`, true);
+      showLiveStatus(`❌ Error: ${d.error}`, true);
       grid.innerHTML = `<div class="empty">❌ ${d.error}</div>`;
     } else if (d.count === 0 && d.fetched === 0) {
-      showLiveStatus(`⚠️ ${d.message || "لا توجد نتائج من TeePublic"}`, true);
-      grid.innerHTML = `<div class="empty">لم يتم العثور على تصاميم لـ "${escapeHtml(q)}" على TeePublic</div>`;
+      showLiveStatus(`⚠️ ${d.message || "No results from TeePublic"}`, true);
+      grid.innerHTML = `<div class="empty">No designs found for "${escapeHtml(q)}" on TeePublic</div>`;
     } else if (d.new === 0) {
-      showLiveStatus(`✅ جميع التصاميم موجودة مسبقاً (${d.skipped} تصميم). استخدم البحث المحلي لإيجادها.`);
+      showLiveStatus(`✅ All designs already exist (${d.skipped} designs). Use local search to find them.`);
       // Auto-run local search to show the existing ones
       $("text-query").value = q;
       doTextSearch();
     } else {
-      showLiveStatus(`✅ ${d.message} — ${d.new} جديد، ${d.skipped} موجود مسبقاً`);
+      showLiveStatus(`✅ ${d.message} — ${d.new} new, ${d.skipped} already exist`);
       renderLiveResults(grid, d.results, q);
     }
     // Refresh stats + status since we added new designs
     loadStats();
     checkStatus();
   } catch (e) {
-    showLiveStatus(`❌ خطأ: ${e.message}`, true);
-    grid.innerHTML = `<div class="empty">❌ خطأ: ${e.message}</div>`;
+    showLiveStatus(`❌ Error: ${e.message}`, true);
+    grid.innerHTML = `<div class="empty">❌ Error: ${e.message}</div>`;
   } finally {
     btn.disabled = false;
-    btn.textContent = "🚀 جلب جديد";
+    btn.textContent = "🚀 Fetch New";
   }
 }
 
 function renderLiveResults(grid, results, heading) {
   if (!results || !results.length) {
-    grid.innerHTML = `<div class="empty">لا توجد نتائج جديدة</div>`;
+    grid.innerHTML = `<div class="empty">No new results</div>`;
     return;
   }
   grid.innerHTML =
-    `<div class="empty" style="padding:14px">🆕 ${results.length} تصميم جديد أُضيف من TeePublic لـ "<strong>${escapeHtml(heading)}</strong>"</div>` +
+    `<div class="empty" style="padding:14px">🆕 ${results.length} new designs added from TeePublic for "<strong>${escapeHtml(heading)}</strong>"</div>` +
     results.map((item) => {
       const cat = item.category || "Uncertain";
       const catClass = "cat-" + cat.replace(/[^a-zA-Z]/g, (m) => (m === " " ? "\\ " : ""));
@@ -167,7 +167,7 @@ function renderLiveResults(grid, results, heading) {
       <div class="card">
         <div class="card-img-wrap">
           <img src="/image/${encodeURIComponent(item.local_file)}" alt="${escapeHtml(item.product_name)}" loading="lazy">
-          <span class="new-badge">🆕 جديد</span>
+          <span class="new-badge">🆕 New</span>
         </div>
         <div class="card-body">
           <div class="card-name">${escapeHtml(item.product_name)}</div>
@@ -177,7 +177,7 @@ function renderLiveResults(grid, results, heading) {
             ${item.price ? `<span class="price">${item.price}</span>` : ""}
           </div>
         </div>
-        <a class="card-link" href="${item.product_url}" target="_blank" rel="noopener">عرض على TeePublic ↗</a>
+        <a class="card-link" href="${item.product_url}" target="_blank" rel="noopener">View on TeePublic ↗</a>
       </div>`;
     }).join("");
 }
@@ -206,7 +206,7 @@ function bindImageSearch() {
 }
 
 function handleFile(file) {
-  if (!file.type.startsWith("image/")) { alert("الرجاء اختيار صورة"); return; }
+  if (!file.type.startsWith("image/")) { alert("Please select an image"); return; }
   uploadedFile = file;
   const prev = $("preview");
   prev.src = URL.createObjectURL(file);
@@ -230,9 +230,9 @@ async function doImageSearch() {
   try {
     const r = await fetch("/api/search/image", { method: "POST", body: fd });
     const d = await r.json();
-    renderResults(grid, d.results, `صورة: ${d.filename}`, d.error);
+    renderResults(grid, d.results, `Image: ${d.filename}`, d.error);
   } catch (e) {
-    grid.innerHTML = `<div class="empty">❌ خطأ: ${e.message}</div>`;
+    grid.innerHTML = `<div class="empty">❌ Error: ${e.message}</div>`;
   } finally {
     $("search-loading").hidden = true;
   }
@@ -245,11 +245,11 @@ function renderResults(grid, results, heading, error) {
     return;
   }
   if (!results || !results.length) {
-    grid.innerHTML = `<div class="empty">لا توجد نتائج مطابقة</div>`;
+    grid.innerHTML = `<div class="empty">No matching results</div>`;
     return;
   }
 
-  const head = heading ? `<div class="empty" style="padding:14px">📌 ${results.length} نتيجة لـ "<strong>${heading}</strong>"</div>` : "";
+  const head = heading ? `<div class="empty" style="padding:14px">📌 ${results.length} results for "<strong>${escapeHtml(heading)}</strong>"</div>` : "";
   grid.innerHTML =
     head +
     results
@@ -272,7 +272,7 @@ function renderResults(grid, results, heading, error) {
               ${item.price ? `<span class="price">${item.price}</span>` : ""}
             </div>
           </div>
-          <a class="card-link" href="${item.product_url}" target="_blank" rel="noopener">عرض على TeePublic ↗</a>
+          <a class="card-link" href="${item.product_url}" target="_blank" rel="noopener">View on TeePublic ↗</a>
         </div>`;
       })
       .join("");
@@ -299,19 +299,19 @@ function bindCatalog() {
 async function loadCatalog() {
   const category = $("category-catalog").value;
   const grid = $("catalog-grid");
-  grid.innerHTML = `<div class="empty">جارٍ التحميل…</div>`;
+  grid.innerHTML = `<div class="empty">Loading…</div>`;
 
   try {
     const r = await fetch(`/api/catalog?page=${catalogPage}&per_page=24&category=${encodeURIComponent(category)}`);
     const d = await r.json();
     catalogTotalPages = d.total_pages || 1;
-    $("catalog-info").textContent = `${d.total} تصميم`;
-    $("pg-info").textContent = `صفحة ${d.page} من ${d.total_pages}`;
+    $("catalog-info").textContent = `${d.total} designs`;
+    $("pg-info").textContent = `Page ${d.page} of ${d.total_pages}`;
     $("pg-prev").disabled = d.page <= 1;
     $("pg-next").disabled = d.page >= d.total_pages;
 
     if (!d.items.length) {
-      grid.innerHTML = `<div class="empty">لا توجد عناصر</div>`;
+      grid.innerHTML = `<div class="empty">No items found</div>`;
       return;
     }
     grid.innerHTML = d.items
@@ -332,12 +332,12 @@ async function loadCatalog() {
               ${item.price ? `<span class="price">${item.price}</span>` : ""}
             </div>
           </div>
-          <a class="card-link" href="${item.product_url}" target="_blank" rel="noopener">عرض على TeePublic ↗</a>
+          <a class="card-link" href="${item.product_url}" target="_blank" rel="noopener">View on TeePublic ↗</a>
         </div>`;
       })
       .join("");
   } catch (e) {
-    grid.innerHTML = `<div class="empty">❌ خطأ: ${e.message}</div>`;
+    grid.innerHTML = `<div class="empty">❌ Error: ${e.message}</div>`;
   }
 }
 
@@ -363,6 +363,6 @@ async function loadStats() {
       })
       .join("");
   } catch (e) {
-    $("stats-list").innerHTML = `<div class="empty">❌ خطأ: ${e.message}</div>`;
+    $("stats-list").innerHTML = `<div class="empty">❌ Error: ${e.message}</div>`;
   }
 }

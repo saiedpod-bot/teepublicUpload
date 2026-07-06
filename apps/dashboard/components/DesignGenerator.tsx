@@ -3,7 +3,7 @@
 import { useState, useRef } from "react";
 import { nanoid } from "nanoid";
 import { generateDesigns } from "@/lib/imageGen";
-import { removeBackgroundFromBase64 } from "@/lib/removeBg";
+import { removeBackgroundFromBase64, padToMinimum } from "@/lib/removeBg";
 
 interface GenResult {
   id: string;
@@ -45,12 +45,14 @@ export function DesignGenerator() {
     try {
       const images = await generateDesigns(buildPrompt(), designCount, ac.signal);
       const genResults: GenResult[] = await Promise.all(images.map(async (img) => {
-        const cleanBase64 = await removeBackgroundFromBase64(img.base64, img.mime);
-        const cleaned = cleanBase64.split(",")[1] || img.base64;
+        // Remove background, then scale to meet 4500×5400 minimum
+        const cleanUrl = await removeBackgroundFromBase64(img.base64, img.mime);
+        const paddedUrl = await padToMinimum(cleanUrl.split(",")[1] || img.base64, "image/png");
+        const cleaned = paddedUrl.split(",")[1] || img.base64;
         return {
           id: nanoid(10),
           base64: cleaned,
-          previewUrl: cleanBase64,
+          previewUrl: paddedUrl,
         };
       }));
       setResults(genResults);

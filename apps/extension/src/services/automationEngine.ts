@@ -16,6 +16,20 @@ const LOGIN_URL_FRAGMENTS = ["sign_in", "/login", "/users/sign_in", "/auth/", "/
 class AutomationEngine {
   private state: EngineState = "idle";
   private currentTabId: number | null = null;
+  private keepaliveTimer: ReturnType<typeof setInterval> | null = null;
+
+  /** MV3 kills the service worker after ~30s of inactivity.  Calling *any*
+   *  chrome.* API resets that timer, so we ping storage every 20s while the
+   *  engine is active. This prevents mid-upload SW termination. */
+  private startKeepalive() {
+    if (this.keepaliveTimer) return;
+    this.keepaliveTimer = setInterval(() => {
+      chrome.storage.local.get("__keepalive__").catch(() => {});
+    }, 20_000);
+  }
+  private stopKeepalive() {
+    if (this.keepaliveTimer) { clearInterval(this.keepaliveTimer); this.keepaliveTimer = null; }
+  }
 
   getState(): EngineState { return this.state; }
 
@@ -29,12 +43,14 @@ class AutomationEngine {
     // Re-queue selected failed items so the loop will process them again.
     await requeueSelectedFailed();
     this.state = "running";
+    this.startKeepalive();
     void this.loop();
   }
 
   async pause() {
     await SettingsStore.set({ paused: true });
     this.state = "paused";
+    this.stopKeepalive();
   }
 
   async retry(itemId: string) {
@@ -45,10 +61,10 @@ class AutomationEngine {
   private async loop() {
     while (true) {
       const settings = await SettingsStore.get();
-      if (settings.paused) { this.state = "paused"; return; }
+      if (settings.paused) { this.state = "paused"; this.stopKeepalive(); return; }
 
       const batch = await QueueStore.get();
-      if (!batch) { this.state = "idle"; return; }
+      if (!batch) { this.state = "idle"; this.stopKeepalive(); return; }
 
       // BULK: TeePublic's official in-place bulk flow — dispatch all selected
       // designs at once on /designs/bulk_uploader, then the content script fills
@@ -57,9 +73,10 @@ class AutomationEngine {
         const pending = batch.items.filter((i) =>
           (i.status === "pending" || i.status === "queued") && i.selected !== false
         );
-        if (pending.length === 0) { this.state = "idle"; return; }
+        if (pending.length === 0) { this.state = "idle"; this.stopKeepalive(); return; }
         await this.runBulk(pending);
         this.state = "idle";
+        this.stopKeepalive();
         return;
       }
 
@@ -67,7 +84,7 @@ class AutomationEngine {
       const next = batch.items.find((i) =>
         (i.status === "pending" || i.status === "queued") && i.selected !== false
       );
-      if (!next) { this.state = "idle"; return; }
+      if (!next) { this.state = "idle"; this.stopKeepalive(); return; }
 
       const total = batch.items.filter((i) => i.selected !== false).length;
       const remaining = batch.items.filter((i) =>

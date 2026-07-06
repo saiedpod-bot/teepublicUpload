@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>TeePublic Intelligence — لوحة البحث الذكي</title>
+  <title>TeePublic Intelligence — Smart Search Dashboard</title>
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
@@ -13,29 +13,29 @@
     <span class="logo">👕</span>
     <div>
       <h1>TeePublic Intelligence</h1>
-      <p class="subtitle">بحث ذكي بالذكاء الاصطناعي · {{ categories|length }} فئة · <span id="stat-total">—</span> تصميم</p>
+      <p class="subtitle">AI-powered smart search · {{ categories|length }} categories · <span id="stat-total">—</span> designs</p>
     </div>
   </div>
-  <div id="status-pill" class="status loading">جارٍ التحميل…</div>
+  <div id="status-pill" class="status loading">Loading…</div>
 </header>
 
 <main>
 
-  <!-- ════ التبويبات ════ -->
+  <!-- ════ Tabs ════ -->
   <nav class="tabs">
-    <button class="tab active" data-tab="search">🔍 بحث</button>
-    <button class="tab" data-tab="catalog">🗂️ تصفح الكتالوج</button>
-    <button class="tab" data-tab="stats">📊 الإحصائيات</button>
+    <button class="tab active" data-tab="search">🔍 Search</button>
+    <button class="tab" data-tab="catalog">🗂️ Browse Catalog</button>
+    <button class="tab" data-tab="stats">📊 Statistics</button>
   </nav>
 
-  <!-- ════ قسم البحث ════ -->
+  <!-- ════ Search Section ════ -->
   <section id="tab-search" class="tab-panel active">
 
-    <!-- فلتر الفئة المشترك -->
+    <!-- Category filter -->
     <div class="filter-row">
-      <label for="category-search">الفئة:</label>
+      <label for="category-search">Category:</label>
       <select id="category-search">
-        <option value="All">الكل</option>
+        <option value="All">All</option>
         {% for c in categories %}
           <option value="{{ c }}">{{ c }}</option>
         {% endfor %}
@@ -43,13 +43,13 @@
     </div>
 
     <div class="search-modes">
-      <!-- بحث نصي -->
+      <!-- Text Search -->
       <div class="mode-card">
-        <h3>🔎 بحث في المكتبة المحلية</h3>
-        <p>ابحث في التصاميم المخزّنة محلياً (بحث فوري)</p>
+        <h3>🔎 Search Local Library</h3>
+        <p>Search locally stored designs (instant results)</p>
         <div class="search-box">
-          <input type="text" id="text-query" placeholder="مثال: funny dog, vintage music, horror...">
-          <button id="btn-text-search" class="primary">بحث</button>
+          <input type="text" id="text-query" placeholder="e.g. funny dog, vintage music, horror...">
+          <button id="btn-text-search" class="primary">Search</button>
         </div>
         <div class="quick-tags">
           <button class="chip" data-q="funny cat">funny cat</button>
@@ -61,36 +61,36 @@
         </div>
       </div>
 
-      <!-- بحث مباشر حي -->
+      <!-- Live Search -->
       <div class="mode-card live-card">
-        <h3>🌐 بحث مباشر من TeePublic</h3>
-        <p>اجلب تصاميم <strong>جديدة</strong> من TeePublic وأضفها للمكتبة</p>
+        <h3>🌐 Live Search from TeePublic</h3>
+        <p>Fetch <strong>new</strong> designs from TeePublic and add them to the library</p>
         <div class="search-box">
-          <input type="text" id="live-query" placeholder="مثال: bigfoot, dragon, christmas...">
-          <button id="btn-live-search" class="primary live-btn">🚀 جلب جديد</button>
+          <input type="text" id="live-query" placeholder="e.g. bigfoot, dragon, christmas...">
+          <button id="btn-live-search" class="primary live-btn">🚀 Fetch New</button>
         </div>
-        <p class="live-hint">⏱️ أول بحث لكلمة جديدة قد يستغرق 30-60 ثانية (جلب + تصنيف + تخزين). البحث التالي سيكون فورياً.</p>
+        <p class="live-hint">⏱️ First search for a new keyword may take 30-60 seconds (fetch + classify + store). Subsequent searches are instant.</p>
       </div>
 
-      <!-- بحث بصري -->
+      <!-- Image Search -->
       <div class="mode-card">
-        <h3>🖼️ بحث بصورة</h3>
-        <p>ارفع صورة تصميم لإيجاد مشابه</p>
+        <h3>🖼️ Search by Image</h3>
+        <p>Upload a design image to find similar ones</p>
         <div id="dropzone" class="dropzone">
           <input type="file" id="image-input" accept="image/*" hidden>
           <div class="dropzone-content">
             <span class="upload-icon">⬆️</span>
-            <p>اسحب صورة هنا أو <span class="link">اختر ملف</span></p>
+            <p>Drop an image here or <span class="link">choose a file</span></p>
           </div>
           <img id="preview" class="preview" hidden>
         </div>
-        <button id="btn-image-search" class="primary" disabled>بحث بالصورة</button>
+        <button id="btn-image-search" class="primary" disabled>Search by Image</button>
       </div>
     </div>
 
     <div id="search-loading" class="loading-bar" hidden>
       <div class="spinner"></div>
-      <span>جارٍ البحث… (أول بحث قد يستغرق وقتاً لتحميل النموذج)</span>
+      <span>Searching… (first search may take time to load the model)</span>
     </div>
 
     <div id="live-status" class="live-status"></div>
@@ -98,12 +98,12 @@
     <div id="search-results" class="results-grid"></div>
   </section>
 
-  <!-- ════ قسم الكتالوج ════ -->
+  <!-- ════ Catalog Section ════ -->
   <section id="tab-catalog" class="tab-panel">
     <div class="filter-row">
-      <label for="category-catalog">الفئة:</label>
+      <label for="category-catalog">Category:</label>
       <select id="category-catalog">
-        <option value="All">الكل</option>
+        <option value="All">All</option>
         {% for c in categories %}
           <option value="{{ c }}">{{ c }}</option>
         {% endfor %}
@@ -112,22 +112,22 @@
     </div>
     <div id="catalog-grid" class="results-grid"></div>
     <div class="pagination">
-      <button id="pg-prev" class="ghost">→ السابق</button>
+      <button id="pg-prev" class="ghost">← Previous</button>
       <span id="pg-info"></span>
-      <button id="pg-next" class="ghost">التالي ←</button>
+      <button id="pg-next" class="ghost">Next →</button>
     </div>
   </section>
 
-  <!-- ════ قسم الإحصائيات ════ -->
+  <!-- ════ Statistics Section ════ -->
   <section id="tab-stats" class="tab-panel">
-    <h2>توزيع التصنيفات</h2>
+    <h2>Category Distribution</h2>
     <div id="stats-list" class="stats-list"></div>
   </section>
 
 </main>
 
 <footer>
-  <span>TeePublic Intelligence · CLIP + Qdrant · {{ categories|length }} فئة</span>
+  <span>TeePublic Intelligence · CLIP + Qdrant · {{ categories|length }} categories</span>
 </footer>
 
 <script src="{{ url_for('static', filename='script.js') }}"></script>

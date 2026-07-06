@@ -1,3 +1,40 @@
+// Minimum dimensions for uploaded artwork (Amazon/TeePublic compatible)
+export const TP_MIN_SHORT = 4500;
+export const TP_MIN_LONG = 5400;
+
+/** Scale an image so its artwork meets the minimum dimensions
+ *  (short side ≥ 4500, long side ≥ 5400). Purely transparent padding is
+ *  ignored by platforms like TeePublic/Amazon, so we MUST scale up the content.
+ *  If already large enough, returns the original unchanged. */
+export function padToMinimum(base64: string, mime: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const w = img.width;
+      const h = img.height;
+      if (Math.min(w, h) >= TP_MIN_SHORT && Math.max(w, h) >= TP_MIN_LONG) {
+        resolve(`data:${mime};base64,${base64}`);
+        img.remove();
+        return;
+      }
+      const scale = Math.max(TP_MIN_SHORT / Math.min(w, h), TP_MIN_LONG / Math.max(w, h));
+      const cw = Math.ceil(w * scale);
+      const ch = Math.ceil(h * scale);
+      const canvas = document.createElement("canvas");
+      canvas.width = cw;
+      canvas.height = ch;
+      const ctx = canvas.getContext("2d")!;
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = "high";
+      ctx.drawImage(img, 0, 0, cw, ch);
+      resolve(canvas.toDataURL("image/png"));
+      img.remove();
+    };
+    img.onerror = () => reject(new Error("Failed to load image for dimension check"));
+    img.src = `data:${mime};base64,${base64}`;
+  });
+}
+
 /** Simple background removal using canvas — makes near-white/edge-color pixels transparent. */
 export function removeBackgroundFromBase64(base64: string, mime: string): Promise<string> {
   return new Promise((resolve, reject) => {
