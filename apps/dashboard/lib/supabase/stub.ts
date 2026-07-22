@@ -1,7 +1,9 @@
 // Stub Supabase client used when NEXT_PUBLIC_SUPABASE_URL / ANON_KEY are
 // not configured (local dev without Supabase). Returns empty/no-op results.
 
-const stubQueryBuilder = {
+const stubTerminal = Promise.resolve({ data: [] as unknown[], error: null });
+
+const stubQueryBuilder: Record<string, (...args: unknown[]) => unknown> = {
   select: () => stubQueryBuilder,
   insert: () => stubQueryBuilder,
   update: () => stubQueryBuilder,
@@ -24,8 +26,9 @@ const stubQueryBuilder = {
   not: () => stubQueryBuilder,
   or: () => stubQueryBuilder,
   and: () => stubQueryBuilder,
-  order: () => stubQueryBuilder,
-  limit: () => stubQueryBuilder,
+  order: () => stubTerminal,
+  limit: () => stubTerminal,
+  then: (resolve: (v: unknown) => unknown) => stubTerminal.then(resolve),
   maybeSingle: () => Promise.resolve({ data: null, error: null }),
   single: () => Promise.resolve({ data: null, error: new Error("Supabase not configured") }),
 };
